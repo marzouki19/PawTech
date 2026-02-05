@@ -1,0 +1,142 @@
+{% extends 'base_front.html.twig' %}
+
+{% block title %}Veterinarian - PawTech{% endblock %}
+
+{% block body %}
+    <section class="relative overflow-hidden">
+        <div class="absolute inset-0">
+            <div class="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-orange-200/70"></div>
+            <div class="absolute top-24 right-24 h-80 w-80 rounded-full bg-orange-400/80"></div>
+        </div>
+
+        <div class="relative container mx-auto px-4 lg:px-8 py-12 lg:py-16 grid lg:grid-cols-2 gap-10 items-center">
+            <div>
+                <p class="text-orange-600 font-semibold tracking-wide uppercase text-xs mb-3">Veterinary</p>
+                <h1 class="text-4xl lg:text-5xl font-extrabold leading-tight text-gray-900">
+                    Where Dogs Come First
+                </h1>
+                <p class="mt-4 text-gray-600 max-w-xl">
+                    Professional care, modern facilities, and a friendly team for your dog’s health and happiness.
+                </p>
+                <div class="mt-7">
+                    <a href="{{ path('app_contact') }}" class="inline-flex items-center rounded-full bg-gray-900 px-6 py-3 text-white font-semibold hover:bg-gray-800 transition">
+                        Learn More
+                    </a>
+                </div>
+            </div>
+            <div class="relative">
+                <div class="relative rounded-3xl bg-white shadow-xl p-6 border border-gray-100">
+                    <div class="aspect-[4/3] rounded-2xl bg-gradient-to-br from-orange-100 via-gray-50 to-orange-200 flex items-center justify-center">
+                        <span class="text-gray-500 font-semibold">Veterinary header image</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="container mx-auto px-4 lg:px-8 py-12">
+        <div class="text-center max-w-2xl mx-auto">
+            <p class="text-orange-600 font-semibold text-xs uppercase tracking-wide">Services</p>
+            <h2 class="text-2xl lg:text-3xl font-extrabold text-gray-900 mt-2">Our Services</h2>
+        </div>
+
+        <div class="mt-10 grid md:grid-cols-3 gap-6">
+            {% for s in [
+                {title:'Pet Checkup', desc:'Routine wellness checks to keep your dog healthy.'},
+                {title:'Lab Tests', desc:'Fast diagnostics and accurate laboratory testing.'},
+                {title:'Vaccination', desc:'Up-to-date vaccines for a safer, happier life.'}
+            ] %}
+                <div class="rounded-2xl bg-white border border-gray-100 shadow-sm p-6 hover:shadow-md transition">
+                    <div class="h-12 w-12 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center font-extrabold">+</div>
+                    <h3 class="mt-4 font-extrabold text-gray-900">{{ s.title }}</h3>
+                    <p class="mt-2 text-sm text-gray-600">{{ s.desc }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="container mx-auto px-4 lg:px-8 py-14">
+        <div class="rounded-3xl bg-white border border-gray-100 shadow-sm overflow-hidden grid lg:grid-cols-2">
+            <div class="bg-gradient-to-br from-orange-100 via-gray-50 to-orange-200 flex items-center justify-center p-10">
+                <div class="w-full max-w-md rounded-3xl bg-white/70 backdrop-blur border border-white/60 p-8">
+                    <div class="h-48 rounded-2xl bg-white/60"></div>
+                    <div class="mt-4 h-4 w-2/3 rounded bg-white/60"></div>
+                    <div class="mt-2 h-4 w-1/2 rounded bg-white/60"></div>
+                </div>
+            </div>
+            <div class="p-8 lg:p-12">
+                <p class="text-orange-600 font-semibold text-xs uppercase tracking-wide">Care</p>
+                <h2 class="mt-2 text-3xl font-extrabold text-gray-900">Medical Care for Dogs</h2>
+                <p class="mt-4 text-gray-600 max-w-xl">
+                    From preventive care to treatment plans, we provide compassionate veterinary services tailored to your dog.
+                </p>
+                <div class="mt-7">
+                    <a href="{{ path('app_contact') }}" class="inline-flex items-center rounded-full bg-gray-900 px-6 py-3 text-white font-semibold hover:bg-gray-800 transition">
+                        Learn More
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="container mx-auto px-4 lg:px-8 py-12">
+        <div class="flex items-end justify-between gap-6">
+            <div>
+                <p class="text-orange-600 font-semibold text-xs uppercase tracking-wide">Team</p>
+                <h2 class="text-2xl lg:text-3xl font-extrabold text-gray-900 mt-2">Our Expert Team</h2>
+            </div>
+            <div class="flex items-center gap-2">
+                <button class="h-10 w-10 rounded-full border border-gray-200 bg-white hover:border-orange-400 hover:text-orange-600 transition">‹</button>
+                <button class="h-10 w-10 rounded-full border border-gray-200 bg-white hover:border-orange-400 hover:text-orange-600 transition">›</button>
+            </div>
+        </div>
+
+        <div class="mt-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {% for doc in [
+                {name:'Dr. Martin', role:'Veterinarian'},
+                {name:'Dr. Rami', role:'Surgeon'},
+                {name:'Dr. Dorsy', role:'Veterinarian'},
+                {name:'Dr. Lina', role:'Assistant'}
+            ] %}
+                <div class="rounded-2xl bg-white border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition">
+                    <div class="aspect-[4/3] bg-gray-100"></div>
+                    <div class="p-4">
+                        <p class="font-extrabold text-gray-900">{{ doc.name }}</p>
+                        <p class="text-sm text-gray-500">{{ doc.role }}</p>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="container mx-auto px-4 lg:px-8 py-12">
+        <div class="flex items-end justify-between gap-6">
+            <div>
+                <p class="text-orange-600 font-semibold text-xs uppercase tracking-wide">Events</p>
+                <h2 class="text-2xl lg:text-3xl font-extrabold text-gray-900 mt-2">Next Events</h2>
+            </div>
+            <a href="{{ path('app_events') }}" class="text-sm font-semibold text-orange-600 hover:text-orange-700">See more</a>
+        </div>
+
+        <div class="mt-8 grid lg:grid-cols-3 gap-6">
+            {% for event in [
+                {title:'My Dog 2026', date:'Jan 2, 2026', tag:'Show'},
+                {title:'Puppy Bowl', date:'Feb 16, 2026', tag:'Meetup'},
+                {title:'Art With Dogs', date:'Mar 11, 2026', tag:'Workshop'}
+            ] %}
+                <article class="rounded-2xl bg-white border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition">
+                    <div class="aspect-[16/9] bg-gray-100"></div>
+                    <div class="p-5">
+                        <div class="flex items-center gap-2 text-xs text-gray-500">
+                            <span class="rounded-full bg-gray-100 px-2 py-1 font-semibold text-gray-700">{{ event.tag }}</span>
+                            <span>{{ event.date }}</span>
+                        </div>
+                        <h3 class="mt-3 font-extrabold text-gray-900">{{ event.title }}</h3>
+                        <p class="mt-2 text-sm text-gray-600">Join us for a fun dog-friendly event with activities, training tips, and more.</p>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    </section>
+{% endblock %}
+
