@@ -65,20 +65,27 @@
         </div>
 
         <div class="mt-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {% set dogs = [
-                {name:'Nina', breed:'Husky', age:'2 years', sex:'Female'},
-                {name:'Prince', breed:'Labrador', age:'1 year', sex:'Male'},
-                {name:'Coco', breed:'Poodle', age:'3 years', sex:'Female'},
-                {name:'Max', breed:'Pug', age:'2 years', sex:'Male'},
-                {name:'Rocky', breed:'Husky', age:'4 years', sex:'Male'},
-                {name:'Bella', breed:'Labrador', age:'2 years', sex:'Female'},
-                {name:'Zoe', breed:'Poodle', age:'1 year', sex:'Female'},
-                {name:'Milo', breed:'Pug', age:'3 years', sex:'Male'}
-            ] %}
+            {% set dogs = dogs|default([
+                {id:1, name:'Nina', breed:'Husky', age:'2 years', gender:'Female', image:null},
+                {id:2, name:'Prince', breed:'Labrador', age:'1 year', gender:'Male', image:null},
+                {id:3, name:'Coco', breed:'Poodle', age:'3 years', gender:'Female', image:null},
+                {id:4, name:'Max', breed:'Pug', age:'2 years', gender:'Male', image:null},
+                {id:5, name:'Rocky', breed:'Husky', age:'4 years', gender:'Male', image:null},
+                {id:6, name:'Bella', breed:'Labrador', age:'2 years', gender:'Female', image:null},
+                {id:7, name:'Zoe', breed:'Poodle', age:'1 year', gender:'Female', image:null},
+                {id:8, name:'Milo', breed:'Pug', age:'3 years', gender:'Male', image:null}
+            ]) %}
 
             {% for dog in dogs %}
                 <div class="rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition overflow-hidden">
                     <div class="aspect-[4/3] bg-gray-100 relative">
+                        {% if dog.image is defined and dog.image %}
+                            <img src="{{ dog.image }}" alt="{{ dog.name }}" class="h-full w-full object-cover">
+                        {% else %}
+                            <div class="flex h-full w-full items-center justify-center text-5xl font-bold text-gray-300">
+                                {{ dog.name|slice(0, 1)|upper }}
+                            </div>
+                        {% endif %}
                         <div class="absolute top-3 right-3 flex items-center gap-2">
                             <button class="h-9 w-9 rounded-full bg-white/90 border border-gray-200 hover:border-orange-400 transition" title="Favorite">♡</button>
                         </div>
@@ -89,11 +96,11 @@
                             <span class="text-xs rounded-full bg-orange-50 text-orange-700 px-2 py-1 font-semibold">{{ dog.breed }}</span>
                         </div>
                         <div class="mt-2 text-sm text-gray-500 flex items-center justify-between">
-                            <span>{{ dog.sex }}</span>
+                            <span>{{ dog.gender }}</span>
                             <span>{{ dog.age }}</span>
                         </div>
                         <div class="mt-4 grid grid-cols-2 gap-3">
-                            <a href="{{ path('app_contact') }}" class="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-800 hover:border-orange-400 hover:text-orange-600 transition">
+                            <a href="{{ path('app_front_dogs_show', {'id': dog.id}) }}" class="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-800 hover:border-orange-400 hover:text-orange-600 transition">
                                 Details
                             </a>
                             <a href="{{ path('app_contact') }}" class="inline-flex items-center justify-center rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 transition">
@@ -106,4 +113,3 @@
         </div>
     </section>
 {% endblock %}
-
