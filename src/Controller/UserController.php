@@ -13,6 +13,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Component\String\Slugger\SluggerInterface;
 final class UserController extends AbstractController
 {
@@ -403,15 +404,101 @@ final class UserController extends AbstractController
 
 
 
+    #[Route('/signin', name: 'app_signin', methods: ['GET', 'POST'])]
+    public function signin(Request $request, UserRepository $userRepository, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher): Response
+    {
+        $session = $request->getSession();
+        if ($session->has('user')) {
+            return $this->redirectToRoute('app_home');
+        }
+
+        $error = null;
+        $lastEmail = '';
+
+        if ($request->isMethod('POST')) {
+            $email = trim((string) $request->request->get('email', ''));
+            $password = (string) $request->request->get('password', '');
+            $lastEmail = $email;
+
+            if ($email === '' || $password === '') {
+                $error = [
+                    'messageKey' => 'Email and password are required.',
+                    'messageData' => [],
+                ];
+                return $this->render('sign/signin.html.twig', [
+                    'error' => $error,
+                    'last_email' => $lastEmail,
+                ]);
+            }
+
+            $user = $userRepository->findOneBy(['email' => $email]);
+
+            if ($user) {
+                if (!$passwordHasher->isPasswordValid($user, $password)) {
+                    $error = [
+                        'messageKey' => 'Invalid email or password.',
+                        'messageData' => [],
+                    ];
+                } else {
+                    $roles = $user->getRoles();
+
+                    $session->set('user', [
+                        'id' => $user->getId(),
+                        'email' => $user->getEmail(),
+                        'prenom' => $user->getPrenom(),
+                        'nom' => $user->getNom(),
+                        'userImage' => $user->getUserImage(),
+                        'role' => $roles[0] ?? 'ROLE_USER',
+                    ]);
+
+                    return $this->redirectToRoute('app_home');
+                }
+            } else {
+                $username = strtok($email, '@') ?: 'User';
+                $firstName = ucfirst($username);
+
+                $user = new User();
+                $user->setPrenom($firstName);
+                $user->setNom('User');
+                $user->setEmail($email);
+                $user->setTelephone(0);
+                $user->setRole('Client');
+                $user->setStatus('Actif');
+                $user->setUserImage('uploads/users/default.png');
+                $user->setPassword($passwordHasher->hashPassword($user, $password));
+
+                $entityManager->persist($user);
+                $entityManager->flush();
+
+                $roles = $user->getRoles();
+                $session->set('user', [
+                    'id' => $user->getId(),
+                    'email' => $user->getEmail(),
+                    'prenom' => $user->getPrenom(),
+                    'nom' => $user->getNom(),
+                    'userImage' => $user->getUserImage(),
+                    'role' => $roles[0] ?? 'ROLE_USER',
+                ]);
+
+                return $this->redirectToRoute('app_home');
+            }
+        }
+
+        return $this->render('sign/signin.html.twig', [
+            'error' => $error,
+            'last_email' => $lastEmail,
+        ]);
+    }
+
+   
 
 
 
 
 
 
-
-  #[Route('/auth/google', name: 'app_google_auth_start', methods: ['GET'])]
-    public function googleAuthStart(Request $request): Response
+    #[Route('/auth/google', name: 'app_google_auth_start', methods: ['GET'])]
+        public function googleAuthStart(Request $request): Response
     {
         $clientId = $_ENV['GOOGLE_CLIENT_ID'] ?? 'YOUR_GOOGLE_CLIENT_ID';
         $redirectUri = $_ENV['GOOGLE_REDIRECT_URI']
@@ -430,7 +517,13 @@ final class UserController extends AbstractController
     }
 
     #[Route('/auth/google/callback', name: 'app_google_auth_callback', methods: ['GET'])]
-    public function googleAuthCallback(Request $request): Response
+    public function googleAuthCallback(
+        Request $request,
+        HttpClientInterface $httpClient,
+        UserRepository $userRepository,
+        EntityManagerInterface $entityManager,
+        UserPasswordHasherInterface $passwordHasher
+    ): Response
     {
         if ($request->query->get('error')) {
             $this->addFlash('error', 'Google sign-in was cancelled.');
@@ -442,8 +535,84 @@ final class UserController extends AbstractController
             return $this->redirectToRoute('app_google_auth_start');
         }
 
-        $this->addFlash('success', 'Google authorization received. Replace this with token exchange.');
-        return $this->redirectToRoute('app_signin');
+        $code = (string) $request->query->get('code');
+        $clientId = $_ENV['GOOGLE_CLIENT_ID'] ?? null;
+        $clientSecret = $_ENV['GOOGLE_CLIENT_SECRET'] ?? null;
+        $redirectUri = $_ENV['GOOGLE_REDIRECT_URI']
+            ?? $request->getSchemeAndHttpHost().$this->generateUrl('app_google_auth_callback');
+
+        if (!$clientId || !$clientSecret) {
+            $this->addFlash('error', 'Google client credentials are missing.');
+            return $this->redirectToRoute('app_signin');
+        }
+
+        try {
+            $tokenResponse = $httpClient->request('POST', 'https://oauth2.googleapis.com/token', [
+                'headers' => [
+                    'Content-Type' => 'application/x-www-form-urlencoded',
+                ],
+                'body' => [
+                    'code' => $code,
+                    'client_id' => $clientId,
+                    'client_secret' => $clientSecret,
+                    'redirect_uri' => $redirectUri,
+                    'grant_type' => 'authorization_code',
+                ],
+            ]);
+
+            $tokenData = $tokenResponse->toArray(false);
+
+            if (!isset($tokenData['access_token'])) {
+                $this->addFlash('error', 'Google token exchange failed.');
+                return $this->redirectToRoute('app_signin');
+            }
+
+            $userInfoResponse = $httpClient->request('GET', 'https://openidconnect.googleapis.com/v1/userinfo', [
+                'headers' => [
+                    'Authorization' => 'Bearer '.$tokenData['access_token'],
+                ],
+            ]);
+
+            $userInfo = $userInfoResponse->toArray(false);
+
+            if (!isset($userInfo['email'])) {
+                $this->addFlash('error', 'Unable to read Google account email.');
+                return $this->redirectToRoute('app_signin');
+            }
+
+            $email = (string) $userInfo['email'];
+            $user = $userRepository->findOneBy(['email' => $email]);
+
+            if (!$user) {
+                $user = new User();
+                $user->setPrenom($userInfo['given_name'] ?? 'Google');
+                $user->setNom($userInfo['family_name'] ?? 'User');
+                $user->setEmail($email);
+                $user->setTelephone(0);
+                $user->setRole('Client');
+                $user->setStatus('Actif');
+                $user->setUserImage('uploads/users/default.png');
+                $user->setPassword($passwordHasher->hashPassword($user, bin2hex(random_bytes(12))));
+
+                $entityManager->persist($user);
+                $entityManager->flush();
+            }
+
+            $roles = $user->getRoles();
+            $request->getSession()->set('user', [
+                'id' => $user->getId(),
+                'email' => $user->getEmail(),
+                'prenom' => $user->getPrenom(),
+                'nom' => $user->getNom(),
+                'userImage' => $user->getUserImage(),
+                'role' => $roles[0] ?? 'ROLE_USER',
+            ]);
+
+            return $this->redirectToRoute('app_home');
+        } catch (\Throwable $exception) {
+            $this->addFlash('error', 'Google sign-in failed. Please try again.');
+            return $this->redirectToRoute('app_signin');
+        }
     }
 
 

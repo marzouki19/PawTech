@@ -92,22 +92,149 @@
         </div>
 
         <div class="mt-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {% for doc in [
-                {name:'Dr. Martin', role:'Veterinarian'},
-                {name:'Dr. Rami', role:'Surgeon'},
-                {name:'Dr. Dorsy', role:'Veterinarian'},
-                {name:'Dr. Lina', role:'Assistant'}
-            ] %}
-                <div class="rounded-2xl bg-white border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition">
-                    <div class="aspect-[4/3] bg-gray-100"></div>
-                    <div class="p-4">
-                        <p class="font-extrabold text-gray-900">{{ doc.name }}</p>
-                        <p class="text-sm text-gray-500">{{ doc.role }}</p>
+            {% for vet in veterinarians|default([]) %}
+                <button type="button"
+                        class="text-left rounded-[26px] bg-white border border-gray-200 shadow-[0_10px_30px_rgba(0,0,0,0.08)] overflow-hidden hover:shadow-[0_14px_34px_rgba(0,0,0,0.12)] transition"
+                        data-vet-card
+                    data-vet-first-name="{{ vet.prenom }}"
+                    data-vet-last-name="{{ vet.nom }}"
+                        data-vet-role="Veterinerian"
+                        data-vet-email="{{ vet.email }}"
+                        data-vet-phone="{{ vet.telephone ? '+216 ' ~ vet.telephone : 'N/A' }}"
+                        data-vet-status="{{ vet.status|default('Unknown') }}"
+                        data-vet-image="{{ vet.userImage ? asset(vet.userImage) : '' }}">
+                    <div class="p-3">
+                        <div class="aspect-square rounded-[20px] bg-[#f7d8bb] border border-gray-200 shadow-inner flex items-center justify-center overflow-hidden">
+                            {% if vet.userImage %}
+                                <img src="{{ asset(vet.userImage) }}" alt="{{ vet.prenom }} {{ vet.nom }}" class="h-full w-full object-cover" />
+                            {% else %}
+                                <div class="h-28 w-28 rounded-2xl bg-[#f4cfae] flex items-center justify-center text-3xl font-bold text-white">
+                                    {{ vet.prenom|default('V')|first|upper }}{{ vet.nom|default('')|first|upper }}
+                                </div>
+                            {% endif %}
+                        </div>
                     </div>
+                    <div class="px-4 pb-4 text-center">
+                        <p class="font-semibold text-gray-900">{{ vet.prenom }} {{ vet.nom }}</p>
+                        <p class="text-sm text-orange-500 font-medium">Veterinerian</p>
+                    </div>
+                </button>
+            {% else %}
+                <div class="col-span-full rounded-2xl bg-white border border-gray-100 p-6 text-center text-gray-500">
+                    No veterinarians found.
                 </div>
             {% endfor %}
         </div>
     </section>
+
+    <div id="vet-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 p-4">
+        <div class="w-full max-w-3xl rounded-3xl bg-white shadow-2xl overflow-hidden">
+            <div class="flex items-center justify-between px-6 py-4 border-b">
+                <h3 class="text-lg font-semibold text-gray-900">Veterinarian Details</h3>
+                <button type="button" id="vet-modal-close" class="text-gray-500 hover:text-gray-700">✕</button>
+            </div>
+            <div class="p-6 grid md:grid-cols-2 gap-6">
+                <div class="rounded-2xl border border-gray-200 p-4 flex flex-col items-center">
+                    <div class="h-64 w-full rounded-2xl bg-[#f7d8bb] border border-gray-200 shadow-inner flex items-center justify-center overflow-hidden">
+                        <img id="vet-modal-image" src="" alt="Veterinarian" class="h-full w-full object-cover hidden" />
+                        <div id="vet-modal-fallback" class="h-28 w-28 rounded-2xl bg-[#f4cfae] flex items-center justify-center text-3xl font-bold text-white">V</div>
+                    </div>
+                    <p id="vet-modal-name" class="mt-4 text-lg font-semibold text-gray-900"></p>
+                    <p id="vet-modal-role" class="text-sm text-orange-500 font-medium">Veterinerian</p>
+                </div>
+                <div class="rounded-2xl border border-gray-200 p-4">
+                    <div class="space-y-3 text-sm text-gray-700">
+                        <p><span class="font-semibold">First Name:</span> <span id="vet-modal-first-name"></span></p>
+                        <p><span class="font-semibold">Last Name:</span> <span id="vet-modal-last-name"></span></p>
+                        <p><span class="font-semibold">Email:</span> <span id="vet-modal-email"></span></p>
+                        <p><span class="font-semibold">Telephone:</span> <span id="vet-modal-phone"></span></p>
+                        <p><span class="font-semibold">Status:</span> <span id="vet-modal-status" class="font-semibold"></span></p>
+                    </div>
+                    <div class="mt-6 flex items-center gap-3">
+                        <button type="button" class="px-4 py-2 rounded-lg bg-red-500 text-white text-sm font-semibold hover:bg-red-600" id="vet-modal-cancel">Cancel</button>
+                        <button type="button" class="px-4 py-2 rounded-lg bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-600" id="vet-modal-appointment">Make an appointment</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            var modal = document.getElementById('vet-modal');
+            var closeBtn = document.getElementById('vet-modal-close');
+            var cards = document.querySelectorAll('[data-vet-card]');
+            var modalImage = document.getElementById('vet-modal-image');
+            var modalFallback = document.getElementById('vet-modal-fallback');
+            var modalName = document.getElementById('vet-modal-name');
+            var modalRole = document.getElementById('vet-modal-role');
+            var modalFirstName = document.getElementById('vet-modal-first-name');
+            var modalLastName = document.getElementById('vet-modal-last-name');
+            var modalEmail = document.getElementById('vet-modal-email');
+            var modalPhone = document.getElementById('vet-modal-phone');
+            var modalStatus = document.getElementById('vet-modal-status');
+
+            if (!modal || !closeBtn) return;
+
+            function openModal(card) {
+                var firstName = card.getAttribute('data-vet-first-name') || '';
+                var lastName = card.getAttribute('data-vet-last-name') || '';
+                var name = (firstName + ' ' + lastName).trim();
+                var role = card.getAttribute('data-vet-role') || 'Veterinerian';
+                var email = card.getAttribute('data-vet-email') || 'N/A';
+                var phone = card.getAttribute('data-vet-phone') || 'N/A';
+                var status = card.getAttribute('data-vet-status') || 'Unknown';
+                var image = card.getAttribute('data-vet-image') || '';
+
+                modalName.textContent = name;
+                modalRole.textContent = role;
+                modalFirstName.textContent = firstName || 'N/A';
+                modalLastName.textContent = lastName || 'N/A';
+                modalEmail.textContent = email;
+                modalPhone.textContent = phone;
+                modalStatus.textContent = status;
+
+                var statusValue = status.toLowerCase();
+                modalStatus.classList.remove('text-emerald-600', 'text-red-600', 'text-gray-500');
+                if (statusValue === 'actif' || statusValue === 'active') {
+                    modalStatus.classList.add('text-emerald-600');
+                } else if (statusValue === 'inactif' || statusValue === 'inactive') {
+                    modalStatus.classList.add('text-red-600');
+                } else {
+                    modalStatus.classList.add('text-gray-500');
+                }
+
+                if (image) {
+                    modalImage.src = image;
+                    modalImage.classList.remove('hidden');
+                    modalFallback.classList.add('hidden');
+                } else {
+                    modalImage.classList.add('hidden');
+                    modalFallback.classList.remove('hidden');
+                    modalFallback.textContent = name ? name.charAt(0).toUpperCase() : 'V';
+                }
+
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+
+            function closeModal() {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+
+            cards.forEach(function (card) {
+                card.addEventListener('click', function () {
+                    openModal(card);
+                });
+            });
+
+            closeBtn.addEventListener('click', closeModal);
+            modal.addEventListener('click', function (e) {
+                if (e.target === modal) closeModal();
+            });
+        })();
+    </script>
 
     <section class="container mx-auto px-4 lg:px-8 py-12">
         <div class="flex items-end justify-between gap-6">

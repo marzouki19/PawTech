@@ -175,7 +175,7 @@
                             type="email" 
                             name="email"
                             value="{{ last_email|default('') }}"
-                            required 
+                            
                             autofocus
                             class="form-input w-full rounded-xl border border-gray-200 px-4 py-3 text-gray-900 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none transition"
                             placeholder="you@example.com"
@@ -186,12 +186,12 @@
                     <div>
                         <div class="flex items-center justify-between mb-1.5">
                             <label class="block text-sm font-medium text-gray-700">Password</label>
-                            <a href="#" class="text-xs text-orange-600 hover:text-orange-700 font-medium">Forgot password?</a>
+                            <a href="{{ path('app_forgot_password') }}" class="text-xs text-orange-600 hover:text-orange-700 font-medium">Forgot password?</a>
                         </div>
                         <input 
                             type="password" 
                             name="password"
-                            required
+                            
                             class="form-input w-full rounded-xl border border-gray-200 px-4 py-3 text-gray-900 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none transition"
                             placeholder="••••••••"
                         >
@@ -654,7 +654,7 @@
                                         id="email" 
                                         name="email" 
                                         value="{{ prenom|default('') }}"
-                                        required 
+                                        
                                         autofocus
                                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition"
                                         placeholder="Enter your email"
@@ -665,13 +665,13 @@
                                 <div>
                                     <div class="flex items-center justify-between mb-1">
                                         <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-                                        <a href="#" class="text-sm text-orange-600 hover:text-orange-700">Forgot password?</a>
+                                        <a href="{{ path('app_forgot_password') }}" class="text-sm text-orange-600 hover:text-orange-700">Forgot password?</a>
                                     </div>
                                     <input 
                                         type="password" 
                                         id="password" 
                                         name="password" 
-                                        required
+                                        
                                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition"
                                         placeholder="Enter your password"
                                     >

@@ -92,6 +92,19 @@ class UserRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * @return User[]
+     */
+    public function findVeterinarians(): array
+    {
+        return $this->createQueryBuilder('u')
+            ->andWhere('LOWER(u.role) = :role')
+            ->setParameter('role', 'veterinaire')
+            ->orderBy('u.id', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
 //    /**
 //     * @return User[] Returns an array of User objects
 //     */
