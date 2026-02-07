@@ -101,13 +101,23 @@ class Dogs
     #[Groups(['dogs'])] // Added back if you need ziptag data
     private ?Ziptag $ziptag = null;
 
+
+
+    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'dogs')]
+    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', nullable: false)]
+    #[Groups(['dogs'])]
+    private ?User $user = null;
+
+    
+
+
     public function __toString(): string
     {
         if ($this->name !== null && $this->name !== '') {
             return $this->name;
         }
-        if ($this->id !== null) {
-            return (string) $this->id;
+        if ($this->user !== null) {
+            return (string) $this->user->getId();
         }
         return 'Dog';
     }
@@ -115,6 +125,17 @@ class Dogs
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): static
+    {
+        $this->user = $user;
+        return $this;
     }
 
     public function getName(): ?string

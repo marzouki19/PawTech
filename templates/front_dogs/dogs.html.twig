@@ -99,14 +99,44 @@
                             <span>{{ dog.gender }}</span>
                             <span>{{ dog.age }}</span>
                         </div>
+
+
+
                         <div class="mt-4 grid grid-cols-2 gap-3">
-                            <a href="{{ path('app_front_dogs_show', {'id': dog.id}) }}" class="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-800 hover:border-orange-400 hover:text-orange-600 transition">
+                            <a href="{{ path('app_front_dogs_show', {'id': dog.id}) }}" 
+                            class="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-800 hover:border-orange-400 hover:text-orange-600 transition">
                                 Details
                             </a>
-                            <a href="{{ path('app_contact') }}" class="inline-flex items-center justify-center rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 transition">
-                                Adopt
-                            </a>
+
+                           {% if sessionUser %}
+                                {% if dog.adoptionStatus == 'Adopted' %}
+                                    {# Case: Already Adopted #}
+                                    <button disabled 
+                                            class="inline-flex items-center justify-center rounded-xl bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-400 cursor-not-allowed border border-gray-200">
+                                        Adopted
+                                    </button>
+                                {% else %}
+                                    {# Case: Available to Adopt #}
+                                    <form method="post" action="{{ path('app_dogs_adopt', {'id': dog.id}) }}" class="w-full">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('adopt' ~ dog.id) }}">
+                                        <button type="submit" 
+                                                class="w-full inline-flex items-center justify-center rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600 hover:shadow-lg active:scale-95 transition-all duration-200">
+                                            Adopt
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            {% else %}
+                                {# Case: Not Logged In (Matches Button Design) #}
+                                <a href="{{ path('app_login') }}" 
+                                class="inline-flex items-center justify-center rounded-xl bg-orange-100 px-4 py-2 text-sm font-semibold text-orange-700 hover:bg-orange-200 transition shadow-sm"
+                                title="Login to adopt">
+                                    Login
+                                </a>
+                            {% endif %}
                         </div>
+
+
+
                     </div>
                 </div>
             {% endfor %}
