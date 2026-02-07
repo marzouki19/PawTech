@@ -73,7 +73,7 @@ final class DogsController extends AbstractController
 
         return $this->render('dogs/new.html.twig', [
             'dog' => $dog,
-            'form' => $form,
+            'form' => $form->createView(),
         ]);
     }
 

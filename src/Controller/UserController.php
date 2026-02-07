@@ -515,7 +515,7 @@ final class UserController extends AbstractController
 
         return $this->redirect('https://accounts.google.com/o/oauth2/v2/auth?'.$params);
     }
-
+    
     #[Route('/auth/google/callback', name: 'app_google_auth_callback', methods: ['GET'])]
     public function googleAuthCallback(
         Request $request,
