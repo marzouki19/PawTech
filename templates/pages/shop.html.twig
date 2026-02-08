@@ -38,38 +38,109 @@
                     <div class="mt-5">
                         <h3 class="text-sm font-bold text-gray-900">By categories</h3>
                         <ul class="mt-3 space-y-2 text-sm text-gray-600">
-                            {% for item in ['Furniture','Bowls','Clothing','Food','Toys','Cage','Medicine'] %}
-                                <li class="flex items-center justify-between">
-                                    <a href="#" class="hover:text-orange-600">{{ item }}</a>
-                                    <span class="text-xs text-gray-400">{{ random(3, 28) }}</span>
-                                </li>
+                            {% set seen_cats = [] %}
+                            {% for p in produits %}
+                                {% set catName = p.categorie ? p.categorie.nom : '' %}
+                                {% if catName not in seen_cats and catName != '' %}
+                                    {% set seen_cats = seen_cats|merge([catName]) %}
+                                    <li class="flex items-center justify-between">
+                                        <a href="{{ path('app_shop', {'categorie': p.categorie.id}) }}" 
+                                           class="hover:text-orange-600 {% if selectedCategorie == p.categorie.id %}font-semibold text-orange-600{% endif %}">
+                                            {{ catName }}
+                                        </a>
+                                        <span class="text-xs text-gray-400">
+                                            {% set catCount = 0 %}
+                                            {% for prod in produits %}
+                                                {% if prod.categorie and prod.categorie.id == p.categorie.id %}
+                                                    {% set catCount = catCount + 1 %}
+                                                {% endif %}
+                                            {% endfor %}
+                                            {{ catCount }}
+                                        </span>
+                                    </li>
+                                {% endif %}
                             {% endfor %}
+                            {% if seen_cats is empty %}
+                                <li class="text-gray-400">No category</li>
+                            {% endif %}
                         </ul>
                     </div>
 
                     <div class="mt-6">
                         <h3 class="text-sm font-bold text-gray-900">Filter by Price</h3>
-                        <div class="mt-3 flex items-center gap-2 text-sm">
-                            <span class="text-gray-500">$</span>
-                            <input class="w-full accent-orange-500" type="range" min="0" max="300" value="120">
-                            <span class="text-gray-500">$300</span>
+                        <div class="mt-3">
+                            <div class="flex items-center justify-between mb-2 text-xs text-gray-600">
+                                <span>Min: <span id="min-price-display">{{ minPrice|default(0) }}</span> TND</span>
+                                <span>Max: <span id="max-price-display">{{ maxPrice|default(300) }}</span> TND</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-sm">
+                                <span class="text-gray-500">0</span>
+                                <input type="range" 
+                                       name="min_price" 
+                                       min="0" 
+                                       max="300" 
+                                       value="{{ minPrice|default(0) }}" 
+                                       class="w-full accent-orange-500 price-slider" 
+                                       data-target="min-price"
+                                       onchange="updatePriceFilter()">
+                                <span class="text-gray-500">300</span>
+                            </div>
+                            <div class="mt-2 flex items-center gap-2 text-sm">
+                                <span class="text-gray-500">0</span>
+                                <input type="range" 
+                                       name="max_price" 
+                                       min="0" 
+                                       max="300" 
+                                       value="{{ maxPrice|default(300) }}" 
+                                       class="w-full accent-orange-500 price-slider" 
+                                       data-target="max-price"
+                                       onchange="updatePriceFilter()">
+                                <span class="text-gray-500">300</span>
+                            </div>
+                            <form method="get" action="{{ path('app_shop') }}" id="price-filter-form" class="hidden">
+                                <input type="hidden" name="categorie" value="{{ selectedCategorie }}">
+                                <input type="hidden" name="search" value="{{ search }}">
+                                <input type="hidden" name="sort" value="{{ sort }}">
+                                <input type="hidden" name="min_price" id="min-price-input" value="{{ minPrice|default('') }}">
+                                <input type="hidden" name="max_price" id="max-price-input" value="{{ maxPrice|default('') }}">
+                            </form>
+                            <button onclick="applyPriceFilter()" 
+                                    class="mt-4 w-full rounded-xl bg-gray-900 px-4 py-2 text-white text-sm font-semibold hover:bg-gray-800 transition">
+                                Apply
+                            </button>
                         </div>
-                        <button class="mt-4 w-full rounded-xl bg-gray-900 px-4 py-2 text-white text-sm font-semibold hover:bg-gray-800 transition">
-                            Apply
-                        </button>
                     </div>
 
                     <div class="mt-6">
                         <h3 class="text-sm font-bold text-gray-900">Popular products</h3>
                         <div class="mt-3 space-y-3">
-                            {% for p in ['Premium Dog Food','Dog Bowl','Dog Leash'] %}
-                                <div class="flex items-center gap-3">
-                                    <div class="h-12 w-12 rounded-xl bg-gray-100"></div>
-                                    <div class="min-w-0">
-                                        <p class="text-sm font-semibold text-gray-900 truncate">{{ p }}</p>
-                                        <p class="text-xs text-gray-500">${{ random(12, 99) }}.99</p>
+                            {% for p in produits|slice(0, 3) %}
+                                <div class="flex items-center gap-3 hover:bg-gray-50 p-2 rounded-lg transition">
+                                    {% if p.image %}
+                                        <div class="h-12 w-12 rounded-xl bg-orange-100 overflow-hidden flex items-center justify-center">
+                                            {% if p.image matches '#^https?://#' %}
+                                                <img src="{{ p.image }}" 
+                                                     alt="{{ p.nom }}" 
+                                                     class="h-full w-full object-cover">
+                                            {% else %}
+                                                <img src="{{ asset('uploads/images/' ~ p.image) }}" 
+                                                     alt="{{ p.nom }}" 
+                                                     class="h-full w-full object-cover">
+                                            {% endif %}
+                                        </div>
+                                    {% else %}
+                                        <div class="h-12 w-12 rounded-xl bg-orange-100 flex items-center justify-center text-orange-500 font-bold text-lg">
+                                            {{ p.nom|slice(0, 1) }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="min-w-0 flex-1">
+                                        <p class="text-sm font-semibold text-gray-900 truncate">{{ p.nom }}</p>
+                                        <p class="text-xs text-gray-500">{{ p.prix|number_format(2, ',', ' ') }} TND</p>
+                                        <p class="text-xs text-gray-400 mt-1">Stock: {{ p.quantite|default(0) }}</p>
                                     </div>
                                 </div>
+                            {% else %}
+                                <p class="text-sm text-gray-400">No popular products</p>
                             {% endfor %}
                         </div>
                     </div>
@@ -78,59 +149,317 @@
 
             <div class="lg:col-span-9">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <p class="text-sm text-gray-500">Showing 1–12 of 74 results</p>
+                    <p class="text-sm text-gray-500">
+                        {% if produits|length > 0 %}
+                            Showing {{ produits|length }} product{% if produits|length != 1 %}s{% endif %}
+                        {% else %}
+                            No products found
+                        {% endif %}
+                    </p>
                     <div class="flex items-center gap-3">
-                        <input class="w-full sm:w-72 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" placeholder="Search products...">
-                        <select class="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300">
-                            <option>Sort by latest</option>
-                            <option>Sort by price: low to high</option>
-                            <option>Sort by price: high to low</option>
-                        </select>
+                        <form method="get" action="{{ path('app_shop') }}" class="flex items-center gap-3">
+                            <input type="hidden" name="categorie" value="{{ selectedCategorie }}">
+                            <input type="hidden" name="min_price" value="{{ minPrice|default('') }}">
+                            <input type="hidden" name="max_price" value="{{ maxPrice|default('') }}">
+                            
+                            <input type="text" 
+                                   name="search" 
+                                   value="{{ search }}" 
+                                   class="w-full sm:w-72 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" 
+                                   placeholder="Search products...">
+                            
+                            <select name="sort" 
+                                    class="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300"
+                                    onchange="this.form.submit()">
+                                <option value="latest" {% if sort == 'latest' %}selected{% endif %}>Sort by latest</option>
+                                <option value="price_low" {% if sort == 'price_low' %}selected{% endif %}>Sort by price: low to high</option>
+                                <option value="price_high" {% if sort == 'price_high' %}selected{% endif %}>Sort by price: high to low</option>
+                                <option value="name_asc" {% if sort == 'name_asc' %}selected{% endif %}>Sort by name: A-Z</option>
+                                <option value="name_desc" {% if sort == 'name_desc' %}selected{% endif %}>Sort by name: Z-A</option>
+                            </select>
+                        </form>
                     </div>
                 </div>
 
                 <div class="mt-7 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {% set products = [
-                        {name:'Premium Dog Food', price:'23.90'},
-                        {name:'Dog Leash', price:'12.90'},
-                        {name:'Dog Bowl', price:'18.90'},
-                        {name:'Pet Carrier', price:'29.90'},
-                        {name:'Dog Bag', price:'16.90'},
-                        {name:'Dog Bed', price:'42.90'},
-                        {name:'Premium Dog Food', price:'24.99'},
-                        {name:'Dog Bowl', price:'14.99'},
-                        {name:'Toy Bundle', price:'9.99'}
-                    ] %}
-
-                    {% for p in products %}
+                    {% for p in produits %}
                         <div class="rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition overflow-hidden">
-                            <div class="aspect-[4/3] bg-gray-100 relative">
+                            <div class="aspect-[4/3] bg-gradient-to-br from-orange-100 to-orange-50 relative flex items-center justify-center">
+                                <!-- AFFICHAGE DE L'IMAGE DU PRODUIT -->
+                                {% if p.image %}
+                                    {% if p.image matches '#^https?://#' %}
+                                        <!-- URL externe -->
+                                        <img src="{{ p.image }}" 
+                                             alt="{{ p.nom }}" 
+                                             class="w-full h-full object-cover">
+                                    {% else %}
+                                        <!-- Fichier local -->
+                                        <img src="{{ asset('uploads/images/' ~ p.image) }}" 
+                                             alt="{{ p.nom }}" 
+                                             class="w-full h-full object-cover">
+                                    {% endif %}
+                                {% else %}
+                                    <!-- Image par défaut (lettre initiale) -->
+                                    <span class="text-5xl font-bold text-orange-200">{{ p.nom|slice(0, 1) }}</span>
+                                {% endif %}
+                                
                                 <div class="absolute top-3 right-3 flex items-center gap-2">
-                                    <button class="h-9 w-9 rounded-full bg-white/90 border border-gray-200 hover:border-orange-400 transition" title="Wishlist">♡</button>
-                                    <button class="h-9 w-9 rounded-full bg-white/90 border border-gray-200 hover:border-orange-400 transition" title="Add to cart">🛒</button>
+                                    <button class="h-9 w-9 rounded-full bg-white/90 border border-gray-200 hover:border-orange-400 transition hover:bg-orange-50" 
+                                            title="Wishlist">♡</button>
                                 </div>
+                                
+                                {% if p.categorie %}
+                                    <span class="absolute top-3 left-3 inline-flex items-center rounded-full bg-white/90 border border-gray-200 px-2 py-1 text-xs font-medium text-gray-600">
+                                        {{ p.categorie.nom }}
+                                    </span>
+                                {% endif %}
                             </div>
                             <div class="p-4">
-                                <p class="font-extrabold text-gray-900">{{ p.name }}</p>
-                                <p class="mt-1 text-sm text-gray-500">${{ p.price }}</p>
+                                <p class="font-extrabold text-gray-900">{{ p.nom }}</p>
+                                <p class="mt-1 text-lg font-semibold text-orange-600">{{ p.prix|number_format(2, ',', ' ') }} TND</p>
+                                
+                                {% if p.quantite is not null %}
+                                    {% set alerte = (p.seuilAlert is not null and p.seuilAlert > 0 and p.quantite <= p.seuilAlert) %}
+                                    <p class="mt-1 text-xs {% if alerte %}text-red-500 font-semibold{% else %}text-gray-400{% endif %}">
+                                        Stock: {{ p.quantite }}
+                                        {% if alerte %} ⚠ Low stock{% endif %}
+                                    </p>
+                                {% endif %}
+                                
+                                <!-- Formulaire pour acheter -->
+                                <form method="post" action="{{ path('app_eshop_produit_buy', {id: p.id}) }}" class="mt-4 buy-form" data-product-id="{{ p.id }}">
+                                    <input type="hidden" name="token" value="{{ csrf_token('buy' ~ p.id) }}">
+                                    <input type="hidden" name="product_name" value="{{ p.nom }}">
+                                    <input type="hidden" name="product_price" value="{{ p.prix|number_format(2, ',', ' ') }}">
+                                    <input type="hidden" name="product_stock" value="{{ p.quantite|default(0) }}">
+                                    <button type="button" 
+                                            class="w-full px-3 py-3 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition font-semibold buy-button {% if p.quantite <= 0 %}opacity-50 cursor-not-allowed{% endif %}"
+                                            {% if p.quantite <= 0 %}disabled{% endif %}
+                                            data-product-name="{{ p.nom }}"
+                                            data-product-price="{{ p.prix|number_format(2, ',', ' ') }} TND"
+                                            data-product-stock="{{ p.quantite|default(0) }}">
+                                        {% if p.quantite <= 0 %}OUT OF STOCK{% else %}BUY PRODUCT{% endif %}
+                                    </button>
+                                </form>
                             </div>
+                        </div>
+                    {% else %}
+                        <div class="lg:col-span-3 text-center py-12 text-gray-500">
+                            <div class="text-gray-400 text-6xl mb-4">😕</div>
+                            <p class="text-lg font-medium">No products found</p>
+                            <p class="mt-2 text-sm">Try adjusting your search or filter criteria</p>
+                            <a href="{{ path('app_shop') }}" class="mt-4 inline-block px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition">
+                                Clear all filters
+                            </a>
                         </div>
                     {% endfor %}
                 </div>
 
+                {% if produits|length > 12 %}
                 <div class="mt-10 flex items-center justify-center gap-2">
                     <button class="h-10 w-10 rounded-xl border border-gray-200 bg-white hover:border-orange-400 hover:text-orange-600 transition">1</button>
                     <button class="h-10 w-10 rounded-xl border border-gray-200 bg-white hover:border-orange-400 hover:text-orange-600 transition">2</button>
                     <button class="h-10 w-10 rounded-xl border border-gray-200 bg-white hover:border-orange-400 hover:text-orange-600 transition">3</button>
                     <button class="h-10 w-20 rounded-xl border border-gray-200 bg-white hover:border-orange-400 hover:text-orange-600 transition">Next →</button>
                 </div>
+                {% endif %}
 
                 <div class="mt-12 grid md:grid-cols-2 gap-6">
-                    <div class="rounded-3xl overflow-hidden border border-gray-100 bg-gray-100 aspect-[16/9]"></div>
-                    <div class="rounded-3xl overflow-hidden border border-gray-100 bg-gray-100 aspect-[16/9]"></div>
+                    <div class="rounded-3xl overflow-hidden border border-gray-100 bg-gradient-to-br from-orange-50 to-gray-50 aspect-[16/9] flex items-center justify-center">
+                        <div class="text-center p-8">
+                            <h3 class="text-2xl font-bold text-gray-900">Instant Purchase</h3>
+                            <p class="text-gray-600 mt-2">Buy directly without cart</p>
+                        </div>
+                    </div>
+                    <div class="rounded-3xl overflow-hidden border border-gray-100 bg-gradient-to-br from-gray-50 to-orange-50 aspect-[16/9] flex items-center justify-center">
+                        <div class="text-center p-8">
+                            <h3 class="text-2xl font-bold text-gray-900">Real-time Stock</h3>
+                            <p class="text-gray-600 mt-2">Stock updates instantly</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
-{% endblock %}
 
+    <!-- Custom Confirmation Modal Popup -->
+    <div id="customConfirmModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Confirm Purchase</h3>
+                <p id="confirmModalMessage" class="text-gray-600"></p>
+            </div>
+            
+            <div class="flex gap-3">
+                <button id="confirmModalYes" class="flex-1 bg-gray-900 text-white py-2.5 rounded-lg font-semibold hover:bg-gray-800 transition">
+                    Yes, Buy It
+                </button>
+                <button id="confirmModalNo" class="flex-1 border border-gray-300 text-gray-700 py-2.5 rounded-lg font-semibold hover:bg-gray-50 transition">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Message de succès après achat -->
+    {% if app.session.flashbag.peek('success')|length > 0 %}
+        <div id="successMessage" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50">
+            <div class="flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span>{{ app.flashes('success')[0] }}</span>
+            </div>
+        </div>
+        <script>
+            // Masquer automatiquement le message après 3 secondes
+            setTimeout(function() {
+                document.getElementById('successMessage').style.opacity = '0';
+                setTimeout(function() {
+                    document.getElementById('successMessage').remove();
+                }, 500);
+            }, 3000);
+        </script>
+    {% endif %}
+
+    <script>
+    // Variables globales
+    let currentFormToSubmit = null;
+    
+    // JavaScript pour les filtres de prix
+    function updatePriceFilter() {
+        const minSlider = document.querySelector('[data-target="min-price"]');
+        const maxSlider = document.querySelector('[data-target="max-price"]');
+        const minDisplay = document.getElementById('min-price-display');
+        const maxDisplay = document.getElementById('max-price-display');
+        
+        if (minSlider && minDisplay) {
+            minDisplay.textContent = minSlider.value;
+        }
+        if (maxSlider && maxDisplay) {
+            maxDisplay.textContent = maxSlider.value;
+        }
+    }
+    
+    function applyPriceFilter() {
+        const minSlider = document.querySelector('[data-target="min-price"]');
+        const maxSlider = document.querySelector('[data-target="max-price"]');
+        const minInput = document.getElementById('min-price-input');
+        const maxInput = document.getElementById('max-price-input');
+        const form = document.getElementById('price-filter-form');
+        
+        if (minSlider && maxSlider && minInput && maxInput && form) {
+            minInput.value = minSlider.value;
+            maxInput.value = maxSlider.value;
+            form.submit();
+        }
+    }
+    
+    // Fonction pour afficher le popup de confirmation personnalisé
+    function showCustomConfirm(productName, productPrice, productStock, formElement) {
+        // Mettre à jour le message du modal
+        const messageElement = document.getElementById('confirmModalMessage');
+        messageElement.innerHTML = `
+            Are you sure you want to buy <strong class="text-orange-600">${productName}</strong> for <strong>${productPrice}</strong>?<br>
+            <span class="text-sm text-gray-500 mt-2 block">Available stock: ${productStock}</span>
+        `;
+        
+        // Stocker le formulaire à soumettre
+        currentFormToSubmit = formElement;
+        
+        // Afficher le modal
+        const modal = document.getElementById('customConfirmModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+    
+    // Fonction pour fermer le modal
+    function closeCustomConfirm() {
+        const modal = document.getElementById('customConfirmModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        currentFormToSubmit = null;
+    }
+    
+    // Fonction pour soumettre le formulaire après confirmation
+    function submitPurchaseForm() {
+        if (currentFormToSubmit) {
+            currentFormToSubmit.submit();
+        }
+        closeCustomConfirm();
+    }
+    
+    // Fonctions auxiliaires
+    window.addToWishlist = function(productId) {
+        showNotification('Added to wishlist!', 'success');
+    };
+    
+    function showNotification(message, type) {
+        const toast = document.createElement('div');
+        toast.className = `fixed top-4 right-4 px-4 py-2 rounded-lg shadow-lg z-50 ${
+            type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+        }`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.remove();
+        }, 3000);
+    }
+    
+    // Initialiser
+    document.addEventListener('DOMContentLoaded', function() {
+        updatePriceFilter();
+        
+        // Gérer les clics sur les boutons "BUY PRODUCT"
+        document.querySelectorAll('.buy-button').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Récupérer les données du produit
+                const productName = this.getAttribute('data-product-name');
+                const productPrice = this.getAttribute('data-product-price');
+                const productStock = this.getAttribute('data-product-stock');
+                const formElement = this.closest('.buy-form');
+                
+                // Vérifier si le produit est en stock
+                if (parseInt(productStock) <= 0) {
+                    showNotification('This product is out of stock!', 'error');
+                    return;
+                }
+                
+                // Afficher le popup de confirmation personnalisé
+                showCustomConfirm(productName, productPrice, productStock, formElement);
+            });
+        });
+        
+        // Gérer les boutons du modal de confirmation
+        document.getElementById('confirmModalYes').addEventListener('click', function() {
+            submitPurchaseForm();
+        });
+        
+        document.getElementById('confirmModalNo').addEventListener('click', function() {
+            closeCustomConfirm();
+        });
+        
+        // Fermer le modal en cliquant en dehors
+        document.getElementById('customConfirmModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeCustomConfirm();
+            }
+        });
+        
+        // Fermer avec la touche Échap
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeCustomConfirm();
+            }
+        });
+    });
+    </script>
+{% endblock %}

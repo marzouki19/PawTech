@@ -1,0 +1,218 @@
+{# templates/eshop/categorie/index.html.twig #}
+{% extends 'layout.html.twig' %}
+
+{% block title %}Eshop - Categories | PawTech{% endblock %}
+
+{% block main %}
+<div data-controller="modal" class="space-y-4">
+  <!-- Barre de recherche et filtres -->
+  <div class="flex flex-wrap items-center gap-4 mb-4">
+    <!-- Barre de recherche -->
+    <form method="get" action="{{ path('app_eshop_categorie_index') }}" class="relative flex-1 min-w-[200px]">
+      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+      </span>
+      <input 
+        name="search" 
+        type="search" 
+        value="{{ search|default('') }}" 
+        placeholder="Search categories by name..." 
+        class="w-full pl-10 pr-10 py-2 border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-paw-orange focus:border-paw-orange outline-none"
+        onkeydown="if(event.key === 'Enter') this.form.submit()">
+      
+      {% if search %}
+        <a href="{{ path('app_eshop_categorie_index') }}" 
+           class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+           title="Clear search">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </a>
+      {% endif %}
+      
+      <!-- Champs cachés pour conserver les autres filtres -->
+      {% if product_count_filter %}
+        <input type="hidden" name="product_count" value="{{ product_count_filter }}">
+      {% endif %}
+    </form>
+    
+    <!-- Bouton de filtrage par nombre de produits -->
+    <div class="relative">
+      <button type="button" 
+              class="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg bg-white text-gray-700 hover:bg-gray-50"
+              onclick="toggleProductFilter()">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+        </svg>
+        Filter by Products
+        {% if product_count_filter %}
+          <span class="ml-1 px-2 py-0.5 bg-paw-orange text-white text-xs rounded-full">
+            {% if product_count_filter == 'empty' %}0{% endif %}
+            {% if product_count_filter == '1-5' %}1-5{% endif %}
+            {% if product_count_filter == '6+' %}6+{% endif %}
+          </span>
+        {% endif %}
+      </button>
+      
+      <!-- Menu déroulant des filtres -->
+      <div id="product-filter-dropdown" 
+           class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10 hidden">
+        <div class="p-2">
+          <div class="text-xs font-semibold text-gray-500 px-2 py-1">Filter by product count</div>
+          <div class="space-y-1">
+            <a href="{{ path('app_eshop_categorie_index', app.request.query.all|merge({product_count: 'empty'})) }}"
+               class="flex items-center justify-between px-3 py-2 rounded hover:bg-gray-100 {% if product_count_filter == 'empty' %}bg-blue-50 text-blue-700{% endif %}">
+              <span>No products</span>
+              {% if product_count_filter == 'empty' %}
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                </svg>
+              {% endif %}
+            </a>
+            <a href="{{ path('app_eshop_categorie_index', app.request.query.all|merge({product_count: '1-5'})) }}"
+               class="flex items-center justify-between px-3 py-2 rounded hover:bg-gray-100 {% if product_count_filter == '1-5' %}bg-blue-50 text-blue-700{% endif %}">
+              <span>1-5 products</span>
+              {% if product_count_filter == '1-5' %}
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                </svg>
+              {% endif %}
+            </a>
+            <a href="{{ path('app_eshop_categorie_index', app.request.query.all|merge({product_count: '6+'})) }}"
+               class="flex items-center justify-between px-3 py-2 rounded hover:bg-gray-100 {% if product_count_filter == '6+' %}bg-blue-50 text-blue-700{% endif %}">
+              <span>6+ products</span>
+              {% if product_count_filter == '6+' %}
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                </svg>
+              {% endif %}
+            </a>
+            {% if product_count_filter %}
+              <div class="border-t border-gray-100 mt-1 pt-1">
+                <a href="{{ path('app_eshop_categorie_index', app.request.query.all|merge({product_count: null})) }}"
+                   class="flex items-center px-3 py-2 rounded hover:bg-gray-100 text-red-600">
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                  </svg>
+                  Clear filter
+                </a>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Bouton Add New -->
+    <a href="{{ path('app_eshop_categorie_new') }}" 
+       class="inline-flex items-center gap-2 px-4 py-2 bg-paw-orange text-white rounded-lg hover:bg-paw-orange-hover font-medium js-modal-link" 
+       data-title="New Category">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+      </svg>
+      New Category
+    </a>
+  </div>
+
+  <!-- Indicateurs de filtres actifs -->
+  {% if search or product_count_filter %}
+    <div class="flex items-center gap-2 p-3 bg-blue-50 border border-blue-100 rounded-lg">
+      <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+      </svg>
+      <span class="text-sm text-blue-700">
+        Active filters: 
+        {% if search %}
+          <strong class="font-semibold">Search: "{{ search }}"</strong>
+        {% endif %}
+        {% if search and product_count_filter %} | {% endif %}
+        {% if product_count_filter %}
+          <strong class="font-semibold">
+            {% if product_count_filter == 'empty' %}No products{% endif %}
+            {% if product_count_filter == '1-5' %}1-5 products{% endif %}
+            {% if product_count_filter == '6+' %}6+ products{% endif %}
+          </strong>
+        {% endif %}
+        {% if categories|length > 0 %}
+          - Showing {{ categories|length }} of {{ total_records }} categories
+        {% endif %}
+      </span>
+      {% if search or product_count_filter %}
+        <a href="{{ path('app_eshop_categorie_index') }}" class="ml-auto text-sm text-blue-600 hover:text-blue-800 font-medium">
+          Clear all filters
+        </a>
+      {% endif %}
+    </div>
+  {% endif %}
+  
+  <!-- Message si aucun résultat -->
+  {% if categories|length == 0 %}
+    <div class="text-center py-12 bg-white rounded-xl border border-gray-200">
+      <div class="text-gray-400 text-6xl mb-4">📁</div>
+      <p class="text-lg font-medium text-gray-700">No categories found</p>
+      <p class="mt-2 text-gray-500">
+        {% if search or product_count_filter %}
+          Try adjusting your search or filter criteria
+        {% else %}
+          No categories have been created yet
+        {% endif %}
+      </p>
+      {% if search or product_count_filter %}
+        <a href="{{ path('app_eshop_categorie_index') }}" class="mt-4 inline-block px-6 py-2 bg-paw-orange text-white rounded-lg hover:bg-paw-orange-hover transition">
+          Clear filters
+        </a>
+      {% else %}
+        <a href="{{ path('app_eshop_categorie_new') }}" 
+           class="mt-4 inline-flex items-center gap-2 px-6 py-2 bg-paw-orange text-white rounded-lg hover:bg-paw-orange-hover transition js-modal-link"
+           data-title="New Category">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          Create your first category
+        </a>
+      {% endif %}
+    </div>
+  {% else %}
+    <!-- Utiliser le composant de table existant -->
+    {% include 'components/_entity_table.html.twig' with {
+      columns: columns,
+      rows: rows,
+      total_records: total_records,
+      per_page: per_page|default(50),
+      page: page|default(1),
+      total_pages: total_pages|default(1)
+    } %}
+  {% endif %}
+</div>
+
+<script>
+// Gestion du dropdown de filtre par produits
+function toggleProductFilter() {
+  const dropdown = document.getElementById('product-filter-dropdown');
+  dropdown.classList.toggle('hidden');
+}
+
+// Fermer le dropdown si on clique ailleurs
+document.addEventListener('click', function(event) {
+  const dropdown = document.getElementById('product-filter-dropdown');
+  const button = document.querySelector('[onclick="toggleProductFilter()"]');
+  
+  if (dropdown && button) {
+    if (!dropdown.contains(event.target) && !button.contains(event.target)) {
+      dropdown.classList.add('hidden');
+    }
+  }
+});
+
+// Focus automatique sur le champ de recherche
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.querySelector('input[name="search"]');
+  if (searchInput && searchInput.value) {
+    searchInput.focus();
+    searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+  }
+});
+</script>
+{% endblock %}

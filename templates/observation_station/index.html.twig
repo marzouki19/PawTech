@@ -1,0 +1,208 @@
+{% extends 'layout.html.twig' %}
+
+{% block title %}Stations | PawTech{% endblock %}
+
+{% block main %}
+<div class="mb-6">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">Observation Stations</h1>
+            <p class="text-gray-500 text-sm mt-1">Manage all observation stations</p>
+        </div>
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <input type="text" id="search" class="px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-paw-orange focus:border-paw-orange outline-none" placeholder="Search by code">
+            <a href="{{ path('app_admin_stations_new') }}" class="inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium text-white bg-orange-500 rounded-lg hover:bg-orange-600 transition-all shadow-md hover:shadow-lg">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                Add Station
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full table-fixed">
+            <thead>
+                <tr class="bg-gray-50 border-b border-gray-100">
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide w-[10%]">ID</th>
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide w-[14%]">Code</th>
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide w-[12%] hidden md:table-cell">Zone</th>
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide w-[18%] hidden lg:table-cell">Localisation</th>
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide w-[14%] hidden sm:table-cell">Statut</th>
+                    <th class="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide w-[30%]">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="all" class="divide-y divide-gray-100">
+            {% for station in observation_stations %}
+                <tr class="odd:bg-white even:bg-gray-50/40 hover:bg-gray-50 transition-colors">
+                    <td class="px-4 py-3 text-sm text-gray-900 whitespace-nowrap">#{{ station.id }}</td>
+                    <td class="px-4 py-3 text-sm text-gray-900 whitespace-nowrap font-medium">{{ station.code }}</td>
+                    <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap hidden md:table-cell">{{ station.zone }}</td>
+                    <td class="px-4 py-3 text-sm text-gray-600 hidden lg:table-cell">
+                        <span class="block truncate">{{ station.localisation }}</span>
+                    </td>
+                    <td class="px-4 py-3 text-sm hidden sm:table-cell">
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium
+                            {% if station.statut == 'active' %}
+                                bg-green-100 text-green-800
+                            {% elseif station.statut == 'inactive' %}
+                                bg-red-100 text-red-800
+                            {% elseif station.statut == 'maintenance' %}
+                                bg-yellow-100 text-yellow-800
+                            {% else %}
+                                bg-orange-100 text-orange-800
+                            {% endif %}">
+                            {{ station.statut }}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3">
+                        <div class="flex items-center justify-center gap-2 flex-wrap">
+                            <a href="{{ path('app_admin_stations_show', {id: station.id}) }}" class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+                                <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
+                                View
+                            </a>
+                            <a href="{{ path('app_admin_stations_edit', {id: station.id}) }}" class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-orange-600 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors">
+                                <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                                Modify
+                            </a>
+                            {{ include('observation_station/_delete_form.html.twig', {station: station}) }}
+                        </div>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="6" class="px-6 py-10 text-center">
+                        <div class="flex flex-col items-center justify-center text-gray-400">
+                            <svg class="w-12 h-12 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                            </svg>
+                            <span class="text-gray-500">No stations found.</span>
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+            <tbody id="searchtab"></tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Function to get status badge HTML
+    function getStatusBadge(status) {
+        var badgeClass = 'bg-orange-100 text-orange-800';
+        if (status === 'active') {
+            badgeClass = 'bg-green-100 text-green-800';
+        } else if (status === 'inactive') {
+            badgeClass = 'bg-red-100 text-red-800';
+        } else if (status === 'maintenance') {
+            badgeClass = 'bg-yellow-100 text-yellow-800';
+        }
+        return '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ' + badgeClass + '">' + status + '</span>';
+    }
+
+    $("#search").keyup(function() {
+        var value = $(this).val();
+
+        if (value.trim() === '') {
+            $('#all').show();
+            $('#searchtab').empty();
+            return;
+        }
+
+        $.ajax({
+            url: "{{ path('app_admin_stations_search') }}",
+            type: 'GET',
+            data: { 'searchValue': value },
+            dataType: 'json',
+            success: function(retour) {
+                $('#searchtab').empty();
+                $('#all').hide();
+
+                if (retour && retour.length > 0) {
+                    $.each(retour, function(i, obj) {
+                        $('#searchtab').append(
+                            '<tr class="odd:bg-white even:bg-gray-50/40 hover:bg-gray-50 transition-colors border-t">' +
+                            '<td class="px-4 py-3 text-sm text-gray-900 whitespace-nowrap">#' + obj.id + '</td>' +
+                            '<td class="px-4 py-3 text-sm text-gray-900 whitespace-nowrap font-medium">' + obj.code + '</td>' +
+                            '<td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap hidden md:table-cell">' + obj.zone + '</td>' +
+                            '<td class="px-4 py-3 text-sm text-gray-600 hidden lg:table-cell"><span class="block truncate">' + obj.localisation + '</span></td>' +
+                            '<td class="px-4 py-3 text-sm hidden sm:table-cell">' + getStatusBadge(obj.statut) + '</td>' +
+                            '<td class="px-4 py-3">' +
+                            '<div class="flex items-center justify-center gap-2 flex-wrap">' +
+                            '<a href="/admin/stations/' + obj.id + '" class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">' +
+                            '<svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+                            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>' +
+                            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>' +
+                            '</svg>View</a>' +
+                            '<a href="/admin/stations/' + obj.id + '/edit" class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-orange-600 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors">' +
+                            '<svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+                            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>' +
+                            '</svg>Modify</a>' +
+                            '<button type="button" class="px-3 py-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors inline-flex items-center gap-1.5 text-xs font-medium" onclick="confirmDelete(' + obj.id + ')">' +
+                            '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+                            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>' +
+                            '</svg>Delete</button>' +
+                            '</div>' +
+                            '</td>' +
+                            '</tr>'
+                        );
+                    });
+                } else {
+                    $('#searchtab').append(
+                        '<tr>' +
+                        '<td colspan="6" class="px-6 py-10 text-center">' +
+                        '<div class="flex flex-col items-center justify-center text-gray-400">' +
+                        '<svg class="w-12 h-12 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+                        '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>' +
+                        '</svg>' +
+                        '<span class="text-gray-500">No stations found matching your search.</span>' +
+                        '</div>' +
+                        '</td>' +
+                        '</tr>'
+                    );
+                }
+            },
+            error: function() {
+                alert('Error fetching data!');
+            }
+        });
+    });
+});
+
+function confirmDelete(id) {
+    if (confirm('Are you sure you want to delete this observation station? This action cannot be undone.')) {
+        var form = $('<form>', {
+            method: 'POST',
+            action: '/admin/stations/' + id
+        });
+        form.append($('<input>', {
+            type: 'hidden',
+            name: '_token',
+            value: csrfTokens[id] || ''
+        }));
+        form.appendTo('body').submit();
+    }
+}
+</script>
+
+{# Store CSRF tokens for delete operations #}
+<script>
+var csrfTokens = {};
+{% for station in observation_stations %}
+csrfTokens[{{ station.id }}] = '{{ csrf_token('delete' ~ station.id) }}';
+{% endfor %}
+</script>
+{% endblock %}

@@ -73,7 +73,7 @@ final class DogsController extends AbstractController
 
         return $this->render('dogs/new.html.twig', [
             'dog' => $dog,
-            'form' => $form->createView(),
+            'form' => $form,
         ]);
     }
 
@@ -151,17 +151,6 @@ final class DogsController extends AbstractController
 
         return $this->redirectToRoute('app_dogs_index', [], Response::HTTP_SEE_OTHER);
     }
-
-
-
-
-
-
-
-
-    
-
-
 
 
 }

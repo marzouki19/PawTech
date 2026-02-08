@@ -53,10 +53,10 @@ class Consultation
     #[Assert\NotNull(message: "User is required")]
     private ?User $user = null;
 
-    #[ORM\ManyToOne(targetEntity: Dogs::class, inversedBy: 'consultations')]
+    #[ORM\ManyToOne(targetEntity: Dog::class, inversedBy: 'consultations')]
     #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotNull(message: "Dog is required")]
-    private ?Dogs $dog = null;
+    private ?Dog $dog = null;
 
     public function getId(): ?int
     {
@@ -80,7 +80,8 @@ class Consultation
         return $this->type;
     }
 
-    public function setType(string $type): static
+    // CORRECTION: Accepter null
+    public function setType(?string $type): static
     {
         $this->type = $type;
 
@@ -92,7 +93,8 @@ class Consultation
         return $this->diagnostic;
     }
 
-    public function setDiagnostic(string $diagnostic): static
+    // CORRECTION: Accepter null
+    public function setDiagnostic(?string $diagnostic): static
     {
         $this->diagnostic = $diagnostic;
 
@@ -123,12 +125,12 @@ class Consultation
         return $this;
     }
 
-    public function getDog(): ?Dogs
+    public function getDog(): ?Dog
     {
         return $this->dog;
     }
 
-    public function setDog(?Dogs $dog): static
+    public function setDog(?Dog $dog): static
     {
         $this->dog = $dog;
 

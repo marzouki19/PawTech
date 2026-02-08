@@ -1,0 +1,54 @@
+{# templates/eshop/categorie/_show_content.html.twig #}
+<div class="space-y-4">
+  <div class="flex justify-between items-center">
+    <h1 class="text-xl font-bold text-gray-800">{{ page_title }}</h1>
+    <div class="flex gap-2">
+      <a href="{{ path('app_eshop_categorie_edit', { id: categorie.id }) }}" 
+         class="px-4 py-2 bg-paw-orange text-white rounded-lg hover:bg-paw-orange-hover js-modal-link">
+        Modify
+      </a>
+      <a href="#" class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 js-modal-cancel">
+        Back
+      </a>
+    </div>
+  </div>
+  <div class="bg-white rounded-xl border border-gray-200 p-6">
+    <dl class="grid grid-cols-1 gap-4">
+      <div>
+        <dt class="text-sm text-gray-500">ID</dt>
+        <dd class="font-medium">{{ categorie.id }}</dd>
+      </div>
+      <div>
+        <dt class="text-sm text-gray-500">Name</dt>
+        <dd class="font-medium">{{ categorie.nom }}</dd>
+      </div>
+      <div>
+        <dt class="text-sm text-gray-500">Number of Products</dt>
+        <dd class="font-medium">{{ categorie.produits|length }}</dd>
+      </div>
+      <div>
+        <dt class="text-sm text-gray-500">Created At</dt>
+        <dd class="font-medium">{{ categorie.id ? 'Category #' ~ categorie.id : 'New category' }}</dd>
+      </div>
+    </dl>
+    
+    {# Liste des produits associés #}
+    {% if categorie.produits|length > 0 %}
+      <div class="mt-6 pt-6 border-t border-gray-200">
+        <h3 class="text-lg font-medium text-gray-800 mb-3">Products in this category</h3>
+        <div class="space-y-2">
+          {% for produit in categorie.produits %}
+            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+              <span class="text-gray-700">{{ produit.nom }}</span>
+              <span class="text-paw-orange font-medium">{{ produit.prix|number_format(2, ',', ' ') }} TND</span>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% else %}
+      <div class="mt-6 pt-6 border-t border-gray-200">
+        <p class="text-gray-500 italic">No products in this category yet.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>

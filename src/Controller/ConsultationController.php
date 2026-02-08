@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Consultation;
 use App\Form\ConsultationType;
 use App\Repository\ConsultationRepository;
+use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -83,6 +84,10 @@ class ConsultationController extends AbstractController
         return $this->json($data);
     }
 
+
+
+
+
     #[Route('/new', name: 'app_consultation_new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $em): Response
     {
@@ -104,6 +109,50 @@ class ConsultationController extends AbstractController
             'page_title' => 'Add Consultation'
         ]);
     }
+
+
+
+ 
+
+
+
+
+
+    
+    #[Route('/veterinaire', name: 'app_veterinaire_index', methods: ['GET'])]
+    public function indexfront(UserRepository $userRepository): Response
+    {
+            return $this->render('pages/veterinarian.html.twig');
+    }
+
+
+
+    #[Route('/appointment/new', name: 'app_frontveterinaire_new', methods: ['GET', 'POST'])]
+    public function newFront(Request $request, EntityManagerInterface $em): Response
+    {
+        $consultation = new Consultation();
+        $form = $this->createForm(ConsultationType::class, $consultation);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $em->persist($consultation);
+            $em->flush();
+
+            $this->addFlash('success', 'Appointment request sent successfully! We will contact you soon.');
+            return $this->redirectToRoute('app_veterinaire_index');
+        }
+
+        // Render a dedicated template for the appointment form (no sidebar)
+        return $this->render('pages/newcons.html.twig', [
+            'form' => $form,
+            'active' => 'consultation',
+            'page_title' => 'Add Consultation'
+        ]);
+    }
+
+
+
+
 
     #[Route('/{id}/edit', name: 'app_consultation_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, Consultation $consultation, EntityManagerInterface $em): Response

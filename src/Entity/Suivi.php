@@ -47,6 +47,10 @@ class Suivi
         minMessage: "Le type doit contenir au moins {{ limit }} caractères",
         maxMessage: "Le type ne peut pas dépasser {{ limit }} caractères"
     )]
+    #[Assert\Choice(
+        choices: ["Alert", "Urgent", "Normal"], // Replace with actual valid choices
+        message: "Le type doit être l'un des choix suivants : {{ choices }}."
+    )]
     private ?string $type = null;
 
     #[ORM\Column(name: 'prochaine_visite', type: Types::DATETIME_MUTABLE, nullable: true)]

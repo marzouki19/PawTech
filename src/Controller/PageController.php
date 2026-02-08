@@ -1,9 +1,12 @@
 <?php
 
 namespace App\Controller;
-
+use App\Form\DonationType;
 use App\Entity\User;
+use App\Entity\Donation;
 use App\Repository\UserRepository;
+use App\Repository\ProduitRepository;
+use App\Repository\CategorieRepository;
 use App\Form\UserType;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Doctrine\ORM\EntityManagerInterface;
@@ -205,17 +208,131 @@ final class PageController extends AbstractController
         return $this->render('pages/events.html.twig');
     }
 
-    #[Route('/pages/donation', name: 'app_donation', methods: ['GET'])]
-    public function donation(): Response
+    #[Route('/donation', name: 'app_donation')]
+    public function index(Request $request, EntityManagerInterface $entityManager): Response
     {
-        return $this->render('pages/donation.html.twig');
+        $donation = new Donation();
+        $form = $this->createForm(DonationType::class, $donation);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->persist($donation);
+            $entityManager->flush();
+
+            $this->addFlash('donation_success', 'Thank you for your donation!');
+            return $this->redirectToRoute('app_donation');
+        }
+
+        // Solution 1: Vérifier si le paramètre existe
+        try {
+            $stripeKey = $this->getParameter('stripe_public_key');
+        } catch (\Exception $e) {
+            $stripeKey = ''; // ou une clé de test
+            // $stripeKey = 'pk_test_51P...'; // clé de test temporaire
+        }
+
+        // Solution 2: Utiliser directement $_ENV
+        // $stripeKey = $_ENV['STRIPE_PUBLIC_KEY'] ?? '';
+
+        // Solution 3: Désactiver Stripe si pas configuré
+        // $stripeKey = null;
+
+        return $this->render('pages/donation.html.twig', [
+            'form' => $form->createView(),
+            'stripe_key' => $stripeKey,
+        ]);
     }
 
+    //#[Route('/shop', name: 'app_shop', methods: ['GET'])]
     #[Route('/pages/shop', name: 'app_shop', methods: ['GET'])]
-    public function shop(): Response
+    public function shop(
+        Request $request,
+        ProduitRepository $produitRepository,
+        CategorieRepository $categorieRepository
+    ): Response
     {
-        return $this->render('pages/shop.html.twig');
+        // Récupérer les paramètres de filtrage
+        $search = $request->query->get('search', '');
+        $categorieId = $request->query->getInt('categorie', 0); // 0 si non défini
+        $minPrice = $request->query->get('min_price', '');
+        $maxPrice = $request->query->get('max_price', '');
+        $sort = $request->query->get('sort', 'latest');
+        
+        // Récupérer tous les produits (vous pouvez ajouter la méthode findFiltered plus tard)
+        $produits = $produitRepository->findAll();
+        
+        // Appliquer les filtres manuellement si pas de méthode findFiltered
+        if ($categorieId > 0) {
+            $produits = array_filter($produits, function($produit) use ($categorieId) {
+                return $produit->getCategorie() && $produit->getCategorie()->getId() === $categorieId;
+            });
+        }
+        
+        if ($search) {
+            $produits = array_filter($produits, function($produit) use ($search) {
+                return stripos($produit->getNom(), $search) !== false;
+            });
+        }
+        
+        if ($minPrice !== '') {
+            $minPrice = (float) $minPrice;
+            $produits = array_filter($produits, function($produit) use ($minPrice) {
+                return $produit->getPrix() >= $minPrice;
+            });
+        }
+        
+        if ($maxPrice !== '') {
+            $maxPrice = (float) $maxPrice;
+            $produits = array_filter($produits, function($produit) use ($maxPrice) {
+                return $produit->getPrix() <= $maxPrice;
+            });
+        }
+        
+        // Trier les produits
+        switch ($sort) {
+            case 'price_low':
+                usort($produits, function($a, $b) {
+                    return $a->getPrix() <=> $b->getPrix();
+                });
+                break;
+            case 'price_high':
+                usort($produits, function($a, $b) {
+                    return $b->getPrix() <=> $a->getPrix();
+                });
+                break;
+            case 'name_asc':
+                usort($produits, function($a, $b) {
+                    return strcmp($a->getNom(), $b->getNom());
+                });
+                break;
+            case 'name_desc':
+                usort($produits, function($a, $b) {
+                    return strcmp($b->getNom(), $a->getNom());
+                });
+                break;
+            case 'latest':
+            default:
+                // Garder l'ordre par défaut ou trier par ID décroissant
+                usort($produits, function($a, $b) {
+                    return $b->getId() <=> $a->getId();
+                });
+                break;
+        }
+        
+        // Récupérer toutes les catégories
+        $categories = $categorieRepository->findAll();
+        
+        return $this->render('pages/shop.html.twig', [
+            'produits' => $produits,
+            'categories' => $categories,
+            'search' => $search,
+            'selectedCategorie' => $categorieId, // <-- AJOUTEZ CETTE LIGNE
+            'minPrice' => $minPrice,
+            'maxPrice' => $maxPrice,
+            'sort' => $sort,
+        ]);
     }
+
 
     #[Route('/pages/veterinarian', name: 'app_veterinarian_page', methods: ['GET'])]
     public function veterinarianPage(UserRepository $userRepository): Response
