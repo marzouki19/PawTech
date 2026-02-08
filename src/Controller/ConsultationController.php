@@ -5,14 +5,12 @@ namespace App\Controller;
 use App\Entity\Consultation;
 use App\Form\ConsultationType;
 use App\Repository\ConsultationRepository;
-use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
 #[Route('/consultation')]
 class ConsultationController extends AbstractController
@@ -27,98 +25,7 @@ class ConsultationController extends AbstractController
         ]);
     }
 
-    #[Route('/search', name: 'app_consultation_search', methods: ['GET'])]
-    public function search(Request $request, ConsultationRepository $repo): JsonResponse
-    {
-        $searchTerm = $request->query->get('searchValue', '');
-        
-        if (empty($searchTerm)) {
-            $consultations = $repo->findAll();
-        } else {
-            $consultations = $repo->search($searchTerm);
-        }
-        
-        // Format personnalisé pour la compatibilité avec le template
-        $data = [];
-        foreach ($consultations as $consultation) {
-            $user = $consultation->getUser();
-            $userLastName = $user ? $user->getnom() : '';
-            $userFirstName = $user ? $user->getPrenom() : '';
-            
-            $data[] = [
-                'id' => $consultation->getId(),
-                'date' => $consultation->getDate()->format('Y-m-d H:i'),
-                'type' => $consultation->getType(),
-                'nom' => $userLastName,
-                'prenom' => $userFirstName,
-                'diagnostic' => $consultation->getDiagnostic(),
-                'traitement' => $consultation->getTraitement(),
-            ];
-        }
-        
-        return $this->json($data);
-    }
 
-    #[Route('/sort-by-date', name: 'app_consultation_sort_by_date', methods: ['GET'])]
-    public function sortByDate(ConsultationRepository $repo): JsonResponse
-    {
-        $consultations = $repo->findAllOrdered();
-        
-        $data = [];
-        foreach ($consultations as $consultation) {
-            $user = $consultation->getUser();
-            $userLastName = $user ? $user->getnom() : '';
-            $userFirstName = $user ? $user->getPrenom() : '';
-            
-            $data[] = [
-                'id' => $consultation->getId(),
-                'date' => $consultation->getDate()->format('Y-m-d H:i'),
-                'type' => $consultation->getType(),
-                'nom' => $userLastName,
-                'prenom' => $userFirstName,
-                'diagnostic' => $consultation->getDiagnostic(),
-                'traitement' => $consultation->getTraitement(),
-            ];
-        }
-        
-        return $this->json($data);
-    }
-
-
-
-
-
-    #[Route('/new', name: 'app_consultation_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $em): Response
-    {
-        $consultation = new Consultation();
-        $form = $this->createForm(ConsultationType::class, $consultation);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $em->persist($consultation);
-            $em->flush();
-
-            $this->addFlash('success', 'Appointment request sent successfully! We will contact you soon.');
-            return $this->redirectToRoute('app_consultation_index');
-        }
-
-        return $this->render('consultation/new.html.twig', [
-            'form' => $form,
-            'active' => 'consultation',
-            'page_title' => 'Add Consultation'
-        ]);
-    }
-
-
-
- 
-
-
-
-
-
-    
     #[Route('/veterinaire', name: 'app_veterinaire_index', methods: ['GET'])]
     public function indexfront(UserRepository $userRepository): Response
     {
@@ -154,22 +61,143 @@ class ConsultationController extends AbstractController
 
 
 
+    #[Route('/search', name: 'app_consultation_search', methods: ['GET'])]
+    public function search(Request $request, ConsultationRepository $repo): JsonResponse
+    {
+        $searchTerm = $request->query->get('searchValue', '');
+        
+        if (empty($searchTerm)) {
+            $consultations = $repo->findAll();
+        } else {
+            $consultations = $repo->search($searchTerm);
+        }
+        
+        // Format personnalisé pour la compatibilité avec le template
+        $data = [];
+        foreach ($consultations as $consultation) {
+            $user = $consultation->getUser();
+            $userLastName = $user ? $user->getNom() : '';
+            $userFirstName = $user ? $user->getPrenom() : '';
+            
+            $data[] = [
+                'id' => $consultation->getId(),
+                'date' => $consultation->getDate()->format('Y-m-d H:i'),
+                'type' => $consultation->getType(),
+                'user_lastName' => $userLastName,
+                'user_firstName' => $userFirstName,
+                'diagnostic' => $consultation->getDiagnostic(),
+                'traitement' => $consultation->getTraitement(),
+            ];
+        }
+        
+        return $this->json($data);
+    }
+
+    #[Route('/sort-by-date', name: 'app_consultation_sort_by_date', methods: ['GET'])]
+    public function sortByDate(ConsultationRepository $repo): JsonResponse
+    {
+        $consultations = $repo->findAllOrdered();
+        
+        $data = [];
+        foreach ($consultations as $consultation) {
+            $user = $consultation->getUser();
+            $userLastName = $user ? $user->getNom() : '';
+            $userFirstName = $user ? $user->getPrenom() : '';
+            
+            $data[] = [
+                'id' => $consultation->getId(),
+                'date' => $consultation->getDate()->format('Y-m-d H:i'),
+                'type' => $consultation->getType(),
+                'user_lastName' => $userLastName,
+                'user_firstName' => $userFirstName,
+                'diagnostic' => $consultation->getDiagnostic(),
+                'traitement' => $consultation->getTraitement(),
+            ];
+        }
+        
+        return $this->json($data);
+    }
+
+    #[Route('/new', name: 'app_consultation_new', methods: ['GET', 'POST'])]
+    public function new(Request $request, EntityManagerInterface $em): Response
+    {
+        $consultation = new Consultation();
+        $form = $this->createForm(ConsultationType::class, $consultation);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $em->persist($consultation);
+            $em->flush();
+
+            $this->addFlash('success', 'Appointment request sent successfully! We will contact you soon.');
+            return $this->redirectToRoute('app_consultation_index');
+        }
+
+        return $this->render('consultation/new.html.twig', [
+            'form' => $form,
+            'active' => 'consultation',
+            'page_title' => 'Add Consultation'
+        ]);
+    }
+
     #[Route('/{id}/edit', name: 'app_consultation_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, Consultation $consultation, EntityManagerInterface $em): Response
     {
         $form = $this->createForm(ConsultationType::class, $consultation);
         $form->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $em->flush();
+        // VÉRIFICATION EXACTEMENT COMME DANS SUIVI
+        if ($form->isSubmitted()) {
+            // Validation manuelle pour s'assurer que les champs ne sont pas null après validation
+            $type = $form->get('type')->getData();
+            $diagnostic = $form->get('diagnostic')->getData();
+            $date = $form->get('date')->getData();
+            $user = $form->get('user')->getData();
+            $chien = $form->get('chien')->getData();
+            
+            if (empty($type)) {
+                $form->get('type')->addError(
+                    new \Symfony\Component\Form\FormError('Type is required')
+                );
+            }
+            
+            if (empty($diagnostic)) {
+                $form->get('diagnostic')->addError(
+                    new \Symfony\Component\Form\FormError('Diagnostic is required')
+                );
+            }
+            
+            if (empty($date)) {
+                $form->get('date')->addError(
+                    new \Symfony\Component\Form\FormError('Date is required')
+                );
+            }
+            
+            if (empty($user)) {
+                $form->get('user')->addError(
+                    new \Symfony\Component\Form\FormError('User is required')
+                );
+            }
+            
+            if (empty($chien)) {
+                $form->get('chien')->addError(
+                    new \Symfony\Component\Form\FormError('Dog is required')
+                );
+            }
+            
+            if ($form->isValid()) {
+                $em->flush();
 
-            $this->addFlash('success', 'Consultation updated successfully');
-            return $this->redirectToRoute('app_consultation_index');
+                $this->addFlash('success', 'Consultation updated successfully');
+                return $this->redirectToRoute('app_consultation_index');
+            } else {
+                $this->addFlash('error', 'Please correct the errors in the form.');
+            }
         }
 
         return $this->render('consultation/edit.html.twig', [
             'consultation' => $consultation,
-            'form' => $form,
+            'form' => $form->createView(),
             'active' => 'consultation',
             'page_title' => 'Edit Consultation'
         ]);

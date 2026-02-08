@@ -111,7 +111,7 @@ class Dogs
 
 
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'dogs')]
-    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', nullable: false)]
+    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', nullable: true)]
     #[Groups(['dogs'])]
     private ?User $user = null;
 

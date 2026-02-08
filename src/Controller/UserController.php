@@ -25,49 +25,7 @@ final class UserController extends AbstractController
         ]);
     }
 
-    #[Route('/users', name: 'app_users_index', methods: ['GET', 'POST'])]
-    public function users(Request $request, UserRepository $userRepository, EntityManagerInterface $entityManager, SluggerInterface $slugger, UserPasswordHasherInterface $passwordHasher): Response
-    {
-        $searchQuery = trim((string) $request->query->get('q', ''));
-        $searchField = (string) $request->query->get('field', 'all');
-        $sortDir = strtolower((string) $request->query->get('sort', 'asc'));
-        $sortBy = (string) $request->query->get('sort_by', 'id');
-        $user = new User();
-        $form = $this->createForm(UserType::class, $user);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $this->hashUserPassword($user, $form->get('password')->getData(), $passwordHasher);
-            $this->handleUserImageUpload($form->get('user_image')->getData(), $user, $slugger);
-            $this->applyRoleNulls($user);
-
-            $entityManager->persist($user);
-            $entityManager->flush();
-
-            return $this->redirectToRoute('app_users_index');
-        }
-
-        $users = $searchQuery === ''
-            ? $userRepository->sortAll($sortDir, $sortBy)
-            : $userRepository->search($searchQuery, $searchField);
-        [$cardRows, $tableRows] = $this->buildUserRows($users);
-
-        return $this->renderEntity('users/index.html.twig', 'Users', 'users', [
-            'ID', 'First Name', 'Last Name', 'Email', 'Phone', 'Role', 'Status',
-        ], $tableRows, 'Add New User', [
-            ['name' => 'first_name', 'placeholder' => 'First name'],
-            ['name' => 'last_name', 'placeholder' => 'Last name'],
-            ['name' => 'email', 'type' => 'email', 'placeholder' => 'Email address'],
-        ], null, [
-            'form' => $form->createView(),
-            'card_rows' => $cardRows,
-            'search_query' => $searchQuery,
-            'search_field' => $searchField,
-            'sort_dir' => $sortDir,
-            'sort_by' => $sortBy,
-        ]);
-    }
-
+   
 
 
 
@@ -85,7 +43,7 @@ final class UserController extends AbstractController
             $entityManager->persist($user);
             $entityManager->flush();
 
-            return $this->redirectToRoute('app_user_index', [], Response::HTTP_SEE_OTHER);
+            return $this->redirectToRoute('app_users_index', [], Response::HTTP_SEE_OTHER);
         }
 
         return $this->render('user/new.html.twig', [
@@ -109,7 +67,7 @@ final class UserController extends AbstractController
 
 
 
-     #[Route('/user/edit/{id}', name: 'app_user_edit', methods: ['GET', 'POST'])]
+    #[Route('/user/edit/{id}', name: 'app_user_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, ManagerRegistry $managerRegistry, UserRepository $userRepository, SluggerInterface $slugger, UserPasswordHasherInterface $passwordHasher, int $id): Response
     {
         $entityManager = $managerRegistry->getManager();
@@ -216,11 +174,15 @@ final class UserController extends AbstractController
     private function handleUserImageUpload(?UploadedFile $uploadedFile, User $user, SluggerInterface $slugger): void
     {
         if ($uploadedFile instanceof UploadedFile) {
+
+            //Récupérer le nom original du fichier
             $originalFilename = pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME);
+            
+            //Sécuriser le nom du fichier "espace accent caractere speciaux" 
             $safeFilename = $slugger->slug($originalFilename);
             $newFilename = $safeFilename.'-'.uniqid().'.'.$uploadedFile->guessExtension();
             $uploadDir = $this->getParameter('kernel.project_dir').'/public/uploads/users';
-
+            //cree le dossier s'il n'existe pas
             if (!is_dir($uploadDir)) {
                 mkdir($uploadDir, 0775, true);
             }
@@ -235,6 +197,8 @@ final class UserController extends AbstractController
         }
     }
 
+
+
     private function hashUserPassword(User $user, ?string $plainPassword, UserPasswordHasherInterface $passwordHasher): void
     {
         if (!$plainPassword) {
@@ -243,6 +207,8 @@ final class UserController extends AbstractController
 
         $user->setPassword($passwordHasher->hashPassword($user, $plainPassword));
     }
+
+
 
     private function applyRoleNulls(User $user): void
     {
@@ -264,6 +230,9 @@ final class UserController extends AbstractController
         }
     }
 
+
+
+    //creation card ou tableau
     private function buildUserRows(array $users): array
     {
         $cardRows = array_map(static function ($user) {
@@ -306,7 +275,7 @@ final class UserController extends AbstractController
 
 
 
-
+    
     #[Route('/signup', name: 'app_signup', methods: ['GET', 'POST'])]
     public function signup(Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher): Response
     {
@@ -378,8 +347,8 @@ final class UserController extends AbstractController
             'signup_data' => $data,
         ]);
     }
-
-
+    
+   
 
 
 
@@ -626,6 +595,63 @@ final class UserController extends AbstractController
             'total_pages' => 1,
         ], $extra));
     }
+
+
+
+
+
+     #[Route('/users', name: 'app_users_index', methods: ['GET', 'POST'])]
+    public function users(Request $request, UserRepository $userRepository, EntityManagerInterface $entityManager, SluggerInterface $slugger, UserPasswordHasherInterface $passwordHasher): Response
+    {
+        $searchQuery = trim((string) $request->query->get('q', ''));
+        $searchField = (string) $request->query->get('field', 'all');
+        $sortDir = strtolower((string) $request->query->get('sort', 'asc'));
+        $sortBy = (string) $request->query->get('sort_by', 'id');
+        $user = new User();
+        $form = $this->createForm(UserType::class, $user);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $this->hashUserPassword($user, $form->get('password')->getData(), $passwordHasher);
+            $this->handleUserImageUpload($form->get('user_image')->getData(), $user, $slugger);
+            $this->applyRoleNulls($user);
+
+            $entityManager->persist($user);
+            $entityManager->flush();
+
+            return $this->redirectToRoute('app_users_index');
+        }
+
+        $users = $searchQuery === ''
+            ? $userRepository->sortAll($sortDir, $sortBy)
+            : $userRepository->search($searchQuery, $searchField);
+        [$cardRows, $tableRows] = $this->buildUserRows($users);
+
+        return $this->renderEntity('users/index.html.twig', 'Users', 'users', [
+            'ID', 'First Name', 'Last Name', 'Email', 'Phone', 'Role', 'Status',
+        ], $tableRows, 'Add New User', [
+            ['name' => 'first_name', 'placeholder' => 'First name'],
+            ['name' => 'last_name', 'placeholder' => 'Last name'],
+            ['name' => 'email', 'type' => 'email', 'placeholder' => 'Email address'],
+        ], null, [
+            'form' => $form->createView(),
+            'card_rows' => $cardRows,
+            'search_query' => $searchQuery,
+            'search_field' => $searchField,
+            'sort_dir' => $sortDir,
+            'sort_by' => $sortBy,
+        ]);
+    }
+
+
+
+
+
+
+
+
+
+
 
 
     

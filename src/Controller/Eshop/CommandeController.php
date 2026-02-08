@@ -169,7 +169,10 @@ class CommandeController extends AbstractController
         // Pour les requêtes normales (non-AJAX)
         if ($form->isSubmitted()) {
             // Récupérer les données brutes pour validation
-            $formData = $request->request->get('commande', []);
+            $formData = $request->request->get('commande', null);
+            if (!$formData) {
+                $formData = [];
+            }
             $dateData = $formData['date'] ?? null;
             $totalData = $formData['total'] ?? null;
             

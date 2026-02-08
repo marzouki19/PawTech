@@ -47,14 +47,11 @@ class Suivi
         minMessage: "Le type doit contenir au moins {{ limit }} caractères",
         maxMessage: "Le type ne peut pas dépasser {{ limit }} caractères"
     )]
-    #[Assert\Choice(
-        choices: ["Alert", "Urgent", "Normal"], // Replace with actual valid choices
-        message: "Le type doit être l'un des choix suivants : {{ choices }}."
-    )]
     private ?string $type = null;
 
-    #[ORM\Column(name: 'prochaine_visite', type: Types::DATETIME_MUTABLE, nullable: true)]
+    #[ORM\Column(name: 'prochaine_visite', type: Types::DATETIME_MUTABLE, nullable: false)] // CHANGÉ: nullable: true → nullable: false
     #[Groups(['suivis'])]
+    #[Assert\NotBlank(message: "La date de prochaine visite est requise")] // AJOUTÉ
     #[Assert\Type("\DateTimeInterface", message: "La date de prochaine visite doit être une date valide")]
     #[Assert\GreaterThanOrEqual(
         "today",
@@ -133,11 +130,11 @@ class Suivi
         return $this;
     }
 
-    // Méthode pour obtenir le nom du Dogs (utile pour l'affichage)
-    public function getDogsNom(): ?string
+    // Méthode pour obtenir le nom du chien (utile pour l'affichage)
+    public function getChienNom(): ?string
     {
-        if ($this->consultation && $this->consultation->getDogs()) {
-            return $this->consultation->getDogs()->getName();
+        if ($this->consultation && $this->consultation->getChien()) {
+            return $this->consultation->getChien()->getNom();
         }
         return null;
     }

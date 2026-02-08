@@ -1,7 +1,5 @@
 <?php
-
 namespace App\Entity;
-
 use App\Repository\ConsultationRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -53,10 +51,10 @@ class Consultation
     #[Assert\NotNull(message: "User is required")]
     private ?User $user = null;
 
-    #[ORM\ManyToOne(targetEntity: Dog::class, inversedBy: 'consultations')]
+    #[ORM\ManyToOne(targetEntity: Dogs::class, inversedBy: 'consultations')]
     #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotNull(message: "Dog is required")]
-    private ?Dog $dog = null;
+    private ?Dogs $dog = null;
 
     public function getId(): ?int
     {
@@ -125,12 +123,12 @@ class Consultation
         return $this;
     }
 
-    public function getDog(): ?Dog
+    public function getDog(): ?Dogs
     {
         return $this->dog;
     }
 
-    public function setDog(?Dog $dog): static
+    public function setDog(?Dogs $dog): static
     {
         $this->dog = $dog;
 

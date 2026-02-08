@@ -1,32 +1,28 @@
-{% extends 'frontend/base.html.twig' %}
+{% extends 'base_front.html.twig' %}
 
 {% block title %}Donation - PawTech{% endblock %}
 
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .error-message {
+            color: #dc2626;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        .input-error {
+            border-color: #dc2626 !important;
+            background-color: #fef2f2 !important;
+        }
+        .input-success {
+            border-color: #16a34a !important;
+        }
+    </style>
+{% endblock %}
+
 {% block body %}
     <section class="relative overflow-hidden">
-        <div class="absolute inset-0">
-            <div class="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-orange-200/70"></div>
-            <div class="absolute top-24 right-24 h-80 w-80 rounded-full bg-orange-400/80"></div>
-        </div>
-
-        <div class="relative container mx-auto px-4 lg:px-8 py-12 lg:py-16 grid lg:grid-cols-2 gap-10 items-center">
-            <div>
-                <p class="text-orange-600 font-semibold tracking-wide uppercase text-xs mb-3">Support</p>
-                <h1 class="text-4xl lg:text-5xl font-extrabold leading-tight text-gray-900">
-                    Help dogs find<br> a better life
-                </h1>
-                <p class="mt-4 text-gray-600 max-w-xl">
-                    Your donation supports rescue, medical care, food, and adoption programs.
-                </p>
-            </div>
-            <div class="relative">
-                <div class="relative rounded-3xl bg-white shadow-xl p-6 border border-gray-100">
-                    <div class="aspect-[4/3] rounded-2xl bg-gradient-to-br from-orange-100 via-gray-50 to-orange-200 flex items-center justify-center">
-                        <span class="text-gray-500 font-semibold">Donation header image</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <!-- ... votre contenu existant ... -->
     </section>
 
     <section class="container mx-auto px-4 lg:px-8 pb-14">
@@ -41,24 +37,55 @@
                     </div>
                 {% endfor %}
 
-                <!-- Formulaire de donation -->
-                {{ form_start(form, { 'attr': { 'class': 'mt-6 space-y-4' } }) }}
+                <!-- Formulaire de donation avec novalidate -->
+                {{ form_start(form, { 
+                    'attr': { 
+                        'class': 'mt-6 space-y-4',
+                        'novalidate': 'novalidate',
+                        'id': 'donation-form'
+                    } 
+                }) }}
                 
+                <!-- Donateur -->
                 <div>
                     <label class="text-sm font-semibold text-gray-700">{{ form.donateur.vars.label }}</label>
-                    {{ form_widget(form.donateur, { 'attr': { 'class': 'mt-2 w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-400' } }) }}
+                    {{ form_widget(form.donateur, { 
+                        'attr': { 
+                            'class': 'mt-2 w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-400',
+                            'required': 'required',
+                            'minlength': '2',
+                            'maxlength': '100'
+                        } 
+                    }) }}
+                    <div class="error-message" id="donateur-error"></div>
                     {{ form_errors(form.donateur) }}
                 </div>
                 
+                <!-- Email -->
                 <div>
                     <label class="text-sm font-semibold text-gray-700">{{ form.email.vars.label }}</label>
-                    {{ form_widget(form.email, { 'attr': { 'class': 'mt-2 w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-400' } }) }}
+                    {{ form_widget(form.email, { 
+                        'attr': { 
+                            'class': 'mt-2 w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-400',
+                            'required': 'required',
+                            'type': 'email'
+                        } 
+                    }) }}
+                    <div class="error-message" id="email-error"></div>
                     {{ form_errors(form.email) }}
                 </div>
                 
+                <!-- Référence -->
                 <div>
                     <label class="text-sm font-semibold text-gray-700">{{ form.reference.vars.label }}</label>
-                    {{ form_widget(form.reference, { 'attr': { 'class': 'mt-2 w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-400', 'rows': 3 } }) }}
+                    {{ form_widget(form.reference, { 
+                        'attr': { 
+                            'class': 'mt-2 w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-400',
+                            'rows': 3,
+                            'maxlength': '500'
+                        } 
+                    }) }}
+                    <div class="error-message" id="reference-error"></div>
                     {{ form_errors(form.reference) }}
                 </div>
                 
@@ -66,7 +93,13 @@
                 {% if form.date is defined %}
                 <div>
                     <label class="text-sm font-semibold text-gray-700">{{ form.date.vars.label|default('Date') }}</label>
-                    {{ form_widget(form.date, { 'attr': { 'class': 'mt-2 w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-400' } }) }}
+                    {{ form_widget(form.date, { 
+                        'attr': { 
+                            'class': 'mt-2 w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-400',
+                            'required': 'required'
+                        } 
+                    }) }}
+                    <div class="error-message" id="date-error"></div>
                     {{ form_errors(form.date) }}
                 </div>
                 {% endif %}
@@ -84,7 +117,7 @@
                                 <button 
                                     type="button" 
                                     class="amount-btn py-3 px-4 rounded-xl border-2 {% if amount == 50 %}border-orange-500 bg-orange-50 text-orange-700{% else %}border-gray-300 bg-white text-gray-700{% endif %} font-semibold hover:border-orange-400 hover:bg-orange-50 hover:text-orange-700 transition"
-                                    onclick="document.getElementById('{{ form.montant.vars.id }}').value = {{ amount }}">
+                                    onclick="document.getElementById('{{ form.montant.vars.id }}').value = {{ amount }}; validateMontant()">
                                     {{ amount }} TND
                                 </button>
                             {% endfor %}
@@ -93,18 +126,20 @@
                     
                     <!-- Champ de montant -->
                     <div class="relative">
-                        {{ form_widget(form.montant, { 'attr': { 
-                            'class': 'w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-400',
-                            'placeholder': 'Enter amount in TND',
-                            'min': '1'
-                        } }) }}
+                        {{ form_widget(form.montant, { 
+                            'attr': { 
+                                'class': 'montant-input w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-400',
+                                'placeholder': 'Enter amount in TND',
+                                'min': '1',
+                                'max': '100000',
+                                'required': 'required',
+                                'step': '0.01'
+                            } 
+                        }) }}
                         <span class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500">TND</span>
                     </div>
+                    <div class="error-message" id="montant-error"></div>
                     {{ form_errors(form.montant) }}
-                    
-                    {% if form.montant.vars.help is defined %}
-                        <p class="mt-1 text-xs text-gray-500">{{ form.montant.vars.help }}</p>
-                    {% endif %}
                 </div>
 
                 <!-- Informations de paiement -->
@@ -115,9 +150,12 @@
                     {% if form.methodePaiement is defined %}
                     <div class="mb-4">
                         <label class="text-sm font-medium text-gray-700 mb-2 block">{{ form.methodePaiement.vars.label|default('Payment Method') }}</label>
-                        {{ form_widget(form.methodePaiement, { 'attr': { 
-                            'class': 'w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-400'
-                        } }) }}
+                        {{ form_widget(form.methodePaiement, { 
+                            'attr': { 
+                                'class': 'w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-400'
+                            } 
+                        }) }}
+                        <div class="error-message" id="methodePaiement-error"></div>
                         {{ form_errors(form.methodePaiement) }}
                     </div>
                     {% endif %}
@@ -126,10 +164,14 @@
                     {% if form.numeroTransaction is defined %}
                     <div class="mb-4">
                         <label class="text-sm font-medium text-gray-700 mb-2 block">{{ form.numeroTransaction.vars.label|default('Transaction Number') }}</label>
-                        {{ form_widget(form.numeroTransaction, { 'attr': { 
-                            'class': 'w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-400',
-                            'placeholder': 'Enter transaction number if applicable'
-                        } }) }}
+                        {{ form_widget(form.numeroTransaction, { 
+                            'attr': { 
+                                'class': 'w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-400',
+                                'placeholder': 'Enter transaction number if applicable',
+                                'maxlength': '50'
+                            } 
+                        }) }}
+                        <div class="error-message" id="numeroTransaction-error"></div>
                         {{ form_errors(form.numeroTransaction) }}
                     </div>
                     {% endif %}
@@ -138,9 +180,12 @@
                     {% if form.datePaiement is defined %}
                     <div class="mb-4">
                         <label class="text-sm font-medium text-gray-700 mb-2 block">{{ form.datePaiement.vars.label|default('Payment Date') }}</label>
-                        {{ form_widget(form.datePaiement, { 'attr': { 
-                            'class': 'w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-400'
-                        } }) }}
+                        {{ form_widget(form.datePaiement, { 
+                            'attr': { 
+                                'class': 'w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-400'
+                            } 
+                        }) }}
+                        <div class="error-message" id="datePaiement-error"></div>
                         {{ form_errors(form.datePaiement) }}
                     </div>
                     {% endif %}
@@ -166,46 +211,200 @@
                 </div>
 
                 <!-- Bouton de soumission -->
-                <button type="submit" class="w-full rounded-2xl bg-orange-500 px-6 py-3 text-white font-extrabold hover:bg-orange-600 transition mt-4">
+                <button type="submit" class="submit-btn w-full rounded-2xl bg-orange-500 px-6 py-3 text-white font-extrabold hover:bg-orange-600 transition mt-4">
                     Submit Donation
                 </button>
                 
                 {{ form_end(form) }}
             </div>
 
-            <div class="space-y-6">
-                <div class="rounded-3xl bg-white border border-gray-100 shadow-sm p-7">
-                    <h2 class="text-xl font-extrabold text-gray-900">Where your money goes</h2>
-                    <div class="mt-5 space-y-4">
-                        {% for item in [
-                            {label:'Medical care', pct:42},
-                            {label:'Food & supplies', pct:28},
-                            {label:'Rescue & transport', pct:18},
-                            {label:'Shelter support', pct:12}
-                        ] %}
-                            <div>
-                                <div class="flex items-center justify-between text-sm">
-                                    <span class="font-semibold text-gray-900">{{ item.label }}</span>
-                                    <span class="text-gray-500">{{ item.pct }}%</span>
-                                </div>
-                                <div class="mt-2 h-2 rounded-full bg-gray-100 overflow-hidden">
-                                    <div class="h-full bg-orange-500" style="width: {{ item.pct }}%"></div>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-                </div>
-
-                <div class="rounded-3xl bg-white border border-gray-100 shadow-sm p-7">
-                    <h2 class="text-xl font-extrabold text-gray-900">Need help?</h2>
-                    <p class="mt-3 text-gray-600">Want to donate supplies or volunteer? Contact us and we'll guide you.</p>
-                    <div class="mt-6">
-                        <a href="{{ path('app_contact') }}" class="inline-flex items-center rounded-full bg-gray-900 px-6 py-3 text-white font-semibold hover:bg-gray-800 transition">
-                            Contact Us
-                        </a>
-                    </div>
-                </div>
-            </div>
+            <!-- ... le reste de votre code ... -->
         </div>
     </section>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('donation-form');
+            const submitBtn = form.querySelector('.submit-btn');
+            
+            // Fonctions de validation
+            function validateDonateur() {
+                const donateur = document.getElementById('{{ form.donateur.vars.id }}');
+                const errorElement = document.getElementById('donateur-error');
+                
+                if (!donateur.value.trim()) {
+                    showError(donateur, errorElement, 'Name is required');
+                    return false;
+                }
+                
+                if (donateur.value.trim().length < 2) {
+                    showError(donateur, errorElement, 'Name must be at least 2 characters');
+                    return false;
+                }
+                
+                if (donateur.value.trim().length > 100) {
+                    showError(donateur, errorElement, 'Name cannot exceed 100 characters');
+                    return false;
+                }
+                
+                showSuccess(donateur, errorElement);
+                return true;
+            }
+            
+            function validateEmail() {
+                const email = document.getElementById('{{ form.email.vars.id }}');
+                const errorElement = document.getElementById('email-error');
+                
+                if (!email.value.trim()) {
+                    showError(email, errorElement, 'Email is required');
+                    return false;
+                }
+                
+                const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailPattern.test(email.value.trim())) {
+                    showError(email, errorElement, 'Please enter a valid email address');
+                    return false;
+                }
+                
+                showSuccess(email, errorElement);
+                return true;
+            }
+            
+            function validateMontant() {
+                const montant = document.getElementById('{{ form.montant.vars.id }}');
+                const errorElement = document.getElementById('montant-error');
+                
+                if (!montant.value.trim()) {
+                    showError(montant, errorElement, 'Amount is required');
+                    return false;
+                }
+                
+                const value = parseFloat(montant.value);
+                if (isNaN(value) || value <= 0) {
+                    showError(montant, errorElement, 'Please enter a valid positive amount');
+                    return false;
+                }
+                
+                if (value < 1) {
+                    showError(montant, errorElement, 'Minimum donation is 1 TND');
+                    return false;
+                }
+                
+                if (value > 100000) {
+                    showError(montant, errorElement, 'Maximum donation is 100,000 TND');
+                    return false;
+                }
+                
+                // Vérifier le format décimal
+                const decimalPattern = /^\d+(\.\d{1,2})?$/;
+                if (!decimalPattern.test(montant.value)) {
+                    showError(montant, errorElement, 'Please enter a valid amount with up to 2 decimal places');
+                    return false;
+                }
+                
+                showSuccess(montant, errorElement);
+                return true;
+            }
+            
+            function validateReference() {
+                const reference = document.getElementById('{{ form.reference.vars.id }}');
+                const errorElement = document.getElementById('reference-error');
+                
+                if (reference.value.trim().length > 500) {
+                    showError(reference, errorElement, 'Reference cannot exceed 500 characters');
+                    return false;
+                }
+                
+                showSuccess(reference, errorElement);
+                return true;
+            }
+            
+            {% if form.methodePaiement is defined %}
+            function validateMethodePaiement() {
+                const methodePaiement = document.getElementById('{{ form.methodePaiement.vars.id }}');
+                const errorElement = document.getElementById('methodePaiement-error');
+                
+                if (!methodePaiement.value.trim()) {
+                    showError(methodePaiement, errorElement, 'Payment method is required');
+                    return false;
+                }
+                
+                showSuccess(methodePaiement, errorElement);
+                return true;
+            }
+            {% else %}
+            function validateMethodePaiement() {
+                return true; // Toujours valide si le champ n'existe pas
+            }
+            {% endif %}
+            
+            // Fonctions utilitaires
+            function showError(input, errorElement, message) {
+                input.classList.add('input-error');
+                input.classList.remove('input-success');
+                errorElement.textContent = message;
+                errorElement.style.display = 'block';
+            }
+            
+            function showSuccess(input, errorElement) {
+                input.classList.remove('input-error');
+                input.classList.add('input-success');
+                errorElement.textContent = '';
+                errorElement.style.display = 'none';
+            }
+            
+            // Événements de validation en temps réel
+            document.getElementById('{{ form.donateur.vars.id }}').addEventListener('input', validateDonateur);
+            document.getElementById('{{ form.donateur.vars.id }}').addEventListener('blur', validateDonateur);
+            
+            document.getElementById('{{ form.email.vars.id }}').addEventListener('input', validateEmail);
+            document.getElementById('{{ form.email.vars.id }}').addEventListener('blur', validateEmail);
+            
+            document.getElementById('{{ form.montant.vars.id }}').addEventListener('input', validateMontant);
+            document.getElementById('{{ form.montant.vars.id }}').addEventListener('blur', validateMontant);
+            
+            document.getElementById('{{ form.reference.vars.id }}').addEventListener('input', validateReference);
+            document.getElementById('{{ form.reference.vars.id }}').addEventListener('blur', validateReference);
+            
+            {% if form.methodePaiement is defined %}
+            document.getElementById('{{ form.methodePaiement.vars.id }}').addEventListener('change', validateMethodePaiement);
+            document.getElementById('{{ form.methodePaiement.vars.id }}').addEventListener('blur', validateMethodePaiement);
+            {% endif %}
+            
+            // Validation complète avant soumission
+            form.addEventListener('submit', function(event) {
+                event.preventDefault();
+                
+                const isDonateurValid = validateDonateur();
+                const isEmailValid = validateEmail();
+                const isMontantValid = validateMontant();
+                const isReferenceValid = validateReference();
+                const isMethodePaiementValid = validateMethodePaiement();
+                
+                if (isDonateurValid && isEmailValid && isMontantValid && isReferenceValid && isMethodePaiementValid) {
+                    // Désactiver le bouton pour éviter les doubles clics
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Processing...';
+                    
+                    // Soumettre le formulaire
+                    form.submit();
+                } else {
+                    // Faire défiler jusqu'à la première erreur
+                    const firstError = form.querySelector('.input-error');
+                    if (firstError) {
+                        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        firstError.focus();
+                    }
+                }
+            });
+            
+            // Réinitialiser le bouton si la validation échoue
+            form.addEventListener('invalid', function(event) {
+                event.preventDefault();
+            }, true);
+        });
+    </script>
 {% endblock %}

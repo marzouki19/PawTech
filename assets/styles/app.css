@@ -1,3 +1,13 @@
+/* Custom orange color classes */
+.bg-orange-custom {
+    background-color: #ff9800;
+}
+.text-orange-custom {
+    color: #ff9800;
+}
+.border-orange-custom {
+    border-color: #ff9800;
+}
 /* PawTech dashboard – Tailwind handles most styling */
 html { scroll-behavior: smooth; }
 .modal-backdrop { backdrop-filter: blur(4px); }

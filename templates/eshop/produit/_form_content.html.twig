@@ -1,208 +1,270 @@
 {# templates/eshop/produit/_form_content.html.twig #}
-<div class="max-w-xl">
-  <h1 class="text-xl font-bold text-gray-800 mb-4">{{ page_title }}</h1>
+<div class="max-w-xl mx-auto">
+  <h1 class="text-2xl font-bold text-gray-800 mb-6">{{ page_title }}</h1>
   
   {# Afficher les erreurs globales du formulaire #}
-  {% if form.vars.errors|length > 0 %}
-    <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-      <div class="text-red-800 font-medium">Please correct the following errors:</div>
+  {% if not form.vars.valid %}
+    <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+      <div class="text-red-800 font-medium mb-2">Veuillez corriger les erreurs suivantes :</div>
       {{ form_errors(form) }}
     </div>
   {% endif %}
   
   {{ form_start(form, {
     'attr': {
-      'id': 'entity-modal-form',
       'novalidate': 'novalidate',
-      'enctype': 'multipart/form-data'
-    }, 
-    'action': form_action|default(null)
+      'enctype': 'multipart/form-data',
+      'class': 'space-y-6',
+      'id': 'product-form'
+    }
   }) }}
   
-  <div class="space-y-4">
-    {# Champ NOM #}
-    <div>
-      {{ form_label(form.nom, null, {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
-      {{ form_widget(form.nom, {'attr': {
-        'class': 'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-paw-orange focus:border-paw-orange ' ~ (form.nom.vars.errors|length > 0 ? 'border-red-500' : 'border-gray-300'),
-        'placeholder': 'Enter product name'
-      }}) }}
-      {% if form.nom.vars.errors|length > 0 %}
-        <div class="text-red-600 text-sm mt-1">
-          {% for error in form.nom.vars.errors %}
-            <div class="flex items-center">
-              <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-              </svg>
-              {{ error.message }}
-            </div>
-          {% endfor %}
-        </div>
-      {% endif %}
-    </div>
+  {# Champ NOM #}
+  <div>
+    {{ form_label(form.nom, null, {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-2'}}) }}
+    {{ form_widget(form.nom, {'attr': {
+      'class': 'w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-paw-orange focus:border-paw-orange ' ~ (form.nom.vars.errors|length > 0 ? 'border-red-500' : 'border-gray-300'),
+      'placeholder': 'Entrez le nom du produit',
+      'required': true
+    }}) }}
+    {% if form.nom.vars.errors|length > 0 %}
+      <div class="mt-2 text-sm text-red-600">
+        {% for error in form.nom.vars.errors %}
+          <div class="flex items-center">
+            <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            {{ error.message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
     
-    {# Champ PRIX #}
-    <div>
-      {{ form_label(form.prix, null, {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
+  {# Champ PRIX #}
+  <div>
+    {{ form_label(form.prix, null, {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-2'}}) }}
+    <div class="relative">
+      <span class="absolute left-3 top-3 text-gray-500">$</span>
       {{ form_widget(form.prix, {'attr': {
-        'class': 'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-paw-orange focus:border-paw-orange ' ~ (form.prix.vars.errors|length > 0 ? 'border-red-500' : 'border-gray-300'),
-        'placeholder': '0.00'
+        'class': 'w-full pl-8 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-paw-orange focus:border-paw-orange ' ~ (form.prix.vars.errors|length > 0 ? 'border-red-500' : 'border-gray-300'),
+        'placeholder': '0.00',
+        'required': true,
+        'min': '0.01',
+        'step': '0.01'
       }}) }}
-      {% if form.prix.vars.errors|length > 0 %}
-        <div class="text-red-600 text-sm mt-1">
-          {% for error in form.prix.vars.errors %}
-            <div class="flex items-center">
-              <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-              </svg>
-              {{ error.message }}
-            </div>
-          {% endfor %}
-        </div>
-      {% endif %}
     </div>
+    {% if form.prix.vars.errors|length > 0 %}
+      <div class="mt-2 text-sm text-red-600">
+        {% for error in form.prix.vars.errors %}
+          <div class="flex items-center">
+            <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            {{ error.message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
     
-    {# Champ CATEGORIE #}
-    <div>
-      {{ form_label(form.categorie, null, {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
-      {{ form_widget(form.categorie, {'attr': {
-        'class': 'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-paw-orange focus:border-paw-orange ' ~ (form.categorie.vars.errors|length > 0 ? 'border-red-500' : 'border-gray-300')
-      }}) }}
-      {% if form.categorie.vars.errors|length > 0 %}
-        <div class="text-red-600 text-sm mt-1">
-          {% for error in form.categorie.vars.errors %}
-            <div class="flex items-center">
-              <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-              </svg>
-              {{ error.message }}
+  {# Champ CATEGORIE #}
+  <div>
+    {{ form_label(form.categorie, null, {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-2'}}) }}
+    {{ form_widget(form.categorie, {'attr': {
+      'class': 'w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-paw-orange focus:border-paw-orange ' ~ (form.categorie.vars.errors|length > 0 ? 'border-red-500' : 'border-gray-300'),
+      'required': true
+    }}) }}
+    {% if form.categorie.vars.errors|length > 0 %}
+      <div class="mt-2 text-sm text-red-600">
+        {% for error in form.categorie.vars.errors %}
+          <div class="flex items-center">
+            <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            {{ error.message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+    
+  {# Champ IMAGE #}
+  <div>
+    {{ form_label(form.image, null, {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-2'}}) }}
+    
+    {# Afficher l'image actuelle si en mode édition #}
+    {% if form.vars.data and form.vars.data.image %}
+      <div class="mb-4 p-4 bg-gray-50 rounded-lg">
+        <div class="text-sm font-medium text-gray-700 mb-2">Image actuelle :</div>
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <img src="{{ asset('uploads/images/' ~ form.vars.data.image) }}" 
+               alt="Image du produit" 
+               class="h-32 w-32 object-cover rounded-lg border border-gray-300">
+          <div class="flex-1">
+            <div class="text-sm text-gray-600 mb-2">
+              <span class="font-medium">Nom du fichier :</span> {{ form.vars.data.image }}
             </div>
-          {% endfor %}
-        </div>
-      {% endif %}
-    </div>
-    
-    {# Champ IMAGE - Version simplifiée avec input file visible #}
-    <div>
-      {{ form_label(form.image, null, {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
-      
-      {# Afficher l'image actuelle si en mode édition #}
-      {% if form.vars.data and form.vars.data.image %}
-        <div class="mb-3">
-          <div class="text-sm text-gray-600 mb-1">Image actuelle :</div>
-          <div class="flex items-center gap-3">
-            <img src="{{ asset('uploads/images/' ~ form.vars.data.image) }}" 
-                 alt="Image du produit" 
-                 class="h-20 w-20 object-cover rounded border border-gray-300">
-            <div>
-              <div class="text-xs text-gray-500">
-                {{ form.vars.data.image }}
-              </div>
-              <div class="mt-1 text-xs text-gray-400">
-                Sélectionnez une nouvelle image pour la remplacer
-              </div>
+            <div class="text-xs text-gray-500">
+              Sélectionnez une nouvelle image pour la remplacer
             </div>
           </div>
         </div>
-      {% endif %}
-      
-      {# Zone de saisie du fichier - SIMPLE ET DIRECTE #}
+      </div>
+    {% endif %}
+    
+    <div class="space-y-2">
       <div class="relative">
-        {# Champ de fichier VISIBLE #}
         {{ form_widget(form.image, {'attr': {
-          'class': 'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-paw-orange focus:border-paw-orange ' ~ (form.image.vars.errors|length > 0 ? 'border-red-500' : 'border-gray-300'),
+          'class': 'w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-paw-orange focus:border-paw-orange ' ~ (form.image.vars.errors|length > 0 ? 'border-red-500' : 'border-gray-300'),
           'accept': 'image/*',
-          'onchange': 'previewImage(this)'
+          'onchange': 'validateImage(this)'
         }}) }}
       </div>
       
-      {# Aperçu de l'image sélectionnée #}
-      <div id="image-preview-container" class="mt-2 hidden">
-        <div class="text-sm text-gray-600 mb-1">Aperçu :</div>
-        <img id="image-preview" class="h-24 w-24 object-cover rounded border border-gray-300">
-        <div id="image-filename" class="text-xs text-gray-500 mt-1"></div>
+      <div class="text-xs text-gray-500">
+        Formats acceptés : JPG, PNG, GIF, WEBP (max. 5MB)
       </div>
       
-      {% if form.image.vars.errors|length > 0 %}
-        <div class="text-red-600 text-sm mt-1">
-          {% for error in form.image.vars.errors %}
-            <div class="flex items-center">
-              <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-              </svg>
-              {{ error.message }}
-            </div>
-          {% endfor %}
+      {# Aperçu de l'image sélectionnée #}
+      <div id="image-preview-container" class="hidden mt-4">
+        <div class="text-sm font-medium text-gray-700 mb-2">Aperçu :</div>
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <img id="image-preview" class="h-32 w-32 object-cover rounded-lg border border-gray-300">
+          <div>
+            <div id="image-filename" class="text-sm text-gray-600 mb-1"></div>
+            <div id="image-size" class="text-xs text-gray-500"></div>
+            <div id="image-error" class="text-xs text-red-600 mt-1 hidden"></div>
+          </div>
         </div>
-      {% endif %}
+      </div>
     </div>
+    {% if form.image.vars.errors|length > 0 %}
+      <div class="mt-2 text-sm text-red-600">
+        {% for error in form.image.vars.errors %}
+          <div class="flex items-center">
+            <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            {{ error.message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
     
-    {# Champ QUANTITE #}
-    <div>
-      {{ form_label(form.quantite, null, {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
-      {{ form_widget(form.quantite, {'attr': {
-        'class': 'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-paw-orange focus:border-paw-orange ' ~ (form.quantite.vars.errors|length > 0 ? 'border-red-500' : 'border-gray-300'),
-        'placeholder': '0'
-      }}) }}
-      {% if form.quantite.vars.errors|length > 0 %}
-        <div class="text-red-600 text-sm mt-1">
-          {% for error in form.quantite.vars.errors %}
-            <div class="flex items-center">
-              <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-              </svg>
-              {{ error.message }}
-            </div>
-          {% endfor %}
-        </div>
-      {% endif %}
-    </div>
+  {# Champ QUANTITE #}
+  <div>
+    {{ form_label(form.quantite, null, {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-2'}}) }}
+    {{ form_widget(form.quantite, {'attr': {
+      'class': 'w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-paw-orange focus:border-paw-orange ' ~ (form.quantite.vars.errors|length > 0 ? 'border-red-500' : 'border-gray-300'),
+      'placeholder': '0',
+      'required': true,
+      'min': '0'
+    }}) }}
+    {% if form.quantite.vars.errors|length > 0 %}
+      <div class="mt-2 text-sm text-red-600">
+        {% for error in form.quantite.vars.errors %}
+          <div class="flex items-center">
+            <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            {{ error.message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
     
-    {# Champ SEUIL ALERT #}
-    <div>
-      {{ form_label(form.seuilAlert, null, {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
-      {{ form_widget(form.seuilAlert, {'attr': {
-        'class': 'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-paw-orange focus:border-paw-orange ' ~ (form.seuilAlert.vars.errors|length > 0 ? 'border-red-500' : 'border-gray-300'),
-        'placeholder': '0'
-      }}) }}
-      {% if form.seuilAlert.vars.errors|length > 0 %}
-        <div class="text-red-600 text-sm mt-1">
-          {% for error in form.seuilAlert.vars.errors %}
-            <div class="flex items-center">
-              <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-              </svg>
-              {{ error.message }}
-            </div>
-          {% endfor %}
-        </div>
-      {% endif %}
+  {# Champ SEUIL ALERT #}
+  <div>
+    {{ form_label(form.seuilAlert, null, {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-2'}}) }}
+    {{ form_widget(form.seuilAlert, {'attr': {
+      'class': 'w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-paw-orange focus:border-paw-orange ' ~ (form.seuilAlert.vars.errors|length > 0 ? 'border-red-500' : 'border-gray-300'),
+      'placeholder': '0',
+      'required': true,
+      'min': '0'
+    }}) }}
+    {% if form.seuilAlert.vars.errors|length > 0 %}
+      <div class="mt-2 text-sm text-red-600">
+        {% for error in form.seuilAlert.vars.errors %}
+          <div class="flex items-center">
+            <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            {{ error.message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+    <div class="text-xs text-gray-500 mt-1">
+      Une alerte sera déclenchée lorsque la quantité sera inférieure à ce seuil
     </div>
   </div>
   
-  <div class="flex gap-3 mt-4">
-    <button type="submit" class="px-4 py-2.5 bg-paw-orange text-white rounded-lg hover:bg-paw-orange-hover font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-paw-orange">
-      {{ submit_label|default('Save') }}
+  <div class="flex gap-4 pt-6 border-t border-gray-200">
+    <button type="submit" class="px-6 py-3 bg-paw-orange text-white rounded-lg hover:bg-paw-orange-hover font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-paw-orange transition-colors duration-200">
+      {{ submit_label|default('Enregistrer') }}
     </button>
-    <a href="#" class="px-4 py-2.5 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 js-modal-cancel">Cancel</a>
+    <a href="{{ path('app_eshop_produit_index') }}" class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 transition-colors duration-200">
+      Annuler
+    </a>
   </div>
   
   {{ form_end(form) }}
 </div>
 
-{# Script pour l'aperçu de l'image #}
+{# Script pour la validation et l'aperçu de l'image #}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  // Fonction pour afficher l'aperçu de l'image
-  window.previewImage = function(input) {
+  const form = document.getElementById('product-form');
+  
+  // Validation de l'image
+  window.validateImage = function(input) {
+    const errorElement = document.getElementById('image-error');
+    if (errorElement) {
+      errorElement.classList.add('hidden');
+    }
+    
     if (input.files && input.files[0]) {
-      const fileName = input.files[0].name;
-      const fileSize = (input.files[0].size / 1024 / 1024).toFixed(2); // MB
+      const file = input.files[0];
+      const fileName = file.name;
+      const fileSize = file.size;
+      const fileSizeMB = (fileSize / 1024 / 1024).toFixed(2);
+      const maxSize = 5 * 1024 * 1024; // 5MB
       
-      // Mettre à jour le nom du fichier
+      // Validation de la taille du fichier
+      if (fileSize > maxSize) {
+        if (errorElement) {
+          errorElement.textContent = `Le fichier est trop volumineux (${fileSizeMB} MB). La taille maximale est de 5 MB.`;
+          errorElement.classList.remove('hidden');
+        }
+        input.value = '';
+        hidePreview();
+        return false;
+      }
+      
+      // Validation du type de fichier
+      const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        if (errorElement) {
+          errorElement.textContent = 'Format de fichier non supporté. Veuillez sélectionner une image (JPG, PNG, GIF, WEBP).';
+          errorElement.classList.remove('hidden');
+        }
+        input.value = '';
+        hidePreview();
+        return false;
+      }
+      
+      // Mettre à jour les informations du fichier
       const filenameElement = document.getElementById('image-filename');
+      const sizeElement = document.getElementById('image-size');
+      
       if (filenameElement) {
-        filenameElement.textContent = `${fileName} (${fileSize} MB)`;
+        filenameElement.textContent = fileName;
+      }
+      if (sizeElement) {
+        sizeElement.textContent = `${fileSizeMB} MB`;
       }
       
       // Afficher l'aperçu de l'image
@@ -219,8 +281,114 @@ document.addEventListener('DOMContentLoaded', function() {
           previewContainer.classList.remove('hidden');
         }
       };
-      reader.readAsDataURL(input.files[0]);
+      reader.readAsDataURL(file);
+      return true;
     }
+    hidePreview();
+    return false;
   };
+  
+  // Cacher l'aperçu
+  function hidePreview() {
+    const previewContainer = document.getElementById('image-preview-container');
+    if (previewContainer) {
+      previewContainer.classList.add('hidden');
+    }
+  }
+  
+  // Validation en temps réel des champs
+  if (form) {
+    const inputs = form.querySelectorAll('input[required], select[required]');
+    
+    inputs.forEach(input => {
+      // Validation au blur
+      input.addEventListener('blur', function() {
+        validateField(this);
+      });
+      
+      // Validation en temps réel
+      input.addEventListener('input', function() {
+        clearFieldError(this);
+      });
+    });
+    
+    // Validation au submit
+    form.addEventListener('submit', function(event) {
+      if (!validateForm()) {
+        event.preventDefault();
+        showFormErrors();
+      }
+    });
+  }
+  
+  // Valider un champ individuel
+  function validateField(field) {
+    clearFieldError(field);
+    
+    if (field.hasAttribute('required') && !field.value.trim()) {
+      showFieldError(field, 'Ce champ est obligatoire');
+      return false;
+    }
+    
+    // Validation spécifique par type
+    if (field.type === 'number') {
+      const value = parseFloat(field.value);
+      if (field.hasAttribute('min') && value < parseFloat(field.getAttribute('min'))) {
+        showFieldError(field, `La valeur minimale est ${field.getAttribute('min')}`);
+        return false;
+      }
+    }
+    
+    return true;
+  }
+  
+  // Afficher erreur sur un champ
+  function showFieldError(field, message) {
+    field.classList.remove('border-gray-300');
+    field.classList.add('border-red-500');
+    
+    // Créer ou mettre à jour le message d'erreur
+    let errorElement = field.parentNode.querySelector('.field-error');
+    if (!errorElement) {
+      errorElement = document.createElement('div');
+      errorElement.className = 'mt-2 text-sm text-red-600 field-error';
+      field.parentNode.appendChild(errorElement);
+    }
+    errorElement.textContent = message;
+  }
+  
+  // Effacer erreur d'un champ
+  function clearFieldError(field) {
+    field.classList.remove('border-red-500');
+    field.classList.add('border-gray-300');
+    
+    const errorElement = field.parentNode.querySelector('.field-error');
+    if (errorElement) {
+      errorElement.remove();
+    }
+  }
+  
+  // Valider tout le formulaire
+  function validateForm() {
+    let isValid = true;
+    const inputs = form.querySelectorAll('input[required], select[required]');
+    
+    inputs.forEach(input => {
+      if (!validateField(input)) {
+        isValid = false;
+      }
+    });
+    
+    return isValid;
+  }
+  
+  // Afficher les erreurs du formulaire
+  function showFormErrors() {
+    const firstErrorField = form.querySelector('.border-red-500');
+    if (firstErrorField) {
+      firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      firstErrorField.focus();
+    }
+  }
 });
 </script>

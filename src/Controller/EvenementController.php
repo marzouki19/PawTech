@@ -22,32 +22,13 @@ final class EvenementController extends AbstractController
         $statut = $request->query->get('statut', '');
         $sort = $request->query->get('sort', 'dateDebut_DESC');
 
-        // Build query
-        $qb = $evenementRepository->createQueryBuilder('e');
-
-        // Search
-        if ($q) {
-            $qb->andWhere('e.titre LIKE :q OR e.lieu LIKE :q OR e.ville LIKE :q')
-               ->setParameter('q', '%' . $q . '%');
-        }
-
-        // Filter by type
-        if ($type) {
-            $qb->andWhere('e.type = :type')
-               ->setParameter('type', $type);
-        }
-
-        // Filter by statut
-        if ($statut) {
-            $qb->andWhere('e.statut = :statut')
-               ->setParameter('statut', $statut);
-        }
-
-        // Sort
-        [$sortField, $sortDir] = explode('_', $sort);
-        $qb->orderBy('e.' . $sortField, $sortDir);
-
-        $evenements = $qb->getQuery()->getResult();
+        // Use repository method for search/filter/sort
+        $evenements = $evenementRepository->findWithAdminFilters(
+            $q ?: null,
+            $type ?: null,
+            $statut ?: null,
+            $sort
+        );
 
         return $this->render('evenement/index.html.twig', [
             'evenements' => $evenements,

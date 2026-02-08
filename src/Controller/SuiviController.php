@@ -2,7 +2,6 @@
 
 namespace App\Controller;
 
-use App\Entity\Dogs;
 use App\Entity\Suivi;
 use App\Form\SuiviType;
 use App\Repository\SuiviRepository;
@@ -102,8 +101,8 @@ class SuiviController extends AbstractController
                     'prochaine_visite' => $suivi->getProchaineVisite() ? 
                         $suivi->getProchaineVisite()->format('d/m/Y H:i') : null,
                     'consultation_id' => $suivi->getConsultation() ? $suivi->getConsultation()->getId() : null,
-                    'Dogs_nom' => $suivi->getConsultation() && $suivi->getConsultation()->getDogs() ?
-                        $suivi->getConsultation()->getDogs()->getNom() : 'N/A',
+                    'dog_nom' => $suivi->getConsultation() && $suivi->getConsultation()->getDog() ?
+                        $suivi->getConsultation()->getDog()->getName() : 'N/A',
                 ];
             }
             
@@ -118,7 +117,7 @@ class SuiviController extends AbstractController
         }
     }
 
-    // AJAX: Recherche par état exact
+   
     #[Route('/search-by-etat', name: 'app_suivi_search_by_etat', methods: ['GET'])]
     public function searchByEtat(Request $request, SuiviRepository $suiviRepository): JsonResponse
     {
@@ -141,8 +140,8 @@ class SuiviController extends AbstractController
                     'prochaine_visite' => $suivi->getProchaineVisite() ? 
                         $suivi->getProchaineVisite()->format('d/m/Y H:i') : null,
                     'consultation_id' => $suivi->getConsultation() ? $suivi->getConsultation()->getId() : null,
-                    'Dogs_nom' => $suivi->getConsultation() && $suivi->getConsultation()->getDogs() ?
-                        $suivi->getConsultation()->getDogs()->getNom() : 'N/A',
+                    'chien_nom' => $suivi->getConsultation() && $suivi->getConsultation()->getChien() ?
+                        $suivi->getConsultation()->getChien()->getNom() : 'N/A',
                 ];
             }
             
@@ -156,7 +155,7 @@ class SuiviController extends AbstractController
         }
     }
 
-    // AJAX: Tri par date de prochaine visite
+   
     #[Route('/sort-by-date', name: 'app_suivi_sort_by_date', methods: ['GET'])]
     public function sortByDate(SuiviRepository $suiviRepository): JsonResponse
     {
@@ -174,8 +173,8 @@ class SuiviController extends AbstractController
                     'prochaine_visite' => $suivi->getProchaineVisite() ? 
                         $suivi->getProchaineVisite()->format('d/m/Y H:i') : null,
                     'consultation_id' => $suivi->getConsultation() ? $suivi->getConsultation()->getId() : null,
-                    'name' => $suivi->getConsultation() && $suivi->getConsultation()->getDogs() ?
-                        $suivi->getConsultation()->getDogs()->getNom() : 'N/A',
+                    'dog_nom' => $suivi->getConsultation() && $suivi->getConsultation()->getDog() ?
+                        $suivi->getConsultation()->getDog()->getName() : 'N/A',
                 ];
             }
             
@@ -193,13 +192,12 @@ class SuiviController extends AbstractController
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
         $suivi = new Suivi();
-        // NE PAS DÉFINIR L'ÉTAT PAR DÉFAUT - laisser l'utilisateur choisir
-        // $suivi->setEtat('Planifié'); // <-- LIGNE SUPPRIMÉE
+       
         
         $form = $this->createForm(SuiviType::class, $suivi);
         $form->handleRequest($request);
 
-        // VÉRIFICATION EXACTEMENT COMME DANS LE WORKSHOP (Figure 3)
+        
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->persist($suivi);
             $entityManager->flush();

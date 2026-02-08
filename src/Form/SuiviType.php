@@ -59,8 +59,8 @@ class SuiviType extends AbstractType
             ->add('prochaineVisite', DateTimeType::class, [
                 'label' => 'Date et heure de la prochaine visite',
                 'widget' => 'single_text',
-                'html5' => true, // <-- COMME DANS ConsultationType
-                'required' => false,
+                'html5' => true,
+                'required' => true, // CHANGÉ: false → true
                 'attr' => [
                     'class' => 'w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-paw-orange focus:border-paw-orange'
                 ]
@@ -71,8 +71,8 @@ class SuiviType extends AbstractType
                 'choice_label' => function (Consultation $consultation) {
                     $date = $consultation->getDate()->format('d/m/Y');
                     $type = $consultation->getType();
-                    $Dogs = $consultation->getDog() ? $consultation->getDog()->getName() : 'N/A';
-                    return "#{$consultation->getId()} - {$date} - {$type} ({$Dogs})";
+                    $dog = $consultation->getDog() ? $consultation->getDog()->getName() : 'N/A';
+                    return "#{$consultation->getId()} - {$date} - {$type} ({$dog})";
                 },
                 'placeholder' => 'Sélectionnez une consultation',
                 'attr' => [

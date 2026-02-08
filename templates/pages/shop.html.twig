@@ -226,15 +226,18 @@
                                     </p>
                                 {% endif %}
                                 
-                                <!-- Formulaire pour acheter -->
-                                <form method="post" action="{{ path('app_eshop_produit_buy', {id: p.id}) }}" class="mt-4 buy-form" data-product-id="{{ p.id }}">
-                                    <input type="hidden" name="token" value="{{ csrf_token('buy' ~ p.id) }}">
-                                    <input type="hidden" name="product_name" value="{{ p.nom }}">
-                                    <input type="hidden" name="product_price" value="{{ p.prix|number_format(2, ',', ' ') }}">
-                                    <input type="hidden" name="product_stock" value="{{ p.quantite|default(0) }}">
+                                <!-- FORMULAIRE POUR ACHETER AVEC TOKEN CSRF -->
+                                <form method="post" 
+                                      action="{{ path('app_eshop_produit_buy', {id: p.id}) }}" 
+                                      class="mt-4 buy-form" 
+                                      id="buy-form-{{ p.id }}">
+                                    <!-- TOKEN CSRF ESSENTIEL -->
+                                    <input type="hidden" name="_token" value="{{ csrf_token('buy_' ~ p.id) }}">
+                                    
                                     <button type="button" 
                                             class="w-full px-3 py-3 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition font-semibold buy-button {% if p.quantite <= 0 %}opacity-50 cursor-not-allowed{% endif %}"
                                             {% if p.quantite <= 0 %}disabled{% endif %}
+                                            data-product-id="{{ p.id }}"
                                             data-product-name="{{ p.nom }}"
                                             data-product-price="{{ p.prix|number_format(2, ',', ' ') }} TND"
                                             data-product-stock="{{ p.quantite|default(0) }}">
@@ -327,6 +330,27 @@
         </script>
     {% endif %}
 
+    <!-- Message d'erreur -->
+    {% if app.session.flashbag.peek('error')|length > 0 %}
+        <div id="errorMessage" class="fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50">
+            <div class="flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+                <span>{{ app.flashes('error')[0] }}</span>
+            </div>
+        </div>
+        <script>
+            // Masquer automatiquement le message après 3 secondes
+            setTimeout(function() {
+                document.getElementById('errorMessage').style.opacity = '0';
+                setTimeout(function() {
+                    document.getElementById('errorMessage').remove();
+                }, 500);
+            }, 3000);
+        </script>
+    {% endif %}
+
     <script>
     // Variables globales
     let currentFormToSubmit = null;
@@ -389,16 +413,20 @@
     // Fonction pour soumettre le formulaire après confirmation
     function submitPurchaseForm() {
         if (currentFormToSubmit) {
+            // Vérifier que le token CSRF est présent
+            const csrfToken = currentFormToSubmit.querySelector('input[name="_token"]');
+            if (!csrfToken || !csrfToken.value) {
+                showNotification('Security error: CSRF token missing!', 'error');
+                return;
+            }
+            
+            // Soumettre le formulaire
             currentFormToSubmit.submit();
         }
         closeCustomConfirm();
     }
     
-    // Fonctions auxiliaires
-    window.addToWishlist = function(productId) {
-        showNotification('Added to wishlist!', 'success');
-    };
-    
+    // Fonction pour afficher une notification
     function showNotification(message, type) {
         const toast = document.createElement('div');
         toast.className = `fixed top-4 right-4 px-4 py-2 rounded-lg shadow-lg z-50 ${
@@ -422,10 +450,11 @@
                 e.preventDefault();
                 
                 // Récupérer les données du produit
+                const productId = this.getAttribute('data-product-id');
                 const productName = this.getAttribute('data-product-name');
                 const productPrice = this.getAttribute('data-product-price');
                 const productStock = this.getAttribute('data-product-stock');
-                const formElement = this.closest('.buy-form');
+                const formElement = document.getElementById('buy-form-' + productId);
                 
                 // Vérifier si le produit est en stock
                 if (parseInt(productStock) <= 0) {

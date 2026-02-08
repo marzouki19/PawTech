@@ -21,7 +21,18 @@ final class DogsController extends AbstractController
     public function searchJson(Request $request, NormalizerInterface $normalizer, DogsRepository $dogsRepository): JsonResponse
     {
         $searchValue = $request->get('searchValue');
-        $dogs = $dogsRepository->searchDogs($searchValue) ;
+        $status = $request->get('status');
+        if ($status) {
+            $dogs = $dogsRepository->filterDogs($status, null, null);
+            if ($searchValue) {
+                $dogs = array_filter($dogs, function($dog) use ($searchValue) {
+                    return stripos($dog->getName(), $searchValue) !== false ||
+                           stripos($dog->getBreed(), $searchValue) !== false;
+                });
+            }
+        } else {
+            $dogs = $dogsRepository->searchDogs($searchValue);
+        }
         $jsonContent = $normalizer->normalize($dogs, 'json', ['groups' => 'dogs']);
         return new JsonResponse($jsonContent);
     }
@@ -78,10 +89,15 @@ final class DogsController extends AbstractController
     }
 
     #[Route('/{id}', name: 'app_dogs_show', methods: ['GET'])]
-    public function show(Dogs $dog): Response
+    public function show(Dogs $dog, \App\Repository\UserRepository $userRepository): Response
     {
+        $adopter = null;
+        if ($dog->getUser()) {
+            $adopter = $userRepository->findById($dog->getUser()->getId());
+        }
         return $this->render('dogs/show.html.twig', [
             'dog' => $dog,
+            'adopter' => $adopter,
         ]);
     }
 
