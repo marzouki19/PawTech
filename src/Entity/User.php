@@ -12,6 +12,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -19,18 +20,47 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 30)]
     #[Assert\NotBlank(message: "The Last name cannot be empty.")]
+    #[Assert\Length(
+        min: 2,
+        max: 30,
+        minMessage: "Le nom doit contenir au moins {{ limit }} caractères",
+        maxMessage: "Le nom ne peut pas dépasser {{ limit }} caractères"
+    )]
+    #[Assert\Regex(
+        pattern: "/^[a-zA-ZÀ-ÿ\s'-]+$/",
+        message: "Le nom ne peut contenir que des lettres, espaces, apostrophes ou tirets."
+    )]
     private ?string $nom = null;
 
     #[ORM\Column(length: 30)]
     #[Assert\NotBlank(message: "The first name cannot be empty.")]
+    #[Assert\Length(
+        min: 3,
+        max: 100,
+        minMessage: "Le prénom doit contenir au moins {{ limit }} caractères.",
+        maxMessage: "Le prénom ne peut pas dépasser {{ limit }} caractères."
+    )]
+    #[Assert\Regex(
+        pattern: "/^[a-zA-ZÀ-ÿ\s'-]+$/",
+        message: "Le prénom ne peut contenir que des lettres, espaces, apostrophes ou tirets."
+    )]
     private ?string $prenom = null;
 
     #[ORM\Column(length: 100)]
     #[Assert\NotBlank(message: "The email cannot be empty.")]
+    #[Assert\Email(message: "L'email '{{ value }}' n'est pas valide.")]
     private ?string $email = null;
 
     #[ORM\Column]
     #[Assert\NotBlank(message: "The phone number cannot be empty.")]
+    #[Assert\Regex(
+        pattern: "/^\d+$/",
+        message: "Le numéro de téléphone doit contenir uniquement des chiffres."
+    )]
+    #[Assert\Length(
+        exactMessage: "Le numéro de téléphone doit contenir exactement {{ limit }} caractères.",
+        exactly :8
+    )]
     private ?int $telephone = null;
 
     #[ORM\Column(length: 20)]
@@ -39,10 +69,24 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 10)]
     #[Assert\NotBlank(message: "The status cannot be empty.")]
+    #[Assert\Choice(
+        choices: ['Actif', 'Inactif','actif', 'inactif'],
+        message: "Le statut sélectionné n'est pas valide."
+    )]
     private ?string $status = null;
 
     #[ORM\Column(length: 100)]
     #[Assert\NotBlank(message: "The password cannot be empty.")]
+    #[Assert\Length(
+        min: 8,
+        max: 255,
+        minMessage: "Le mot de passe doit contenir au moins {{ limit }} caractères.",
+        maxMessage: "Le mot de passe ne peut pas dépasser {{ limit }} caractères."
+    )]
+    #[Assert\Regex(
+        pattern: "/^(?=.*[a-zA-Z])(?=.*\d).+$/",
+        message: "Le mot de passe doit contenir au moins une lettre et un chiffre."
+    )]
     private ?string $password = null;
 
     #[ORM\Column(length: 255)]

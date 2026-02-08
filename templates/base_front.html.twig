@@ -84,7 +84,7 @@
 
 
 
-            <!--<div class="border-b border-orange-100">
+            <div class="border-b border-orange-100">
                 <div class="container mx-auto px-4 lg:px-8 flex items-center justify-between gap-4 py-2 text-[13px] text-gray-600">
                     <div class="flex flex-wrap items-center gap-4">
                         <span class="flex items-center gap-1">
@@ -97,10 +97,17 @@
                         </span>
                     </div>
                     <div class="hidden md:block text-gray-500">
-                        8529 Fairground St. Tallahassee, FL 32303
+                        8529 Ariana tn. ghazela, TN 20303
                     </div>
                 </div>
-            </div>-->
+            </div>
+
+
+
+
+
+
+            
 
             {# Main nav bar #} 
             <div class="container mx-auto px-4 lg:px-8 py-4">
@@ -139,8 +146,9 @@
                                     <div class="relative dropdown">
                                         <button class="flex items-center space-x-2 focus:outline-none">
                                                 <div class="w-10 h-10 rounded-full user-avatar flex items-center justify-center text-white font-bold text-sm overflow-hidden">
-                                                    {% if user.userImage is defined and user.userImage %}
-                                                            <img src="{{ user.userImage }}" alt="Avatar" class="w-full h-full object-cover" />
+                                                    {% set avatarImage = user.userImage is defined and user.userImage ? asset(user.userImage) : null %}
+                                                    {% if avatarImage %}
+                                                        <img src="{{ avatarImage }}" alt="Avatar" class="w-full h-full object-cover" />
                                                     {% elseif user.prenom is defined and user.nom is defined %}
                                                         {{ user.prenom|first|upper }}{{ user.nom|first|upper }}
                                                     {% elseif user.email is defined %}
@@ -388,9 +396,8 @@
         <footer class="bg-white border-t mt-10">
             <div class="container mx-auto px-4 lg:px-8 py-10 grid gap-8 md:grid-cols-4 text-sm">
                 <div>
-                    <div class="flex items-center gap-2 mb-3">
-                        <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-orange-500 text-white font-bold text-lg">P</span>
-                        <span class="font-semibold text-gray-900">PawTech</span>
+                    <div class="flex items-center gap-2">
+                            <span><img src="{{ asset('logo.png') }}" alt="PawTech Logo" class="h-12"></span>
                     </div>
                     <p class="text-gray-500">
                         Caring pet shop offering quality products and services to keep your pets happy, healthy, and comfortable.
@@ -417,8 +424,8 @@
                 <div>
                     <h3 class="font-semibold text-gray-900 mb-3">Store</h3>
                     <p class="text-gray-500">
-                        8529 Fairground St.<br>
-                        Tallahassee, FL 32303
+                        8529 Ariana tn<br>
+                        . ghazela, TN 20303
                     </p>
                     <p class="mt-3 text-gray-500">
                         <span class="block">+216 58 458 152</span>

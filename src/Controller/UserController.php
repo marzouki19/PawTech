@@ -71,7 +71,7 @@ final class UserController extends AbstractController
 
 
 
-    #[Route('/user/new', name: 'app_user_new', methods: ['GET', 'POST'])]
+    #[Route('/user/new', name: 'app_users_create', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $entityManager, SluggerInterface $slugger, UserPasswordHasherInterface $passwordHasher): Response
     {
         $user = new User();
@@ -109,7 +109,7 @@ final class UserController extends AbstractController
 
 
 
-    #[Route('/user/edit/{id}', name: 'app_user_edit', methods: ['GET', 'POST'])]
+     #[Route('/user/edit/{id}', name: 'app_user_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, ManagerRegistry $managerRegistry, UserRepository $userRepository, SluggerInterface $slugger, UserPasswordHasherInterface $passwordHasher, int $id): Response
     {
         $entityManager = $managerRegistry->getManager();
@@ -134,7 +134,7 @@ final class UserController extends AbstractController
             $this->applyRoleNulls($user);
             $entityManager->flush();
 
-            return $this->redirectToRoute('app_user_index', [], Response::HTTP_SEE_OTHER);
+            return $this->redirectToRoute('app_users_index', [], Response::HTTP_SEE_OTHER);
         }
 
         return $this->render('user/edit.html.twig', [
@@ -151,9 +151,16 @@ final class UserController extends AbstractController
     #[Route('/user/{id}', name: 'app_user_delete', methods: ['POST'])]
     public function delete(Request $request, User $user, EntityManagerInterface $entityManager): Response
     {
-        if ($this->isCsrfTokenValid('delete'.$user->getId(), $request->getPayload()->getString('_token'))) {
-            $entityManager->remove($user);
-            $entityManager->flush();
+        $token = $request->request->getString('_token') ?: $request->getPayload()->getString('_token') ?: '';
+        if ($this->isCsrfTokenValid('delete'.$user->getId(), $token)) {
+            try {
+                $entityManager->remove($user);
+                $entityManager->flush();
+            } catch (\Throwable $e) {
+                $this->addFlash('error', User::DELETE_ERROR_MESSAGE);
+
+                return $this->redirectToRoute('app_user_edit', ['id' => $user->getId()], Response::HTTP_SEE_OTHER);
+            }
         }
 
         return $this->redirectToRoute('app_users_index', [], Response::HTTP_SEE_OTHER);
@@ -161,8 +168,8 @@ final class UserController extends AbstractController
 
 
 
-    
-    #[Route('/users/edit/{id}', name: 'app_users_edit', methods: ['GET', 'POST'])]
+    /*
+    #[Route('/users/edits/{id}', name: 'app_users_edit', methods: ['GET', 'POST'])]
     public function editUser(Request $request, UserRepository $userRepository, EntityManagerInterface $entityManager, SluggerInterface $slugger, UserPasswordHasherInterface $passwordHasher, int $id): Response
     {
         $user = $userRepository->find($id);
@@ -204,32 +211,7 @@ final class UserController extends AbstractController
         ]);
     }
 
-    private function renderEntity(
-        string $template,
-        string $pageTitle,
-        string $active,
-        array $columns,
-        array $rows,
-        string $modalTitle,
-        array $modalFields,
-        ?string $addHref = null,
-        array $extra = []
-    ): Response {
-        return $this->render($template, array_merge([
-            'page_title' => $pageTitle,
-            'active' => $active,
-            'entity_name' => $pageTitle,
-            'columns' => $columns,
-            'rows' => $rows,
-            'modal_title' => $modalTitle,
-            'modal_fields' => $modalFields,
-            'add_href' => $addHref,
-            'total_records' => count($rows),
-            'per_page' => 10,
-            'page' => 1,
-            'total_pages' => 1,
-        ], $extra));
-    }
+   */
 
     private function handleUserImageUpload(?UploadedFile $uploadedFile, User $user, SluggerInterface $slugger): void
     {
@@ -618,7 +600,32 @@ final class UserController extends AbstractController
 
 
 
-
+ private function renderEntity(
+        string $template,
+        string $pageTitle,
+        string $active,
+        array $columns,
+        array $rows,
+        string $modalTitle,
+        array $modalFields,
+        ?string $addHref = null,
+        array $extra = []
+    ): Response {
+        return $this->render($template, array_merge([
+            'page_title' => $pageTitle,
+            'active' => $active,
+            'entity_name' => $pageTitle,
+            'columns' => $columns,
+            'rows' => $rows,
+            'modal_title' => $modalTitle,
+            'modal_fields' => $modalFields,
+            'add_href' => $addHref,
+            'total_records' => count($rows),
+            'per_page' => 10,
+            'page' => 1,
+            'total_pages' => 1,
+        ], $extra));
+    }
 
 
     

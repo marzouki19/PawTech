@@ -14,13 +14,22 @@ class UserType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            ->add('nom')
-            ->add('prenom')
-            ->add('email')
+            ->add('nom', null, [
+                'required' => false,
+            ])
+
+            ->add('prenom', null, [
+                'required' => false,
+            ])
+
+            ->add('email', null, [
+                'required' => false,
+            ])
+
             ->add('telephone', null, [
                 'required' => false,
-                'error_bubbling' => false,
             ])
+
             ->add('role', ChoiceType::class, [
                 'choices' => [
                     'Client' => 'Client',
@@ -32,6 +41,7 @@ class UserType extends AbstractType
                 'required' => false,
                 'error_bubbling' => false,
             ])
+
             ->add('status', ChoiceType::class, [
                 'choices' => [
                     'Actif' => 'Actif',
@@ -41,27 +51,28 @@ class UserType extends AbstractType
                 'required' => false,
                 'error_bubbling' => false,
             ])
+
             ->add('password', null, [
                 'required' => false,
-                'error_bubbling' => false,
             ])
+        
             ->add('user_image', FileType::class, [
                 'label' => 'User image',
                 'mapped' => false,
                 'required' => false,
                 'error_bubbling' => false,
             ])
+            
             ->add('order_number', null, [
                 'required' => false,
-                'error_bubbling' => false,
             ])
+
             ->add('matricule', null, [
                 'required' => false,
-                'error_bubbling' => false,
             ])
+
             ->add('zone_affectee', null, [
                 'required' => false,
-                'error_bubbling' => false,
             ])
         ;
     }
@@ -70,6 +81,7 @@ class UserType extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => User::class,
+            'require_password' => false,
         ]);
     }
 }

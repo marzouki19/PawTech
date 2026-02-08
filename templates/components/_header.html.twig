@@ -1,6 +1,6 @@
 <header class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between gap-4 flex-shrink-0">
     <h1 class="text-xl font-bold text-gray-800">{{ page_title }}</h1>
-    <div class="flex items-center gap-4 flex-wrap">
+        <div class="flex items-center gap-4 flex-wrap">
         <div class="relative">
             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
@@ -15,14 +15,55 @@
             <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-paw-orange rounded-full"></span>
         </button>
         <div class="flex items-center gap-3 pl-2 border-l border-gray-200">
-            <div class="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 font-medium">MA</div>
-            <div>
-                <p class="font-medium text-gray-800 text-sm">Mohammed Amine</p>
-                <p class="text-gray-500 text-xs">Admin</p>
-            </div>
-            <button type="button" class="text-gray-400 hover:text-gray-600">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </button>
+            {% if app.user or app.session.get('user') %}
+                {% set user = app.user ? app.user : app.session.get('user') %}
+                <div class="relative dropdown">
+                    <button class="flex items-center space-x-3 focus:outline-none">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg shadow-md border-2 border-white overflow-hidden"
+                             style="background: linear-gradient(135deg, #f97316 0%, #fb923c 100%); box-shadow: 0 4px 12px rgba(249,115,22,0.15);">
+                            {% if user.userImage is defined and user.userImage %}
+                                <img src="/{{ user.userImage|replace({'\\':'/'}) }}" alt="Avatar" class="w-full h-full object-cover" />
+                            {% elseif user.user_image is defined and user.user_image %}
+                                <img src="/{{ user.user_image|replace({'\\':'/'}) }}" alt="Avatar" class="w-full h-full object-cover" />
+                            {% elseif user.prenom is defined and user.nom is defined %}
+                                <span class="tracking-wide">{{ user.prenom|first|upper }}{{ user.nom|first|upper }}</span>
+                            {% elseif user.email is defined %}
+                                <span class="tracking-wide">{{ user.email|first|upper }}</span>
+                            {% else %}
+                                <i class="fas fa-user"></i>
+                            {% endif %}
+                        </div>
+                        <div class="hidden sm:block">
+                            <p class="font-medium text-gray-800 text-sm flex items-center gap-2">
+                                {% if user.prenom is defined %}{{ user.prenom }}{% else %}My Account{% endif %}
+                                {% if is_granted('ADMIN') %}
+                                    <i class="fas fa-shield-alt text-red-500 text-xs ml-1"></i>
+                                {% elseif is_granted('ROLE_VETERINAIRE') %}
+                                    <i class="fas fa-stethoscope text-blue-500 text-xs ml-1"></i>
+                                {% elseif is_granted('ROLE_AGENT') %}
+                                    <i class="fas fa-user-tie text-purple-500 text-xs ml-1"></i>
+                                {% else %}
+                                    <i class="fas fa-user text-green-500 text-xs ml-1"></i>
+                                {% endif %}
+                            </p>
+                            <p class="text-gray-500 text-xs">
+                                {% if user.role is defined and user.role %}
+                                    {{ user.role|capitalize }}
+                                {% elseif is_granted('ADMIN') %}Admin
+                                {% elseif is_granted('ROLE_VETERINAIRE') %}Veterinarian
+                                {% elseif is_granted('ROLE_AGENT') %}Agent
+                                {% else %}Client
+                                {% endif %}
+                            </p>
+                        </div>
+                        <i class="fas fa-chevron-down text-gray-400 text-xs"></i>
+                    </button>
+
+                    
+                </div>
+            {% else %}
+                <a href="{{ path('app_signin') }}" class="px-4 py-2 text-sm font-semibold text-orange-600 hover:text-orange-700">Sign In</a>
+            {% endif %}
         </div>
     </div>
 </header>

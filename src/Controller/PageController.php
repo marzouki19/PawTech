@@ -4,6 +4,8 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Repository\UserRepository;
+use App\Form\UserType;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -133,26 +135,17 @@ final class PageController extends AbstractController
             return $this->redirectToRoute('app_signin');
         }
 
-        if ($request->isMethod('POST')) {
-            $prenom = trim((string) $request->request->get('prenom', ''));
-            $nom = trim((string) $request->request->get('nom', ''));
-            $email = trim((string) $request->request->get('email', ''));
-            $telephone = trim((string) $request->request->get('telephone', ''));
+        $form = $this->createForm(UserType::class, $user, [
+            'validation_groups' => ['Default'],
+        ]);
+        $form->handleRequest($request);
 
-            if ($prenom !== '') {
-                $user->setPrenom($prenom);
+        if ($form->isSubmitted() && $form->isValid()) {
+            // Handle avatar upload
+            $avatarFile = $form['user_image']->getData();
+            if ($avatarFile) {
+                $this->handleUserImageUpload($avatarFile, $user);
             }
-            if ($nom !== '') {
-                $user->setNom($nom);
-            }
-            if ($email !== '') {
-                $user->setEmail($email);
-            }
-            if ($telephone !== '' && ctype_digit($telephone)) {
-                $user->setTelephone((int) $telephone);
-            }
-
-            $this->handleUserImageUpload($request->files->get('avatar'), $user);
 
             $entityManager->flush();
 
@@ -171,6 +164,7 @@ final class PageController extends AbstractController
         }
 
         return $this->render('accountinfo/account.html.twig', [
+            'form' => $form->createView(),
             'user' => $user,
         ]);
     }

@@ -316,8 +316,8 @@
                                     <div class="relative dropdown">
                                         <button class="flex items-center space-x-2 focus:outline-none">
                                             <div class="w-8 h-8 rounded-full user-avatar flex items-center justify-center text-white font-bold text-sm overflow-hidden">
-                                                {% if user.userImage is defined and user.userImage %}
-                                                    <img src="{{ user.userImage }}" alt="Avatar" class="w-full h-full object-cover" />
+                                                {% if user.user_image is defined and user.user_image %}
+                                                    <img src="{{ user.user_image }}" alt="Avatar" class="w-full h-full object-cover" />
                                                 {% elseif user.prenom is defined and user.nom is defined %}
                                                     {{ user.prenom|first|upper }}{{ user.nom|first|upper }}
                                                 {% elseif user.email is defined %}
@@ -481,8 +481,8 @@
                             <div class="relative dropdown">
                                 <button class="flex items-center space-x-1 focus:outline-none">
                                     <div class="w-8 h-8 rounded-full user-avatar flex items-center justify-center text-white font-bold text-sm overflow-hidden">
-                                        {% if user.userImage is defined and user.userImage %}
-                                            <img src="{{ user.userImage }}" alt="Avatar" class="w-full h-full object-cover" />
+                                        {% if user.user_image is defined and user.user_image %}
+                                            <img src="{{ user.user_image }}" alt="Avatar" class="w-full h-full object-cover" />
                                         {% elseif user.prenom is defined and user.nom is defined %}
                                             {{ user.prenom|first|upper }}{{ user.nom|first|upper }}
                                         {% elseif user.email is defined %}
