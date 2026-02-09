@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\Alert;
 use App\Entity\ObservationStation;
 use App\Form\ObservationStationType;
 use App\Repository\ObservationStationRepository;
@@ -11,7 +12,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
+use Symfony\Component\Serializer\NormaliZerInterface;
 
 #[Route('/admin/stations')]
 final class ObservationStationController extends AbstractController
@@ -34,6 +35,19 @@ final class ObservationStationController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // Also create alert if new station is created as inactive
+            if ($observationStation->getStatut() === 'inactive') {
+                $alert = new Alert();
+                $alert->setType('TECHNICAL');
+                $alert->setMessage('Station ' . $observationStation->getCode() . ' is inactive');
+                $alert->setPrioritee(1);
+                $alert->setStatut('unread');
+                $alert->setDate(new \DateTime());
+                $alert->setStation($observationStation);
+                $alert->setUserId(null); // System-generated alert
+                $entityManager->persist($alert);
+            }
+
             $entityManager->persist($observationStation);
             $entityManager->flush();
 
@@ -48,7 +62,7 @@ final class ObservationStationController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}', name: 'app_admin_stations_show', methods: ['GET'], requirements: ['id' => '\\d+'])]
+    #[Route('/{id}', name: 'app_admin_stations_show', methods: ['GET'], requirements: ['id' => '\d+'])]
     public function show(ObservationStation $observationStation): Response
     {
         return $this->render('observation_station/show.html.twig', [
@@ -58,13 +72,28 @@ final class ObservationStationController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}/edit', name: 'app_admin_stations_edit', methods: ['GET', 'POST'], requirements: ['id' => '\\d+'])]
+    #[Route('/{id}/edit', name: 'app_admin_stations_edit', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
     public function edit(Request $request, ObservationStation $observationStation, EntityManagerInterface $entityManager): Response
     {
+        $oldStatut = $observationStation->getStatut();
         $form = $this->createForm(ObservationStationType::class, $observationStation);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // Check if station became inactive
+            if ($observationStation->getStatut() === 'inactive' && $oldStatut !== 'inactive') {
+                $alert = new Alert();
+                $alert->setType('TECHNICAL');
+                $alert->setMessage('Station ' . $observationStation->getCode() . ' is inactive');
+                $alert->setPrioritee(1);
+                $alert->setStatut('unread');
+                $alert->setDate(new \DateTime());
+                $alert->setStation($observationStation);
+                $alert->setUserId(null); // System-generated alert
+                
+                $entityManager->persist($alert);
+            }
+            
             $entityManager->flush();
 
             return $this->redirectToRoute('app_admin_stations', [], Response::HTTP_SEE_OTHER);
@@ -78,7 +107,7 @@ final class ObservationStationController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}', name: 'app_admin_stations_delete', methods: ['POST'], requirements: ['id' => '\\d+'])]
+    #[Route('/{id}', name: 'app_admin_stations_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function delete(Request $request, ObservationStation $observationStation, EntityManagerInterface $entityManager): Response
     {
         if ($this->isCsrfTokenValid('delete'.$observationStation->getId(), $request->getPayload()->getString('_token'))) {

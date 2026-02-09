@@ -23,7 +23,7 @@ class ObservationStation
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Assert\NotBlank]
+    #[Assert\NotBlank(message: 'Ce champ ne peut pas être vide')]
     #[Assert\Length(max: 255)]
     #[Assert\Regex(
         pattern: '/^\d{6}$/',
@@ -33,7 +33,7 @@ class ObservationStation
     private ?string $code = null;
 
     #[ORM\Column(length: 50)]
-    #[Assert\NotBlank]
+    #[Assert\NotBlank(message: 'Ce champ ne peut pas être vide')]
     #[Assert\Length(max: 50)]
     #[Assert\Regex(
         pattern: '/^[A-Za-z]+_[A-Za-z]+$/',
@@ -43,17 +43,17 @@ class ObservationStation
     private ?string $zone = null;
 
     #[ORM\Column(length: 255)]
-    #[Assert\NotBlank]
+    #[Assert\NotBlank(message: 'Ce champ ne peut pas être vide')]
     #[Assert\Length(max: 255)]
     #[Assert\Regex(
-        pattern: '/^-?\\d{1,3}\\.\\d+,\\s*-?\\d{1,3}\\.\\d+$/',
+        pattern: '/^-?\d{1,3}\.\d+,\s*-?\d{1,3}\.\d+$/',
         message: 'La localisation doit être au format "48.8566, 2.3522".'
     )]
     #[Groups(['stations'])]
     private ?string $localisation = null;
 
     #[ORM\Column(length: 50)]
-    #[Assert\NotBlank]
+    #[Assert\NotBlank(message: 'Ce champ ne peut pas être vide')]
     #[Assert\Length(max: 50)]
     #[Assert\Choice(
         choices: ['active', 'inactive', 'maintenance'],

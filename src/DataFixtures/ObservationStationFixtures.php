@@ -2,57 +2,88 @@
 
 namespace App\DataFixtures;
 
-use App\Entity\Alert;
 use App\Entity\ObservationStation;
-use DateTime;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
-use Faker\Factory;
 
 class ObservationStationFixtures extends Fixture
 {
     public function load(ObjectManager $manager): void
     {
-        $faker = Factory::create('fr_FR');
-        $statuses = ['active', 'inactive', 'maintenance'];
+        $stationsData = [
+            [
+                'code' => '123456',
+                'zone' => 'djerba_Nord',
+                'localisation' => '35.8765, 10.9876',
+                'statut' => 'active',
+            ],
+            [
+                'code' => '234567',
+                'zone' => 'djerba_Sud',
+                'localisation' => '35.6543, 10.7654',
+                'statut' => 'active',
+            ],
+            [
+                'code' => '345678',
+                'zone' => 'houmt_Souk',
+                'localisation' => '35.7890, 10.8765',
+                'statut' => 'active',
+            ],
+            [
+                'code' => '456789',
+                'zone' => 'midoun_Nord',
+                'localisation' => '35.9012, 10.7654',
+                'statut' => 'inactive',
+            ],
+            [
+                'code' => '567890',
+                'zone' => 'djerba_Nord',
+                'localisation' => '35.8901, 10.9987',
+                'statut' => 'maintenance',
+            ],
+            [
+                'code' => '678901',
+                'zone' => 'djerba_Sud',
+                'localisation' => '35.6789, 10.6543',
+                'statut' => 'active',
+            ],
+            [
+                'code' => '789012',
+                'zone' => 'houmt_Souk',
+                'localisation' => '35.7654, 10.8901',
+                'statut' => 'active',
+            ],
+            [
+                'code' => '890123',
+                'zone' => 'midoun_Nord',
+                'localisation' => '35.9234, 10.7890',
+                'statut' => 'active',
+            ],
+            [
+                'code' => '901234',
+                'zone' => 'djerba_Nord',
+                'localisation' => '35.8456, 10.9456',
+                'statut' => 'inactive',
+            ],
+            [
+                'code' => '012345',
+                'zone' => 'djerba_Sud',
+                'localisation' => '35.6123, 10.6789',
+                'statut' => 'active',
+            ],
+        ];
 
-        $stations = [];
-        for ($i = 0; $i < 15; $i++) {
+        foreach ($stationsData as $data) {
             $station = new ObservationStation();
-            $station->setCode($faker->unique()->numerify('######'));
-            $station->setZone($faker->randomElement(['djerba_Nord', 'djerba_Sud', 'houmt_Souk', 'midoun_Nord']));
-            $station->setLocalisation($faker->latitude() . ', ' . $faker->longitude());
-            $station->setStatut($faker->randomElement($statuses));
+
+            $station->setCode($data['code']);
+            $station->setZone($data['zone']);
+            $station->setLocalisation($data['localisation']);
+            $station->setStatut($data['statut']);
+
             $manager->persist($station);
-            $stations[] = $station;
         }
 
         $manager->flush();
-
-        $userId = null;
-        if (method_exists($manager, 'getConnection')) {
-            $userId = $manager->getConnection()->fetchOne('SELECT id FROM user ORDER BY id ASC LIMIT 1');
-        }
-
-        if ($userId) {
-            foreach ($stations as $station) {
-                if ($station->getStatut() !== 'inactive') {
-                    continue;
-                }
-
-                $alert = (new Alert())
-                    ->setType('TECHNICAL')
-                    ->setMessage(sprintf('Station %s is inactive', $station->getCode()))
-                    ->setPrioritee(1)
-                    ->setStatut('unread')
-                    ->setDate(new DateTime())
-                    ->setUserId((int) $userId)
-                    ->setStation($station);
-
-                $manager->persist($alert);
-            }
-
-            $manager->flush();
-        }
     }
 }

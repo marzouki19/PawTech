@@ -24,4 +24,14 @@ class ObservationStationRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    public function findInactiveStations(): array
+    {
+        return $this->createQueryBuilder('s')
+            ->where('s.statut = :statut')
+            ->setParameter('statut', 'inactive')
+            ->orderBy('s.id', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
 }

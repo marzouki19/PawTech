@@ -135,8 +135,40 @@
                             {{ _self.link('Veterinarian', 'app_veterinarian_page', current) }}
                             {{ _self.link('Events', 'app_events', current) }}
                             {{ _self.link('Donation', 'app_donation', current) }}
+                            {{ _self.link('Notifications', 'app_notifications', current) }}
                             {{ _self.link('Contact Us', 'app_contact', current) }}
                             {{ _self.link('About Us', 'app_about', current) }}
+                            
+                            {# Translate Button #}
+                            <span class="relative dropdown">
+                                <button class="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path>
+                                    </svg>
+                                    <span class="hidden sm:inline">Translate</span>
+                                    <i class="fas fa-chevron-down text-xs"></i>
+                                </button>
+                                <div class="dropdown-menu animate-fade-in w-40">
+                                    <a href="#" onclick="translatePage('en'); return false;" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                        <span class="mr-2">🇺🇸</span> English
+                                    </a>
+                                    <a href="#" onclick="translatePage('fr'); return false;" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                        <span class="mr-2">🇫🇷</span> Français
+                                    </a>
+                                    <a href="#" onclick="translatePage('es'); return false;" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                        <span class="mr-2">🇪🇸</span> Español
+                                    </a>
+                                    <a href="#" onclick="translatePage('de'); return false;" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                        <span class="mr-2">🇩🇪</span> Deutsch
+                                    </a>
+                                    <a href="#" onclick="translatePage('ar'); return false;" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                        <span class="mr-2">🇸🇦</span> العربية
+                                    </a>
+                                    <a href="#" onclick="translatePage('zh'); return false;" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                        <span class="mr-2">🇨🇳</span> 中文
+                                    </a>
+                                </div>
+                            </span>
                             
                             {# User Profile Section - MATCHES DASHBOARD STYLE #}
                             <span class="flex items-center gap-2 pl-2 border-l border-gray-200">
@@ -146,7 +178,12 @@
                                     <div class="relative dropdown">
                                         <button class="flex items-center space-x-2 focus:outline-none">
                                                 <div class="w-10 h-10 rounded-full user-avatar flex items-center justify-center text-white font-bold text-sm overflow-hidden">
-                                                    {% set avatarImage = user.userImage is defined and user.userImage ? asset(user.userImage) : null %}
+                                                    {% set avatarImage = null %}
+                                                    {% if user.userImage is defined and user.userImage and user.userImage != 'uploads/users/default.png' and user.userImage != 'uploads/users/default-user.png' %}
+                                                        {% set avatarImage = asset(user.userImage) %}
+                                                    {% elseif user.user_image is defined and user.user_image and user.user_image != 'uploads/users/default.png' and user.user_image != 'uploads/users/default-user.png' %}
+                                                        {% set avatarImage = asset(user.user_image) %}
+                                                    {% endif %}
                                                     {% if avatarImage %}
                                                         <img src="{{ avatarImage }}" alt="Avatar" class="w-full h-full object-cover" />
                                                     {% elseif user.prenom is defined and user.nom is defined %}
@@ -283,8 +320,14 @@
                             <div class="relative dropdown">
                                 <button class="flex items-center space-x-1 focus:outline-none">
                                             <div class="w-8 h-8 rounded-full user-avatar flex items-center justify-center text-white font-bold text-sm overflow-hidden">
-                                                {% if user.userImage is defined and user.userImage %}
-                                                        <img src="{{ user.userImage }}" alt="Avatar" class="w-full h-full object-cover" />
+                                                {% set avatarImage = null %}
+                                                {% if user.userImage is defined and user.userImage and user.userImage != 'uploads/users/default.png' and user.userImage != 'uploads/users/default-user.png' %}
+                                                    {% set avatarImage = asset(user.userImage) %}
+                                                {% elseif user.user_image is defined and user.user_image and user.user_image != 'uploads/users/default.png' and user.user_image != 'uploads/users/default-user.png' %}
+                                                    {% set avatarImage = asset(user.user_image) %}
+                                                {% endif %}
+                                                {% if avatarImage %}
+                                                    <img src="{{ avatarImage }}" alt="Avatar" class="w-full h-full object-cover" />
                                                 {% elseif user.prenom is defined and user.nom is defined %}
                                                     {{ user.prenom|first|upper }}{{ user.nom|first|upper }}
                                                 {% elseif user.email is defined %}
@@ -462,6 +505,94 @@
                     }, 5000);
                 });
             });
+            
+            // Toggle notification dropdown
+            function toggleNotifications() {
+                const dropdown = document.getElementById('notification-dropdown');
+                dropdown.classList.toggle('hidden');
+            }
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(event) {
+                const dropdown = document.getElementById('notification-dropdown');
+                const button = event.target.closest('button[onclick="toggleNotifications()"]');
+                if (!dropdown.contains(event.target) && !button) {
+                    dropdown.classList.add('hidden');
+                }
+            });
+            
+            // Translate page function
+            async function translatePage(targetLanguage) {
+                console.log('Translating to:', targetLanguage);
+                
+                const elementsToTranslate = [];
+                const walker = document.createTreeWalker(
+                    document.body,
+                    NodeFilter.SHOW_TEXT,
+                    null,
+                    false
+                );
+                
+                let node;
+                while (node = walker.nextNode()) {
+                    const text = node.textContent.trim();
+                    const parent = node.parentElement;
+                    
+                    // Skip script and style elements
+                    if (parent && parent.tagName !== 'SCRIPT' && parent.tagName !== 'STYLE') {
+                        // Skip very short or very long texts
+                        if (text && text.length > 1 && text.length < 5000) {
+                            // Skip texts that are just numbers or symbols
+                            if (!/^[\d\s\p{P}]+$/u.test(text)) {
+                                elementsToTranslate.push({ node: node, originalText: text });
+                            }
+                        }
+                    }
+                }
+                
+                console.log('Elements to translate:', elementsToTranslate.length);
+                
+                if (elementsToTranslate.length === 0) {
+                    console.log('No elements to translate');
+                    return;
+                }
+                
+                const texts = elementsToTranslate.map(el => el.originalText);
+                
+                try {
+                    console.log('Sending request to translation API...');
+                    const response = await fetch('http://127.0.0.1:5000/translate', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            texts: texts,
+                            target_language: targetLanguage
+                        })
+                    });
+                    
+                    console.log('Response status:', response.status);
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        console.log('Translation successful, received:', data.translated_texts.length, 'translations');
+                        
+                        elementsToTranslate.forEach((el, index) => {
+                            if (data.translated_texts[index]) {
+                                el.node.textContent = data.translated_texts[index];
+                            }
+                        });
+                    } else {
+                        const errorText = await response.text();
+                        console.error('Translation failed:', response.status, errorText);
+                        alert('Translation failed. Please make sure the translation server is running.');
+                    }
+                } catch (error) {
+                    console.error('Translation error:', error);
+                    alert('Translation error: ' + error.message + '. Please make sure the Flask translation server is running on port 5000.');
+                }
+            }
         </script>
     </body>
 </html>

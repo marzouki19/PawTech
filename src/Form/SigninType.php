@@ -18,7 +18,7 @@ use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\Email;
 use Symfony\Component\Validator\Constraints\Regex;
 
-class SignupType extends AbstractType
+class SigninType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {

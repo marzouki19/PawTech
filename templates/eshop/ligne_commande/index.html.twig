@@ -1,282 +1,248 @@
 {% extends 'layout.html.twig' %}
 
-{% block title %}Eshop - Lignes de commande | PawTech{% endblock %}
+{% block title %}Order Lines | PawTech{% endblock %}
+
+{% set active = 'order_lines' %}
+{% set page_title = 'Order Lines' %}
+
+{# Calculate records here so they're available in both main and javascripts blocks #}
+{% set total_records = lignes_commande|length %}
 
 {% block main %}
-<div data-controller="modal" class="space-y-4">
-  <!-- Barre de recherche et filtres -->
-  <div class="flex flex-wrap items-center gap-4 mb-4">
-    <!-- Barre de recherche -->
-    <form method="get" action="{{ path('app_eshop_ligne_commande_index') }}" class="relative flex-1 min-w-[200px]">
-      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-        </svg>
-      </span>
-      <input 
-        name="search" 
-        type="search" 
-        value="{{ app.request.query.get('search') }}" 
-        placeholder="Search by product name or order ID..." 
-        class="w-full pl-10 pr-10 py-2 border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-paw-orange focus:border-paw-orange outline-none"
-        onkeydown="if(event.key === 'Enter') this.form.submit()">
-      
-      {% if app.request.query.get('search') %}
-        <a href="{{ path('app_eshop_ligne_commande_index') }}" 
-           class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-           title="Clear search">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-          </svg>
-        </a>
-      {% endif %}
-      
-      <!-- Champs cachés pour conserver la pagination -->
-      <input type="hidden" name="per_page" value="{{ per_page }}">
-      <input type="hidden" name="page" value="{{ page }}">
-    </form>
-    
-    <!-- Bouton de filtrage par commande -->
-    <div class="relative">
-      <button type="button" 
-              class="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg bg-white text-gray-700 hover:bg-gray-50"
-              onclick="toggleOrderFilter()">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
-        </svg>
-        Filter by Order
-        {% if app.request.query.get('order_id') %}
-          <span class="ml-1 px-2 py-0.5 bg-paw-orange text-white text-xs rounded-full">
-            Order #{{ app.request.query.get('order_id') }}
-          </span>
-        {% endif %}
-      </button>
-      
-      <!-- Menu déroulant des commandes -->
-      <div id="order-filter-dropdown" 
-           class="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-10 hidden">
-        <div class="p-2">
-          <div class="text-xs font-semibold text-gray-500 px-2 py-1">Filter by order</div>
-          <div class="space-y-1">
-            <a href="{{ path('app_eshop_ligne_commande_index', app.request.query.all|merge({order_id: null})) }}"
-               class="flex items-center justify-between px-3 py-2 rounded hover:bg-gray-100 {% if not app.request.query.get('order_id') %}bg-blue-50 text-blue-700{% endif %}">
-              <span>All orders</span>
-              {% if not app.request.query.get('order_id') %}
-                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                </svg>
-              {% endif %}
-            </a>
-            <div class="border-t border-gray-100 pt-2">
-              <div class="text-xs font-semibold text-gray-500 px-2 py-1">Recent orders</div>
-              {# Pour simplifier, on pourrait faire une requête AJAX pour charger les commandes récentes #}
-              <div class="max-h-60 overflow-y-auto">
-                {# Les commandes seraient chargées dynamiquement via AJAX #}
-                <div class="px-3 py-2 text-sm text-gray-500 text-center">
-                  Enter order ID in search
+<div x-data="{
+    searchQuery: '',
+    deleteModalOpen: false,
+    deleteAction: '',
+    deleteToken: '',
+    deleteLabel: '',
+    openDelete(action, token, label) {
+        this.deleteAction = action;
+        this.deleteToken = token;
+        this.deleteLabel = label;
+        this.deleteModalOpen = true;
+    }
+}">
+    <div class="px-4 sm:px-6 lg:px-8 py-8 max-w-7xl mx-auto">
+        <!-- Page Header -->
+        <div class="bg-white rounded-2xl border border-gray-200 p-6 mb-8 shadow-sm">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                <div class="flex items-start gap-4 flex-1">
+                    <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-100">
+                        <svg class="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                    </div>
+                    <div>
+                        <nav class="flex items-center gap-2 text-sm text-gray-500 mb-1">
+                            <a href="#" class="hover:text-gray-700 transition">Dashboard</a>
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                            <span class="text-gray-900 font-medium">Order Lines</span>
+                        </nav>
+                        <h1 class="text-2xl font-bold text-gray-900">Order Line Management</h1>
+                        <p class="mt-1 text-sm text-gray-600 max-w-xl">Manage order line items, track quantities, and update product details.</p>
+                    </div>
                 </div>
-              </div>
+                <div class="flex items-center gap-3 flex-shrink-0 mt-4 lg:mt-0">
+                    <a href="{{ path('app_eshop_ligne_commande_new') }}"
+                       class="inline-flex items-center gap-2 rounded-lg bg-paw-orange px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-paw-orange-hover transition-colors">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Add Order Line
+                    </a>
+                </div>
             </div>
-            {% if app.request.query.get('order_id') %}
-              <div class="border-t border-gray-100 mt-1 pt-1">
-                <a href="{{ path('app_eshop_ligne_commande_index', app.request.query.all|merge({order_id: null})) }}"
-                   class="flex items-center px-3 py-2 rounded hover:bg-gray-100 text-red-600">
-                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                  </svg>
-                  Clear filter
-                </a>
-              </div>
-            {% endif %}
-          </div>
         </div>
-      </div>
-    </div>
-    
-    <!-- Bouton Add New -->
-    <a href="{{ path('app_eshop_ligne_commande_new') }}" 
-       class="inline-flex items-center gap-2 px-4 py-2 bg-paw-orange text-white rounded-lg hover:bg-paw-orange-hover font-medium" 
-       data-action="modal#open"
-       data-modal-url-param="{{ path('app_eshop_ligne_commande_new') }}">
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-      </svg>
-      New Order Line
-    </a>
-  </div>
 
-  <!-- Indicateurs de filtres actifs -->
-  {% if app.request.query.get('search') or app.request.query.get('order_id') %}
-    <div class="flex items-center gap-2 p-3 bg-blue-50 border border-blue-100 rounded-lg">
-      <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
-      </svg>
-      <span class="text-sm text-blue-700">
-        Active filters: 
-        {% if app.request.query.get('search') %}
-          <strong class="font-semibold">Search: "{{ app.request.query.get('search') }}"</strong>
-        {% endif %}
-        {% if app.request.query.get('search') and app.request.query.get('order_id') %} | {% endif %}
-        {% if app.request.query.get('order_id') %}
-          <strong class="font-semibold">Order: #{{ app.request.query.get('order_id') }}</strong>
-        {% endif %}
-        {% if rows|length > 0 %}
-          - Showing {{ rows|length }} of {{ total_records }} order lines
-        {% endif %}
-      </span>
-      {% if app.request.query.get('search') or app.request.query.get('order_id') %}
-        <a href="{{ path('app_eshop_ligne_commande_index') }}" class="ml-auto text-sm text-blue-600 hover:text-blue-800 font-medium">
-          Clear all filters
-        </a>
-      {% endif %}
-    </div>
-  {% endif %}
-  
-  <!-- Message si aucun résultat -->
-  {% if rows|length == 0 %}
-    <div class="text-center py-12 bg-white rounded-xl border border-gray-200">
-      <div class="text-gray-400 text-6xl mb-4">📋</div>
-      <p class="text-lg font-medium text-gray-700">No order lines found</p>
-      <p class="mt-2 text-gray-500">
-        {% if app.request.query.get('search') or app.request.query.get('order_id') %}
-          Try adjusting your search or filter criteria
-        {% else %}
-          No order lines have been created yet
-        {% endif %}
-      </p>
-      {% if app.request.query.get('search') or app.request.query.get('order_id') %}
-        <a href="{{ path('app_eshop_ligne_commande_index') }}" class="mt-4 inline-block px-6 py-2 bg-paw-orange text-white rounded-lg hover:bg-paw-orange-hover transition">
-          Clear filters
-        </a>
-      {% else %}
-        <a href="{{ path('app_eshop_ligne_commande_new') }}" 
-           class="mt-4 inline-flex items-center gap-2 px-6 py-2 bg-paw-orange text-white rounded-lg hover:bg-paw-orange-hover transition"
-           data-action="modal#open"
-           data-modal-url-param="{{ path('app_eshop_ligne_commande_new') }}">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-          </svg>
-          Create your first order line
-        </a>
-      {% endif %}
-    </div>
-  {% else %}
-    <!-- Tableau des lignes de commande -->
-    <div class="bg-white rounded-lg shadow overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
-            <tr>
-              {% for column in columns %}
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                {{ column }}
-              </th>
-              {% endfor %}
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            {% for row in rows %}
-            <tr class="hover:bg-gray-50">
-              {% for cell in row %}
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {{ cell|raw }}
-              </td>
-              {% endfor %}
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-      
-      <!-- Pagination -->
-      {% if total_pages > 1 %}
-      <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-        <div class="flex-1 flex justify-between sm:hidden">
-          {% if page > 1 %}
-          <a href="?page={{ page - 1 }}&per_page={{ per_page }}&search={{ app.request.query.get('search') }}" 
-             class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-            Previous
-          </a>
-          {% endif %}
-          {% if page < total_pages %}
-          <a href="?page={{ page + 1 }}&per_page={{ per_page }}&search={{ app.request.query.get('search') }}" 
-             class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-            Next
-          </a>
-          {% endif %}
+        <!-- FILTERS INLINE WITH SEARCH BAR -->
+        <div class="flex flex-col gap-2 mb-8">
+            <div class="flex flex-1 items-center gap-4 max-w-5xl">
+                <!-- Filters -->
+                <span class="text-sm font-semibold text-gray-700">Filters:</span>
+                <div class="relative">
+                    <select id="orderFilter" 
+                            class="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-900 focus:border-paw-orange focus:ring-2 focus:ring-paw-orange/30">
+                        <option value="">All Orders</option>
+                        {# Orders would be loaded dynamically #}
+                    </select>
+                </div>
+                <div class="flex gap-2">
+                    <button type="button" 
+                            id="applyFilters"
+                            class="inline-flex items-center gap-2 rounded-lg bg-paw-orange px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-paw-orange-hover transition-colors min-w-[120px]">
+                        Apply Filters
+                    </button>
+                    <button type="button" 
+                            id="clearFilters"
+                            class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors min-w-[120px]">
+                        Clear Filters
+                    </button>
+                </div>
+                <!-- Search -->
+                <form method="get" action="{{ path('app_eshop_ligne_commande_index') }}" class="relative flex-1 min-w-[200px]">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                  </span>
+                  <input 
+                    name="search" 
+                    type="search" 
+                    value="{{ app.request.query.get('search', '') }}" 
+                    placeholder="Search by product or order..." 
+                    class="w-full pl-10 pr-10 py-2 border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-paw-orange focus:border-paw-orange outline-none"
+                    onkeydown="if(event.key === 'Enter') this.form.submit()">
+                  
+                  {% if app.request.query.get('search') %}
+                    <a href="{{ path('app_eshop_ligne_commande_index', app.request.query.all|filter((v, k) => k != 'search')) }}" 
+                       class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                       title="Clear search">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                      </svg>
+                    </a>
+                  {% endif %}
+                  
+                  {% if app.request.query.get('order_id') %}
+                    <input type="hidden" name="order_id" value="{{ app.request.query.get('order_id') }}">
+                  {% endif %}
+                </form>
+            </div>
+            {% set has_active_filter = app.request.query.get('order_id') or app.request.query.get('search') %}
+            {% if has_active_filter %}
+            <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-sm text-gray-600">Active filters:</span>
+                {% if app.request.query.get('order_id') %}
+                    <span class="inline-flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
+                        Order: #{{ app.request.query.get('order_id') }}
+                        <a href="{{ path('app_eshop_ligne_commande_index', {search: app.request.query.get('search')}) }}" class="text-blue-500 hover:text-blue-700">&times;</a>
+                    </span>
+                {% endif %}
+                {% if app.request.query.get('search') %}
+                    <span class="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-700">
+                        Search: "{{ app.request.query.get('search') }}"
+                        <a href="{{ path('app_eshop_ligne_commande_index', {order_id: app.request.query.get('order_id')}) }}" class="text-yellow-500 hover:text-yellow-700">&times;</a>
+                    </span>
+                {% endif %}
+            </div>
+            {% endif %}
         </div>
-        
-        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-          <div>
-            <p class="text-sm text-gray-700">
-              Showing <span class="font-medium">{{ ((page - 1) * per_page) + 1 }}</span>
-              to <span class="font-medium">{{ min(page * per_page, total_records) }}</span>
-              of <span class="font-medium">{{ total_records }}</span> results
-            </p>
-          </div>
-          <div>
-            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-              {% if page > 1 %}
-              <a href="?page={{ page - 1 }}&per_page={{ per_page }}&search={{ app.request.query.get('search') }}" 
-                 class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                <span class="sr-only">Previous</span>
-                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-                </svg>
-              </a>
-              {% endif %}
-              
-              {% for p in range(max(1, page - 2), min(total_pages, page + 2)) %}
-              <a href="?page={{ p }}&per_page={{ per_page }}&search={{ app.request.query.get('search') }}" 
-                 class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium {% if p == page %}text-paw-orange bg-orange-50{% else %}text-gray-700 hover:bg-gray-50{% endif %}">
-                {{ p }}
-              </a>
-              {% endfor %}
-              
-              {% if page < total_pages %}
-              <a href="?page={{ page + 1 }}&per_page={{ per_page }}&search={{ app.request.query.get('search') }}" 
-                 class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                <span class="sr-only">Next</span>
-                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                </svg>
-              </a>
-              {% endif %}
-            </nav>
-          </div>
+
+        <!-- Overview Stats -->
+        <div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Total Order Lines</p>
+                <p class="mt-2 text-2xl font-bold text-gray-900">{{ total_records }}</p>
+            </div>
         </div>
-      </div>
-      {% endif %}
+
+        <!-- Order Lines Table -->
+        <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-100">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 w-[15%]">ID</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 w-[25%]">Product</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 w-[15%]">Order</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 w-[15%]">Quantity</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 w-[15%]">Price</th>
+                            <th class="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wide text-gray-500 w-[15%]">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="all">
+                        {% if lignes_commande is empty %}
+                            <tr>
+                                <td colspan="6" class="px-6 py-12 text-center">
+                                    <p class="text-sm font-semibold text-gray-600">No order lines registered yet.</p>
+                                    <p class="text-xs text-gray-400">Click "Add Order Line" to create the first record.</p>
+                                </td>
+                            </tr>
+                        {% else %}
+                            {% for ligne in lignes_commande %}
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 text-sm font-semibold text-gray-900">#{{ ligne.id }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-600">
+                                        {% if ligne.produit %}
+                                            {{ ligne.produit.nom }}
+                                        {% else %}
+                                            <span class="text-gray-400">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-600">
+                                        {% if ligne.commande %}
+                                            #{{ ligne.commande.id }}
+                                        {% else %}
+                                            <span class="text-gray-400">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td6 py-4 class="px- text-sm text-gray-600">{{ ligne.quantite }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-600">{{ ligne.prix }} TND</td>
+                                    <td class="px-6 py-4 text-right text-sm">
+                                        <a href="{{ path('app_eshop_ligne_commande_show', {'id': ligne.id}) }}"
+                                           class="text-gray-600 hover:text-gray-900 font-semibold">View</a>
+                                        <a href="{{ path('app_eshop_ligne_commande_edit', {'id': ligne.id}) }}"
+                                           class="ml-4 text-paw-orange hover:text-paw-orange-hover font-semibold">Edit</a>
+                                        <button type="button"
+                                                class="ml-4 text-red-600 hover:text-red-700 font-semibold"
+                                                @click="openDelete('{{ path('app_eshop_ligne_commande_delete', {'id': ligne.id}) }}', '{{ csrf_token('delete' ~ ligne.id) }}', '#' ~ ligne.id)">
+                                            Delete
+                                        </button>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% endif %}
+                    </tbody>
+                    <tbody id="filtertab" style="display: none;"></tbody>
+                    <tbody id="searchtab" style="display: none;"></tbody>
+                </table>
+            </div>
+        </div>
     </div>
-  {% endif %}
+
+    <!-- Delete Modal -->
+    <div x-show="deleteModalOpen"
+         class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
+         @click.self="deleteModalOpen = false"
+         @keydown.escape.window="deleteModalOpen = false"
+         style="display: none;"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95">
+        <div @click.stop class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4">
+            <div class="sticky top-0 bg-white border-b border-gray-200 px-8 py-6 rounded-t-2xl">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Delete Order Line</h2>
+                        <p class="mt-1 text-sm text-gray-600">Are you sure you want to delete order line <span class="font-semibold" x-text="deleteLabel"></span>?</p>
+                    </div>
+                    <button @click="deleteModalOpen = false" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="px-8 py-6">
+                <form method="post" :action="deleteAction">
+                    <input type="hidden" name="_token" :value="deleteToken">
+                    <div class="flex justify-end gap-3">
+                        <button type="button" @click="deleteModalOpen = false"
+                                class="px-6 py-2.5 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                            Cancel
+                        </button>
+                        <button type="submit"
+                                class="px-6 py-2.5 rounded-lg bg-red-600 text-sm font-semibold text-white shadow hover:bg-red-700">
+                            Delete
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 
-<script>
-// Gestion du dropdown de filtre par commande
-function toggleOrderFilter() {
-  const dropdown = document.getElementById('order-filter-dropdown');
-  dropdown.classList.toggle('hidden');
-}
-
-// Fermer le dropdown si on clique ailleurs
-document.addEventListener('click', function(event) {
-  const dropdown = document.getElementById('order-filter-dropdown');
-  const button = document.querySelector('[onclick="toggleOrderFilter()"]');
-  
-  if (dropdown && button) {
-    if (!dropdown.contains(event.target) && !button.contains(event.target)) {
-      dropdown.classList.add('hidden');
-    }
-  }
-});
-
-// Focus automatique sur le champ de recherche
-document.addEventListener('DOMContentLoaded', function() {
-  const searchInput = document.querySelector('input[name="search"]');
-  if (searchInput && searchInput.value) {
-    searchInput.focus();
-    searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
-  }
-});
-</script>
 {% endblock %}

@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Alert;
 use App\Form\AlertType;
 use App\Repository\AlertRepository;
+use App\Repository\ObservationStationRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -15,13 +16,44 @@ use Symfony\Component\Routing\Attribute\Route;
 final class AlertController extends AbstractController
 {
     #[Route('', name: 'app_admin_alerts', methods: ['GET'])]
-    public function index(AlertRepository $alertRepository): Response
+    public function index(AlertRepository $alertRepository, ObservationStationRepository $stationRepository): Response
     {
         return $this->render('alert/index.html.twig', [
             'alerts' => $alertRepository->findBy([], ['date' => 'DESC']),
+            'inactive_stations' => $stationRepository->findBy(['statut' => 'inactive']),
             'active' => 'alerts',
             'page_title' => 'Alerts',
         ]);
+    }
+
+    #[Route('/search', name: 'app_admin_alerts_search', methods: ['GET'])]
+    public function search(Request $request, AlertRepository $alertRepository): Response
+    {
+        $searchValue = $request->query->get('searchValue', '');
+        
+        $queryBuilder = $alertRepository->createQueryBuilder('a');
+        
+        if (!empty($searchValue)) {
+            $queryBuilder->andWhere('a.message LIKE :search OR a.type LIKE :search')
+                         ->setParameter('search', '%' . $searchValue . '%');
+        }
+        
+        $alerts = $queryBuilder->getQuery()->getResult();
+        
+        $result = [];
+        foreach ($alerts as $alert) {
+            $result[] = [
+                'id' => $alert->getId(),
+                'type' => $alert->getType(),
+                'message' => $alert->getMessage(),
+                'prioritee' => $alert->getPrioritee(),
+                'statut' => $alert->getStatut(),
+                'station_id' => $alert->getStation() ? $alert->getStation()->getId() : null,
+                'date' => $alert->getDate() ? $alert->getDate()->format('d/m/Y H:i') : '',
+            ];
+        }
+        
+        return $this->json($result);
     }
 
     #[Route('/new', name: 'app_admin_alerts_new', methods: ['GET', 'POST'])]

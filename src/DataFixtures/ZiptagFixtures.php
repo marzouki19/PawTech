@@ -4,7 +4,7 @@ namespace App\DataFixtures;
 
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
-use App\Entity\Ziptag; // ← change to your actual entity namespace/class name
+use App\Entity\Ziptag;
 
 class ZiptagFixtures extends Fixture
 {

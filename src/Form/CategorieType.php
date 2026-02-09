@@ -15,10 +15,9 @@ class CategorieType extends AbstractType
         $builder
             ->add('nom', TextType::class, [
                 'label' => 'Category Name',
-                'required' => false,
                 'attr' => [
                     'placeholder' => 'Enter category name',
-                    'class' => 'form-control'
+                    'required' => 'required'
                 ]
             ]);
     }

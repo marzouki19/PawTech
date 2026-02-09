@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Consultation;
 use App\Form\ConsultationType;
 use App\Repository\ConsultationRepository;
+use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -27,7 +28,7 @@ class ConsultationController extends AbstractController
 
 
     #[Route('/veterinaire', name: 'app_veterinaire_index', methods: ['GET'])]
-    public function indexfront(UserRepository $userRepository): Response
+    public function indexfront(): Response
     {
             return $this->render('pages/veterinarian.html.twig');
     }

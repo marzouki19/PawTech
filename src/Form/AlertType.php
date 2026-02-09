@@ -22,37 +22,58 @@ class AlertType extends AbstractType
             ->add('type', ChoiceType::class, [
                 'choices' => [
                     'TECHNICAL' => 'TECHNICAL',
-                    'SYSTEM' => 'SYSTEM',
-                    'INFO' => 'INFO',
                 ],
-                'constraints' => [new Assert\NotBlank()],
+                'constraints' => [
+                    new Assert\NotBlank([
+                        'message' => 'Ce champ ne peut pas être vide',
+                    ]),
+                ],
             ])
             ->add('message', TextareaType::class, [
-                'constraints' => [new Assert\NotBlank()],
+                'constraints' => [
+                    new Assert\NotBlank([
+                        'message' => 'Ce champ ne peut pas être vide',
+                    ]),
+                ],
             ])
             ->add('prioritee', IntegerType::class, [
-                'constraints' => [new Assert\NotBlank()],
+                'constraints' => [
+                    new Assert\NotBlank([
+                        'message' => 'Ce champ ne peut pas être vide',
+                    ]),
+                    new Assert\Positive([
+                        'message' => 'Ce champ doit être un nombre positif',
+                    ]),
+                ],
             ])
             ->add('statut', ChoiceType::class, [
                 'choices' => [
                     'unread' => 'unread',
                     'read' => 'read',
                 ],
-                'constraints' => [new Assert\NotBlank()],
+                'constraints' => [
+                    new Assert\NotBlank([
+                        'message' => 'Ce champ ne peut pas être vide',
+                    ]),
+                ],
             ])
             ->add('date', DateTimeType::class, [
                 'widget' => 'single_text',
-                'constraints' => [new Assert\NotBlank()],
-            ])
-            ->add('userId', IntegerType::class, [
-                'label' => 'User ID',
-                'constraints' => [new Assert\NotBlank()],
+                'constraints' => [
+                    new Assert\NotBlank([
+                        'message' => 'Ce champ ne peut pas être vide',
+                    ]),
+                ],
             ])
             ->add('station', EntityType::class, [
                 'class' => ObservationStation::class,
                 'choice_label' => 'code',
-                'placeholder' => 'Select a station',
-                'constraints' => [new Assert\NotBlank()],
+                'placeholder' => 'Sélectionnez une station',
+                'constraints' => [
+                    new Assert\NotBlank([
+                        'message' => 'Ce champ ne peut pas être vide',
+                    ]),
+                ],
             ])
         ;
     }

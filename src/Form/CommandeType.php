@@ -18,7 +18,6 @@ class CommandeType extends AbstractType
             ->add('date', DateType::class, [
                 'label' => 'Date',
                 'widget' => 'single_text',
-                'required' => false, // Désactive validation HTML5
                 'format' => 'dd/MM/yyyy',
                 'html5' => false,
                 'attr' => [
@@ -30,7 +29,11 @@ class CommandeType extends AbstractType
             ])
             ->add('total', NumberType::class, [
                 'label' => 'Total (TND)',
-                'required' => false, // Désactive validation HTML5
+                'attr' => [
+                    'step' => '0.01'
+                ],
+                'scale' => 2,
+                'html5' => true,
             ])
             ->add('statut', CheckboxType::class, [
                 'label' => 'Order delivered / completed',

@@ -21,7 +21,6 @@ class LigneCommandeType extends AbstractType
                 'class' => Produit::class,
                 'choice_label' => 'nom',
                 'placeholder' => 'Select a product',
-                'required' => false, // Désactive validation HTML5
                 'attr' => [
                     'class' => 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-paw-orange focus:border-paw-orange'
                 ]
@@ -32,20 +31,17 @@ class LigneCommandeType extends AbstractType
                     return 'Order #' . $commande->getId() . ' - ' . $commande->getDate()->format('d/m/Y');
                 },
                 'placeholder' => 'Select an order',
-                'required' => false, // Désactive validation HTML5
                 'attr' => [
                     'class' => 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-paw-orange focus:border-paw-orange'
                 ]
             ])
             ->add('quantite', IntegerType::class, [
-                'required' => false, // Désactive validation HTML5
                 'attr' => [
                     'class' => 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-paw-orange focus:border-paw-orange',
                     'placeholder' => '1'
                 ]
             ])
             ->add('prixUnitaire', NumberType::class, [
-                'required' => false, // Désactive validation HTML5
                 'scale' => 2,
                 'attr' => [
                     'class' => 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-paw-orange focus:border-paw-orange',

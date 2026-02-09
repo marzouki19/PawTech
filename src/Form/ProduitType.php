@@ -23,51 +23,60 @@ class ProduitType extends AbstractType
             ->add('nom', TextType::class, [
                 'label' => 'Nom du produit',
                 'attr' => [
-                    'placeholder' => 'Entrez le nom du produit'
+                    'placeholder' => 'Entrez le nom du produit',
+                    'required' => 'required'
                 ]
             ])
             ->add('prix', NumberType::class, [
                 'label' => 'Prix',
                 'attr' => [
                     'placeholder' => '0.00',
-                    'step' => '0.01'
-                ]
+                    'step' => '0.01',
+                    'min' => '0.01',
+                    'required' => 'required'
+                ],
+                'scale' => 2,
+                'html5' => true,
             ])
             ->add('categorie', EntityType::class, [
                 'label' => 'Catégorie',
                 'class' => Categorie::class,
                 'choice_label' => 'nom',
-                'placeholder' => 'Sélectionnez une catégorie'
+                'placeholder' => 'Sélectionnez une catégorie',
+                'attr' => [
+                    'required' => 'required'
+                ]
             ])
             ->add('image', FileType::class, [
-    'label' => 'Image du produit',
-    'required' => false, 
-    'mapped' => false, 
-    'constraints' => [
-        new File([
-            'maxSize' => '5M',
-            'mimeTypes' => ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
-            'mimeTypesMessage' => 'Veuillez télécharger une image valide',
-        ])
-    ],
-    // Ces attributs rendent le champ plus user-friendly
-    'attr' => [
-        'accept' => 'image/*',
-        'class' => 'file-input'
-    ]
-])
+                'label' => 'Image du produit',
+                'required' => false, 
+                'mapped' => false, 
+                'constraints' => [
+                    new File([
+                        'maxSize' => '5M',
+                        'maxSizeMessage' => 'L\'image est trop lourde ({{ size }} {{ suffix }}). La taille maximale est de {{ limit }} {{ suffix }}',
+                        'mimeTypes' => ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+                        'mimeTypesMessage' => 'Veuillez télécharger une image valide (JPEG, PNG, GIF, WEBP)',
+                    ])
+                ],
+                'attr' => [
+                    'accept' => 'image/*'
+                ]
+            ])
             ->add('quantite', IntegerType::class, [
                 'label' => 'Quantité',
                 'attr' => [
                     'placeholder' => '0',
-                    'min' => 0
+                    'min' => '0',
+                    'required' => 'required'
                 ]
             ])
             ->add('seuilAlert', IntegerType::class, [
                 'label' => 'Seuil d\'alerte',
                 'attr' => [
                     'placeholder' => '0',
-                    'min' => 0
+                    'min' => '0',
+                    'required' => 'required'
                 ]
             ]);
     }

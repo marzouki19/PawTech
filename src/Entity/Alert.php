@@ -16,37 +16,34 @@ class Alert
     private ?int $id = null;
 
     #[ORM\Column(length: 50)]
-    #[Assert\NotBlank]
+    #[Assert\NotBlank(message: 'Ce champ ne peut pas être vide')]
     #[Assert\Length(max: 50)]
-    #[Assert\Choice(choices: ['TECHNICAL', 'SYSTEM', 'INFO'])]
+    #[Assert\Choice(choices: ['TECHNICAL'], message: 'Le type doit être TECHNICAL')]
     private ?string $type = null;
 
     #[ORM\Column(type: Types::TEXT)]
-    #[Assert\NotBlank]
+    #[Assert\NotBlank(message: 'Ce champ ne peut pas être vide')]
     private ?string $message = null;
 
     #[ORM\Column]
-    #[Assert\NotNull]
-    #[Assert\PositiveOrZero]
+    #[Assert\NotBlank(message: 'Ce champ ne peut pas être vide')]
+    #[Assert\Positive(message: 'Ce champ doit être un nombre positif')]
     private ?int $prioritee = null;
 
     #[ORM\Column(length: 50)]
-    #[Assert\NotBlank]
-    #[Assert\Choice(choices: ['unread', 'read'])]
+    #[Assert\NotBlank(message: 'Ce champ ne peut pas être vide')]
+    #[Assert\Choice(choices: ['unread', 'read'], message: 'Le statut doit être "unread" ou "read"')]
     private ?string $statut = null;
 
     #[ORM\Column]
-    #[Assert\NotNull]
+    #[Assert\NotBlank(message: 'Ce champ ne peut pas être vide')]
     private ?\DateTime $date = null;
 
-    #[ORM\Column(name: 'user_id')]
-    #[Assert\NotNull]
-    #[Assert\Positive]
+    #[ORM\Column(name: 'user_id', nullable: true)]
     private ?int $userId = null;
 
     #[ORM\ManyToOne(inversedBy: 'alerts')]
     #[ORM\JoinColumn(nullable: false)]
-    #[Assert\NotNull]
     private ?ObservationStation $station = null;
 
     public function getId(): ?int
@@ -131,7 +128,7 @@ class Alert
         return $this->userId;
     }
 
-    public function setUserId(int $userId): static
+    public function setUserId(?int $userId): static
     {
         $this->userId = $userId;
 
