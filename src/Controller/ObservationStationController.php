@@ -12,16 +12,24 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Serializer\NormaliZerInterface;
+use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
 #[Route('/admin/stations')]
 final class ObservationStationController extends AbstractController
 {
     #[Route('', name: 'app_admin_stations', methods: ['GET'])]
-    public function index(ObservationStationRepository $observationStationRepository): Response
+    public function index(ObservationStationRepository $observationStationRepository, Request $request): Response
     {
+        $statut = $request->query->get('statut');
+        
+        if ($statut) {
+            $stations = $observationStationRepository->findBy(['statut' => $statut]);
+        } else {
+            $stations = $observationStationRepository->findAll();
+        }
+        
         return $this->render('observation_station/index.html.twig', [
-            'observation_stations' => $observationStationRepository->findAll(),
+            'observation_stations' => $stations,
             'active' => 'station',
             'page_title' => 'Stations',
         ]);

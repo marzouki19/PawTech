@@ -2,8 +2,8 @@
   <div class="flex justify-between items-center">
     <h1 class="text-xl font-bold text-gray-800">{{ page_title }}</h1>
     <div class="flex gap-2">
-      <a href="{{ path('app_donation_edit', { id: donation.id }) }}" class="px-4 py-2 bg-paw-orange text-white rounded-lg hover:bg-paw-orange-hover js-modal-link">Modify</a>
-      <a href="#" class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 js-modal-cancel">Back</a>
+      <a href="{{ path('app_donation_edit', { id: donation.id }) }}" class="px-4 py-2 bg-paw-orange text-white rounded-lg hover:bg-paw-orange-hover">Edit</a>
+      <a href="{{ path('app_donation_index') }}" class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50">Back</a>
     </div>
   </div>
   <div class="bg-white rounded-xl border border-gray-200 p-6">

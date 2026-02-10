@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller\Eshop;
+namespace App\Controller;
 
 use App\Entity\Produit;
 use App\Form\ProduitType;
@@ -10,6 +10,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\Routing\Attribute\Route;
 
 #[Route('/dashboard/eshop/produits')]
@@ -18,16 +19,13 @@ class ProduitController extends AbstractController
     private function uploadImage($imageFile, $oldImage = null)
     {
         if ($imageFile) {
-            // Génère un nom unique pour le fichier
             $newFilename = uniqid().'.'.$imageFile->guessExtension();
             
-            // Déplace le fichier dans le répertoire d'upload
             $imageFile->move(
                 $this->getParameter('kernel.project_dir').'/public/uploads/images',
                 $newFilename
             );
             
-            // Supprime l'ancienne image si elle existe et si elle est différente de la nouvelle
             if ($oldImage && $oldImage !== $newFilename) {
                 $oldImagePath = $this->getParameter('kernel.project_dir').'/public/uploads/images/'.$oldImage;
                 if (file_exists($oldImagePath)) {
@@ -38,7 +36,7 @@ class ProduitController extends AbstractController
             return $newFilename;
         }
         
-        return $oldImage; // Garde l'ancienne image si aucune nouvelle n'est fournie
+        return $oldImage;
     }
 
     private function deleteImage($imageName)
@@ -54,7 +52,6 @@ class ProduitController extends AbstractController
     #[Route('', name: 'app_eshop_produit_index', methods: ['GET'])]
     public function index(Request $request, ProduitRepository $produitRepository, CategorieRepository $categorieRepository): Response
     {
-        // Récupérer les filtres depuis la requête
         $search = $request->query->get('search', '');
         $category = $request->query->get('category', '');
         $stockStatus = $request->query->get('stock_status', '');
@@ -63,11 +60,9 @@ class ProduitController extends AbstractController
         $page = max(1, (int) $request->query->get('page', 1));
         $perPage = 20;
 
-        // Créer le query builder de base
         $qb = $produitRepository->createQueryBuilder('p')
             ->leftJoin('p.categorie', 'c');
 
-        // Appliquer les filtres
         if ($search) {
             $qb->andWhere('p.nom LIKE :search')
                ->setParameter('search', '%' . $search . '%');
@@ -78,7 +73,6 @@ class ProduitController extends AbstractController
                ->setParameter('categoryId', $category);
         }
 
-        // Filtrer par statut de stock
         if ($stockStatus && $stockStatus !== 'all') {
             switch ($stockStatus) {
                 case 'in_stock':
@@ -93,7 +87,6 @@ class ProduitController extends AbstractController
             }
         }
 
-        // Filtrer par fourchette de prix
         if ($priceRange && $priceRange !== 'all') {
             switch ($priceRange) {
                 case '0-50':
@@ -111,7 +104,6 @@ class ProduitController extends AbstractController
             }
         }
 
-        // Appliquer le tri
         switch ($sort) {
             case 'id_asc':
                 $qb->orderBy('p.id', 'ASC');
@@ -132,7 +124,6 @@ class ProduitController extends AbstractController
                 $qb->orderBy('p.id', 'DESC');
         }
 
-        // Pagination
         $totalQuery = clone $qb;
         $total = $totalQuery->select('COUNT(p.id)')->getQuery()->getSingleScalarResult();
         
@@ -143,17 +134,14 @@ class ProduitController extends AbstractController
         $produits = $qb->getQuery()->getResult();
         $totalPages = ceil($total / $perPage);
 
-        // Récupérer toutes les catégories pour le filtre
         $categories_for_filter = $categorieRepository->findAll();
 
-        // Préparer les données pour le tableau
         $columns = ['ID', 'Name', 'Price', 'Image', 'Category', 'Stock', 'Actions'];
         $rows = [];
         foreach ($produits as $p) {
             $qte = $p->getQuantite() ?? '-';
             $alerte = ($p->getSeuilAlert() !== null && $p->getSeuilAlert() > 0 && $p->getQuantite() !== null && $p->getQuantite() <= $p->getSeuilAlert()) ? ' ⚠' : '';
             
-            // Afficher l'image dans le tableau
             $imageDisplay = '-';
             if ($p->getImage()) {
                 $imageUrl = $this->generateUrl('app_uploads_images', ['filename' => $p->getImage()]);
@@ -167,11 +155,11 @@ class ProduitController extends AbstractController
                 $imageDisplay,
                 ($p->getCategorie() ? $p->getCategorie()->getNom() : '-'),
                 ($qte . $alerte),
-                $this->renderView('eshop/produit/_actions.html.twig', ['produit' => $p]),
+                $this->renderView('produit/_actions.html.twig', ['produit' => $p]),
             ];
         }
 
-        return $this->render('eshop/produit/index.html.twig', [
+        return $this->render('produit/index.html.twig', [
             'active' => 'eshop_produits',
             'page_title' => 'Eshop - Products',
             'entity_name' => 'Product',
@@ -200,9 +188,8 @@ class ProduitController extends AbstractController
         $form = $this->createForm(ProduitType::class, $produit);
         $form->handleRequest($request);
 
-        // Ajax GET -> fragment
         if ($request->isXmlHttpRequest() && !$form->isSubmitted()) {
-            return $this->render('eshop/produit/_form_content.html.twig', [
+            return $this->render('produit/_form_content.html.twig', [
                 'page_title' => 'New product',
                 'produit' => $produit,
                 'form' => $form->createView(),
@@ -214,7 +201,6 @@ class ProduitController extends AbstractController
         if ($form->isSubmitted()) {
             if ($form->isValid()) {
                 try {
-                    // Gérer l'upload de l'image
                     $imageFile = $form->get('image')->getData();
                     if ($imageFile) {
                         $newFilename = $this->uploadImage($imageFile);
@@ -245,9 +231,8 @@ class ProduitController extends AbstractController
                     $this->addFlash('error', 'Error creating product: ' . $e->getMessage());
                 }
             } else {
-                // Pour AJAX : retourner le formulaire avec les erreurs
                 if ($request->isXmlHttpRequest()) {
-                    return $this->render('eshop/produit/_form_content.html.twig', [
+                    return $this->render('produit/_form_content.html.twig', [
                         'page_title' => 'New product',
                         'produit' => $produit,
                         'form' => $form->createView(),
@@ -256,8 +241,7 @@ class ProduitController extends AbstractController
                     ]);
                 }
                 
-                // Pour non-AJAX : afficher le formulaire avec erreurs
-                return $this->render('eshop/produit/form.html.twig', [
+                return $this->render('produit/form.html.twig', [
                     'active' => 'eshop_produits',
                     'page_title' => 'New product',
                     'produit' => $produit,
@@ -267,8 +251,7 @@ class ProduitController extends AbstractController
             }
         }
         
-        // Non-AJAX GET request (fallback)
-        return $this->render('eshop/produit/form.html.twig', [
+        return $this->render('produit/form.html.twig', [
             'active' => 'eshop_produits',
             'page_title' => 'New product',
             'produit' => $produit,
@@ -281,13 +264,13 @@ class ProduitController extends AbstractController
     public function show(Request $request, Produit $produit): Response
     {
         if ($request->isXmlHttpRequest()) {
-            return $this->render('eshop/produit/_show_content.html.twig', [
+            return $this->render('produit/_show_content.html.twig', [
                 'page_title' => 'Product: ' . $produit->getNom(),
                 'produit' => $produit,
             ]);
         }
 
-        return $this->render('eshop/produit/show.html.twig', [
+        return $this->render('produit/show.html.twig', [
             'active' => 'eshop_produits',
             'page_title' => 'Product: ' . $produit->getNom(),
             'produit' => $produit,
@@ -297,15 +280,13 @@ class ProduitController extends AbstractController
     #[Route('/{id}/edit', name: 'app_eshop_produit_edit', requirements: ['id' => '\d+'], methods: ['GET','POST'])]
     public function edit(Request $request, Produit $produit, EntityManagerInterface $em): Response
     {
-        // Sauvegarder l'ancienne image avant de gérer le formulaire
         $oldImage = $produit->getImage();
         
         $form = $this->createForm(ProduitType::class, $produit);
         $form->handleRequest($request);
 
-        // Ajax GET -> fragment
         if ($request->isXmlHttpRequest() && !$form->isSubmitted()) {
-            return $this->render('eshop/produit/_form_content.html.twig', [
+            return $this->render('produit/_form_content.html.twig', [
                 'page_title' => 'Modify product',
                 'produit' => $produit,
                 'form' => $form->createView(),
@@ -317,7 +298,6 @@ class ProduitController extends AbstractController
         if ($form->isSubmitted()) {
             if ($form->isValid()) {
                 try {
-                    // Gérer l'upload de l'image
                     $imageFile = $form->get('image')->getData();
                     if ($imageFile) {
                         $newFilename = $this->uploadImage($imageFile, $oldImage);
@@ -347,9 +327,8 @@ class ProduitController extends AbstractController
                     $this->addFlash('error', 'Error updating product: ' . $e->getMessage());
                 }
             } else {
-                // Pour AJAX : retourner le formulaire avec les erreurs
                 if ($request->isXmlHttpRequest()) {
-                    return $this->render('eshop/produit/_form_content.html.twig', [
+                    return $this->render('produit/_form_content.html.twig', [
                         'page_title' => 'Modify product',
                         'produit' => $produit,
                         'form' => $form->createView(),
@@ -358,8 +337,7 @@ class ProduitController extends AbstractController
                     ]);
                 }
                 
-                // Pour non-AJAX : afficher le formulaire avec erreurs
-                return $this->render('eshop/produit/form.html.twig', [
+                return $this->render('produit/form.html.twig', [
                     'active' => 'eshop_produits',
                     'page_title' => 'Modify product',
                     'produit' => $produit,
@@ -369,8 +347,7 @@ class ProduitController extends AbstractController
             }
         }
 
-        // Non-AJAX GET request (fallback)
-        return $this->render('eshop/produit/form.html.twig', [
+        return $this->render('produit/form.html.twig', [
             'active' => 'eshop_produits',
             'page_title' => 'Modify product',
             'produit' => $produit,
@@ -384,7 +361,6 @@ class ProduitController extends AbstractController
     {
         if ($this->isCsrfTokenValid('delete' . $produit->getId(), (string) $request->request->get('_token'))) {
             try {
-                // Supprimer l'image associée
                 $this->deleteImage($produit->getImage());
                 
                 $em->remove($produit);
@@ -422,25 +398,22 @@ class ProduitController extends AbstractController
 
         return $this->redirectToRoute('app_shop');
     }
-     #[Route('/uploads/images/{filename}', name: 'app_uploads_images')]
+
+    #[Route('/uploads/images/{filename}', name: 'app_uploads_images')]
     public function serveImage(string $filename): Response
     {
-        // Chemin complet vers l'image
         $projectDir = $this->getParameter('kernel.project_dir');
         $imagePath = $projectDir . '/public/uploads/images/' . $filename;
         
-        // Vérifier si le fichier existe
         if (!file_exists($imagePath)) {
             throw $this->createNotFoundException('Image not found: ' . $filename);
         }
         
-        // Déterminer le type MIME
         $mimeType = mime_content_type($imagePath);
         if (!$mimeType) {
             $mimeType = 'application/octet-stream';
         }
         
-        // Retourner la réponse avec le fichier
         $response = new BinaryFileResponse($imagePath);
         $response->headers->set('Content-Type', $mimeType);
         $response->headers->set('Content-Disposition', 'inline; filename="' . $filename . '"');

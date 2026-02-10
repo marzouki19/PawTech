@@ -35,7 +35,7 @@ class Produit
     private ?float $prix = null;
 
     #[ORM\ManyToOne(targetEntity: Categorie::class)]
-    #[ORM\JoinColumn(name: 'categorie', referencedColumnName: 'id', nullable: false)] // false = required
+    #[ORM\JoinColumn(name: 'categorie', referencedColumnName: 'id', nullable: false)] 
     #[Assert\NotNull(message: 'Category is required')]
     private ?Categorie $categorie = null;
 

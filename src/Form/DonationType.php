@@ -32,6 +32,7 @@ class DonationType extends AbstractType
                 'widget' => 'single_text',
                 'html5' => false,
                 'format' => 'dd/MM/yyyy',
+                'empty_data' => new \DateTime(),
                 'attr' => [
                     'class' => 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-paw-orange focus:border-paw-orange',
                     'placeholder' => 'dd/mm/yyyy'

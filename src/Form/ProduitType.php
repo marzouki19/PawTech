@@ -14,6 +14,7 @@ use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Validator\Constraints\File;
+use Symfony\Component\Validator\Constraints as Assert;
 
 class ProduitType extends AbstractType
 {
@@ -23,60 +24,79 @@ class ProduitType extends AbstractType
             ->add('nom', TextType::class, [
                 'label' => 'Nom du produit',
                 'attr' => [
-                    'placeholder' => 'Entrez le nom du produit',
-                    'required' => 'required'
+                    'placeholder' => 'Entrez le nom du produit'
+                ],
+                'constraints' => [
+                    new Assert\NotBlank([
+                        'message' => 'Le nom du produit est obligatoire.'
+                    ])
                 ]
             ])
             ->add('prix', NumberType::class, [
                 'label' => 'Prix',
                 'attr' => [
-                    'placeholder' => '0.00',
-                    'step' => '0.01',
-                    'min' => '0.01',
-                    'required' => 'required'
+                    'placeholder' => '0.00'
                 ],
                 'scale' => 2,
-                'html5' => true,
+                'constraints' => [
+                    new Assert\NotBlank([
+                        'message' => 'Le prix est obligatoire.'
+                    ]),
+                    new Assert\Positive([
+                        'message' => 'Le prix doit être supérieur à 0.'
+                    ])
+                ]
             ])
             ->add('categorie', EntityType::class, [
                 'label' => 'Catégorie',
                 'class' => Categorie::class,
                 'choice_label' => 'nom',
                 'placeholder' => 'Sélectionnez une catégorie',
-                'attr' => [
-                    'required' => 'required'
+                'constraints' => [
+                    new Assert\NotBlank([
+                        'message' => 'Veuillez sélectionner une catégorie.'
+                    ])
                 ]
             ])
             ->add('image', FileType::class, [
                 'label' => 'Image du produit',
-                'required' => false, 
-                'mapped' => false, 
+                'required' => false,
+                'mapped' => false,
                 'constraints' => [
                     new File([
                         'maxSize' => '5M',
                         'maxSizeMessage' => 'L\'image est trop lourde ({{ size }} {{ suffix }}). La taille maximale est de {{ limit }} {{ suffix }}',
                         'mimeTypes' => ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
-                        'mimeTypesMessage' => 'Veuillez télécharger une image valide (JPEG, PNG, GIF, WEBP)',
+                        'mimeTypesMessage' => 'Veuillez télécharger une image valide (JPEG, PNG, GIF, WEBP).',
                     ])
-                ],
-                'attr' => [
-                    'accept' => 'image/*'
                 ]
             ])
             ->add('quantite', IntegerType::class, [
                 'label' => 'Quantité',
                 'attr' => [
-                    'placeholder' => '0',
-                    'min' => '0',
-                    'required' => 'required'
+                    'placeholder' => '0'
+                ],
+                'constraints' => [
+                    new Assert\NotBlank([
+                        'message' => 'La quantité est obligatoire.'
+                    ]),
+                    new Assert\PositiveOrZero([
+                        'message' => 'La quantité ne peut pas être négative.'
+                    ])
                 ]
             ])
             ->add('seuilAlert', IntegerType::class, [
                 'label' => 'Seuil d\'alerte',
                 'attr' => [
-                    'placeholder' => '0',
-                    'min' => '0',
-                    'required' => 'required'
+                    'placeholder' => '0'
+                ],
+                'constraints' => [
+                    new Assert\NotBlank([
+                        'message' => 'Le seuil d\'alerte est obligatoire.'
+                    ]),
+                    new Assert\PositiveOrZero([
+                        'message' => 'Le seuil d\'alerte ne peut pas être négatif.'
+                    ])
                 ]
             ]);
     }

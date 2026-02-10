@@ -97,6 +97,10 @@ class DonationController extends AbstractController
     public function new(Request $request): Response
     {
         $donation = new Donation();
+        // Set default date if not provided
+        if (!$donation->getDate()) {
+            $donation->setDate(new \DateTime());
+        }
         $form = $this->createForm(DonationType::class, $donation);
         $form->handleRequest($request);
 

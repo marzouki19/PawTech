@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller\Eshop;
+namespace App\Controller;
 
 use App\Entity\LigneCommande;
 use App\Form\LigneCommandeType;
@@ -29,10 +29,10 @@ class LigneCommandeController extends AbstractController
                 $l->getQuantite(),
                 number_format((float) $l->getPrixUnitaire(), 2, ',', ' ') . ' TND',
                 number_format($l->calculerSousTotal(), 2, ',', ' ') . ' TND',
-                $this->renderView('eshop/ligne_commande/_actions.html.twig', ['ligne' => $l]),
+                $this->renderView('ligne_commande/_actions.html.twig', ['ligne' => $l]),
             ];
         }
-        return $this->render('eshop/ligne_commande/index.html.twig', [
+        return $this->render('ligne_commande/index.html.twig', [
             'active' => 'eshop_lignes',
             'page_title' => 'Eshop - Order lines',
             'entity_name' => 'Order line',
@@ -73,7 +73,7 @@ class LigneCommandeController extends AbstractController
                     }
                 } else {
                     // Retourner le formulaire avec les erreurs Symfony
-                    return $this->render('eshop/ligne_commande/_form_content.html.twig', [
+                    return $this->render('ligne_commande/_form_content.html.twig', [
                         'page_title' => 'New order line',
                         'ligne' => $ligne,
                         'form' => $form->createView(),
@@ -83,7 +83,7 @@ class LigneCommandeController extends AbstractController
                 }
             } else {
                 // GET request pour la modal
-                return $this->render('eshop/ligne_commande/_form_content.html.twig', [
+                return $this->render('ligne_commande/_form_content.html.twig', [
                     'page_title' => 'New order line',
                     'ligne' => $ligne,
                     'form' => $form->createView(),
@@ -105,7 +105,7 @@ class LigneCommandeController extends AbstractController
             }
         }
 
-        return $this->render('eshop/ligne_commande/form.html.twig', [
+        return $this->render('ligne_commande/form.html.twig', [
             'active' => 'eshop_lignes_commande',
             'page_title' => 'New order line',
             'ligne' => $ligne,
@@ -118,13 +118,13 @@ class LigneCommandeController extends AbstractController
     public function show(Request $request, LigneCommande $ligne): Response
     {
         if ($request->isXmlHttpRequest()) {
-            return $this->render('eshop/ligne_commande/_show_content.html.twig', [
+            return $this->render('ligne_commande/_show_content.html.twig', [
                 'page_title' => 'Order line #' . $ligne->getId(),
                 'ligne' => $ligne,
             ]);
         }
 
-        return $this->render('eshop/ligne_commande/show.html.twig', [
+        return $this->render('ligne_commande/show.html.twig', [
             'active' => 'eshop_lignes',
             'page_title' => 'Order line #' . $ligne->getId(),
             'ligne' => $ligne,
@@ -156,7 +156,7 @@ class LigneCommandeController extends AbstractController
                     }
                 } else {
                     // Retourner le formulaire avec les erreurs Symfony
-                    return $this->render('eshop/ligne_commande/_form_content.html.twig', [
+                    return $this->render('ligne_commande/_form_content.html.twig', [
                         'page_title' => 'Modify order line',
                         'ligne' => $ligneCommande,
                         'form' => $form->createView(),
@@ -166,7 +166,7 @@ class LigneCommandeController extends AbstractController
                 }
             } else {
                 // GET request pour la modal
-                return $this->render('eshop/ligne_commande/_form_content.html.twig', [
+                return $this->render('ligne_commande/_form_content.html.twig', [
                     'page_title' => 'Modify order line',
                     'ligne' => $ligneCommande,
                     'form' => $form->createView(),
@@ -187,7 +187,7 @@ class LigneCommandeController extends AbstractController
             }
         }
 
-        return $this->render('eshop/ligne_commande/form.html.twig', [
+        return $this->render('ligne_commande/form.html.twig', [
             'active' => 'eshop_lignes_commande',
             'page_title' => 'Modify order line',
             'ligne' => $ligneCommande,

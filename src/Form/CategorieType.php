@@ -10,14 +10,16 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 
 class CategorieType extends AbstractType
 {
-     public function buildForm(FormBuilderInterface $builder, array $options): void
+    public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
             ->add('nom', TextType::class, [
                 'label' => 'Category Name',
+                'required' => false,
                 'attr' => [
                     'placeholder' => 'Enter category name',
-                    'required' => 'required'
+                    'minlength' => null,
+                    'maxlength' => null
                 ]
             ]);
     }

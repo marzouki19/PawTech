@@ -94,7 +94,7 @@
   {# Boutons #}
   <div class="flex gap-3 mt-4">
     <button type="submit" class="px-4 py-2.5 bg-paw-orange text-white rounded-lg hover:bg-paw-orange-hover font-medium">{{ submit_label|default('Add') }}</button>
-    <button type="button" class="px-4 py-2.5 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 js-modal-cancel">Cancel</button>
+    <a href="{{ path('app_donation_index') }}" class="px-4 py-2.5 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</a>
   </div>
   
   {{ form_end(form) }}

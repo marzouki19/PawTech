@@ -59,6 +59,7 @@ class AlertType extends AbstractType
             ])
             ->add('date', DateTimeType::class, [
                 'widget' => 'single_text',
+                'empty_data' => new \DateTime(),
                 'constraints' => [
                     new Assert\NotBlank([
                         'message' => 'Ce champ ne peut pas être vide',

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller\Eshop;
+namespace App\Controller;
 
 use App\Entity\Categorie;
 use App\Form\CategorieType;
@@ -78,7 +78,7 @@ class CategorieController extends AbstractController
             $productCount = $categorie->getProduits()->count();
             
             // Créer les actions en HTML
-            $actionsHtml = $this->renderView('eshop/categorie/_actions.html.twig', [
+            $actionsHtml = $this->renderView('categorie/_actions.html.twig', [
                 'categorie' => $categorie
             ]);
             
@@ -90,7 +90,7 @@ class CategorieController extends AbstractController
             ];
         }
 
-        return $this->render('eshop/categorie/index.html.twig', [
+        return $this->render('categorie/index.html.twig', [
             'active' => 'eshop_categories',
             'page_title' => 'Eshop - Categories',
             'entity_name' => 'Category',
@@ -115,10 +115,10 @@ class CategorieController extends AbstractController
 
         // Ajax GET -> fragment
         if ($request->isXmlHttpRequest() && !$form->isSubmitted()) {
-            return $this->render('eshop/categorie/_form_content.html.twig', [
+            return $this->render('categorie/_form_content.html.twig', [
                 'page_title' => 'New Category',
                 'categorie' => $categorie,
-                'form' => $form,
+                'form' => $form->createView(),
                 'submit_label' => 'Add',
                 'form_action' => $this->generateUrl('app_eshop_categorie_new'),
             ]);
@@ -152,16 +152,16 @@ class CategorieController extends AbstractController
                 }
             } else {
                 if ($request->isXmlHttpRequest()) {
-                    return $this->render('eshop/categorie/_form_content.html.twig', [
+                    return $this->render('categorie/_form_content.html.twig', [
                         'page_title' => 'New Category',
                         'categorie' => $categorie,
-                        'form' => $form,
+                        'form' => $form->createView(),
                         'submit_label' => 'Add',
                         'form_action' => $this->generateUrl('app_eshop_categorie_new'),
                     ]);
                 }
                 
-                return $this->render('eshop/categorie/form.html.twig', [
+                return $this->render('categorie/form.html.twig', [
                     'active' => 'eshop_categories',
                     'page_title' => 'New Category',
                     'categorie' => $categorie,
@@ -171,7 +171,7 @@ class CategorieController extends AbstractController
             }
         }
 
-        return $this->render('eshop/categorie/form.html.twig', [
+        return $this->render('categorie/form.html.twig', [
             'active' => 'eshop_categories',
             'page_title' => 'New Category',
             'categorie' => $categorie,
@@ -184,13 +184,13 @@ class CategorieController extends AbstractController
     public function show(Request $request, Categorie $categorie): Response
     {
         if ($request->isXmlHttpRequest()) {
-            return $this->render('eshop/categorie/_show_content.html.twig', [
+            return $this->render('categorie/_show_content.html.twig', [
                 'page_title' => 'Category: ' . $categorie->getNom(),
                 'categorie' => $categorie,
             ]);
         }
 
-        return $this->render('eshop/categorie/show.html.twig', [
+        return $this->render('categorie/show.html.twig', [
             'active' => 'eshop_categories',
             'page_title' => 'Category: ' . $categorie->getNom(),
             'categorie' => $categorie,
@@ -204,10 +204,10 @@ class CategorieController extends AbstractController
         $form->handleRequest($request);
 
         if ($request->isXmlHttpRequest() && !$form->isSubmitted()) {
-            return $this->render('eshop/categorie/_form_content.html.twig', [
+            return $this->render('categorie/_form_content.html.twig', [
                 'page_title' => 'Modify Category',
                 'categorie' => $categorie,
-                'form' => $form,
+                'form' => $form->createView(),
                 'submit_label' => 'Modify',
                 'form_action' => $this->generateUrl('app_eshop_categorie_edit', ['id' => $categorie->getId()]),
             ]);
@@ -240,16 +240,16 @@ class CategorieController extends AbstractController
                 }
             } else {
                 if ($request->isXmlHttpRequest()) {
-                    return $this->render('eshop/categorie/_form_content.html.twig', [
+                    return $this->render('categorie/_form_content.html.twig', [
                         'page_title' => 'Modify Category',
                         'categorie' => $categorie,
-                        'form' => $form,
+                        'form' => $form->createView(),
                         'submit_label' => 'Modify',
                         'form_action' => $this->generateUrl('app_eshop_categorie_edit', ['id' => $categorie->getId()]),
                     ]);
                 }
                 
-                return $this->render('eshop/categorie/form.html.twig', [
+                return $this->render('categorie/form.html.twig', [
                     'active' => 'eshop_categories',
                     'page_title' => 'Modify Category: ' . $categorie->getNom(),
                     'categorie' => $categorie,
@@ -259,7 +259,7 @@ class CategorieController extends AbstractController
             }
         }
 
-        return $this->render('eshop/categorie/form.html.twig', [
+        return $this->render('categorie/form.html.twig', [
             'active' => 'eshop_categories',
             'page_title' => 'Modify Category: ' . $categorie->getNom(),
             'categorie' => $categorie,

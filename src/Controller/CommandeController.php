@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller\Eshop;
+namespace App\Controller;
 
 use App\Entity\Commande;
 use App\Form\CommandeType;
@@ -28,8 +28,26 @@ class CommandeController extends AbstractController
 
         // Appliquer les filtres
         if ($search) {
-            $qb->andWhere('c.reference LIKE :search')
-               ->setParameter('search', '%' . $search . '%');
+            $search = trim($search);
+            if (is_numeric($search)) {
+                $expr = 'c.total = :total';
+                if (ctype_digit($search)) {
+                    $expr = '(' . $expr . ' OR c.id = :id)';
+                }
+                $qb->andWhere($expr)
+                   ->setParameter('total', (float) $search);
+                if (ctype_digit($search)) {
+                    $qb->setParameter('id', (int) $search);
+                }
+            } else {
+                $date = \DateTime::createFromFormat('d/m/Y', $search);
+                if ($date !== false) {
+                    $qb->andWhere('c.date = :date')
+                       ->setParameter('date', $date);
+                } else {
+                    $qb->andWhere('1 = 0');
+                }
+            }
         }
 
         // Filtrer par statut (booléen isStatut)
@@ -65,11 +83,11 @@ class CommandeController extends AbstractController
                 $c->getDate()?->format('d/m/Y') ?? '-',
                 number_format((float) $c->getTotal(), 2, ',', ' ') . ' TND',
                 $c->isStatut() ? 'Completed' : 'in progress',
-                $this->renderView('eshop/commande/_actions.html.twig', ['commande' => $c]),
+                $this->renderView('commande/_actions.html.twig', ['commande' => $c]),
             ];
         }
         
-        return $this->render('eshop/commande/index.html.twig', [
+        return $this->render('commande/index.html.twig', [
             'active' => 'eshop_commandes',
             'page_title' => 'Eshop - Orders',
             'entity_name' => 'Order',
@@ -146,7 +164,7 @@ class CommandeController extends AbstractController
                     }
                 } else {
                     // Retourner le formulaire avec les erreurs
-                    return $this->render('eshop/commande/_form_content.html.twig', [
+                    return $this->render('commande/_form_content.html.twig', [
                         'page_title' => 'New order',
                         'commande' => $commande,
                         'form' => $form->createView(),
@@ -156,7 +174,7 @@ class CommandeController extends AbstractController
                 }
             } else {
                 // GET request pour la modal
-                return $this->render('eshop/commande/_form_content.html.twig', [
+                return $this->render('commande/_form_content.html.twig', [
                     'page_title' => 'New order',
                     'commande' => $commande,
                     'form' => $form->createView(),
@@ -216,7 +234,7 @@ class CommandeController extends AbstractController
             }
         }
 
-        return $this->render('eshop/commande/form.html.twig', [
+        return $this->render('commande/form.html.twig', [
             'active' => 'eshop_commandes',
             'page_title' => 'New order',
             'commande' => $commande,
@@ -229,13 +247,13 @@ class CommandeController extends AbstractController
     public function show(Request $request, Commande $commande): Response
     {
         if ($request->isXmlHttpRequest()) {
-            return $this->render('eshop/commande/_show_content.html.twig', [
+            return $this->render('commande/_show_content.html.twig', [
                 'page_title' => 'Order #' . $commande->getId(),
                 'commande' => $commande,
             ]);
         }
 
-        return $this->render('eshop/commande/show.html.twig', [
+        return $this->render('commande/show.html.twig', [
             'active' => 'eshop_commandes',
             'page_title' => 'Order #' . $commande->getId(),
             'commande' => $commande,
@@ -300,7 +318,7 @@ class CommandeController extends AbstractController
                     }
                 } else {
                     // Retourner le formulaire avec les erreurs
-                    return $this->render('eshop/commande/_form_content.html.twig', [
+                    return $this->render('commande/_form_content.html.twig', [
                         'page_title' => 'Modify order',
                         'commande' => $commande,
                         'form' => $form->createView(),
@@ -310,7 +328,7 @@ class CommandeController extends AbstractController
                 }
             } else {
                 // GET request pour la modal
-                return $this->render('eshop/commande/_form_content.html.twig', [
+                return $this->render('commande/_form_content.html.twig', [
                     'page_title' => 'Modify order',
                     'commande' => $commande,
                     'form' => $form->createView(),
@@ -366,7 +384,7 @@ class CommandeController extends AbstractController
             }
         }
 
-        return $this->render('eshop/commande/form.html.twig', [
+        return $this->render('commande/form.html.twig', [
             'active' => 'eshop_commandes',
             'page_title' => 'Modify order',
             'commande' => $commande,

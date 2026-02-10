@@ -1,18 +1,22 @@
-<div class="flex gap-2">
-  <a href="{{ path('app_donation_show', { id: donation.id }) }}" 
-     class="text-paw-orange hover:underline js-modal-link"
+<div class="flex items-center gap-2">
+  <a href="{{ path('app_donation_show', { id: donation.id }) }}"
+     class="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm font-medium js-modal-link"
      data-title="Donation #{{ donation.id }}">
     View
   </a>
-  <a href="{{ path('app_donation_edit', { id: donation.id }) }}" 
-     class="text-blue-600 hover:underline js-modal-link"
+  <a href="{{ path('app_donation_edit', { id: donation.id }) }}"
+     class="px-3 py-1.5 rounded-lg border border-orange-200 text-paw-orange hover:bg-orange-50 text-sm font-medium js-modal-link"
      data-title="Modify donation #{{ donation.id }}">
-    Modify
+    Edit
   </a>
-  <form method="post" action="{{ path('app_donation_delete', { id: donation.id }) }}" class="inline js-delete-form">
+  <form method="post"
+        action="{{ path('app_donation_delete', { id: donation.id }) }}"
+        data-action="submit->delete-confirm#confirm"
+        data-delete-message="Delete donation #{{ donation.id }}?"
+        class="inline">
     <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ donation.id) }}">
-    <button type="button" class="text-red-600 hover:underline js-delete-button" 
-            data-message="Delete this donation?">
+    <button type="submit"
+            class="px-3 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 text-sm font-medium">
       Delete
     </button>
   </form>

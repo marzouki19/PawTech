@@ -22,18 +22,12 @@ class CommandeType extends AbstractType
                 'html5' => false,
                 'attr' => [
                     'class' => 'date-picker',
-                    'placeholder' => 'dd/mm/yyyy',
-                    'pattern' => '\d{2}/\d{2}/\d{4}',
-                    'title' => 'Format: dd/mm/yyyy'
+                    'placeholder' => 'dd/mm/yyyy'
                 ]
             ])
             ->add('total', NumberType::class, [
                 'label' => 'Total (TND)',
-                'attr' => [
-                    'step' => '0.01'
-                ],
                 'scale' => 2,
-                'html5' => true,
             ])
             ->add('statut', CheckboxType::class, [
                 'label' => 'Order delivered / completed',
