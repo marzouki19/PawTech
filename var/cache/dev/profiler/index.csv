@@ -1,0 +1,6 @@
+f13863,127.0.0.1,GET,http://127.0.0.1:8000/consultation/,1770935677,,200,request
+733494,127.0.0.1,GET,http://127.0.0.1:8000/consultation/new,1770935680,,200,request
+a478e3,127.0.0.1,POST,http://127.0.0.1:8000/consultation/new,1770935700,,302,request
+f211ec,127.0.0.1,GET,http://127.0.0.1:8000/consultation/,1770935701,,200,request
+5f7687,127.0.0.1,GET,http://127.0.0.1:8000/consultation/sort-by-date,1770935705,,200,request
+9646a0,127.0.0.1,GET,http://127.0.0.1:8000/suivi/,1770935708,,200,request
