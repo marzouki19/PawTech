@@ -1,0 +1,3 @@
+/* PawTech dashboard – Tailwind handles most styling */
+html { scroll-behavior: smooth; }
+.modal-backdrop { backdrop-filter: blur(4px); }
