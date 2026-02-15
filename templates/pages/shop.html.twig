@@ -1,0 +1,136 @@
+{% extends 'base_front.html.twig' %}
+
+{% block title %}Shop - PawTech{% endblock %}
+
+{% block body %}
+    <section class="relative overflow-hidden">
+        <div class="absolute inset-0">
+            <div class="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-orange-200/70"></div>
+            <div class="absolute top-24 right-24 h-80 w-80 rounded-full bg-orange-400/80"></div>
+        </div>
+
+        <div class="relative container mx-auto px-4 lg:px-8 py-12 lg:py-16 grid lg:grid-cols-2 gap-10 items-center">
+            <div>
+                <p class="text-orange-600 font-semibold tracking-wide uppercase text-xs mb-3">Pet Shop</p>
+                <h1 class="text-4xl lg:text-5xl font-extrabold leading-tight text-gray-900">
+                    The friendly and caring small dog store
+                </h1>
+                <p class="mt-4 text-gray-600 max-w-xl">
+                    Everything you need for your dog: food, toys, carriers, bowls and more.
+                </p>
+            </div>
+            <div class="relative">
+                <div class="relative rounded-3xl bg-white shadow-xl p-6 border border-gray-100">
+                    <div class="aspect-[4/3] rounded-2xl bg-gradient-to-br from-orange-100 via-gray-50 to-orange-200 flex items-center justify-center">
+                        <span class="text-gray-500 font-semibold">Shop header image</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="container mx-auto px-4 lg:px-8 pb-14">
+        <div class="grid lg:grid-cols-12 gap-8">
+            <aside class="lg:col-span-3">
+                <div class="rounded-2xl bg-white border border-gray-100 shadow-sm p-5 sticky top-6">
+                    <h2 class="font-extrabold text-gray-900">Filter</h2>
+
+                    <div class="mt-5">
+                        <h3 class="text-sm font-bold text-gray-900">By categories</h3>
+                        <ul class="mt-3 space-y-2 text-sm text-gray-600">
+                            {% for item in ['Furniture','Bowls','Clothing','Food','Toys','Cage','Medicine'] %}
+                                <li class="flex items-center justify-between">
+                                    <a href="#" class="hover:text-orange-600">{{ item }}</a>
+                                    <span class="text-xs text-gray-400">{{ random(3, 28) }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <div class="mt-6">
+                        <h3 class="text-sm font-bold text-gray-900">Filter by Price</h3>
+                        <div class="mt-3 flex items-center gap-2 text-sm">
+                            <span class="text-gray-500">$</span>
+                            <input class="w-full accent-orange-500" type="range" min="0" max="300" value="120">
+                            <span class="text-gray-500">$300</span>
+                        </div>
+                        <button class="mt-4 w-full rounded-xl bg-gray-900 px-4 py-2 text-white text-sm font-semibold hover:bg-gray-800 transition">
+                            Apply
+                        </button>
+                    </div>
+
+                    <div class="mt-6">
+                        <h3 class="text-sm font-bold text-gray-900">Popular products</h3>
+                        <div class="mt-3 space-y-3">
+                            {% for p in ['Premium Dog Food','Dog Bowl','Dog Leash'] %}
+                                <div class="flex items-center gap-3">
+                                    <div class="h-12 w-12 rounded-xl bg-gray-100"></div>
+                                    <div class="min-w-0">
+                                        <p class="text-sm font-semibold text-gray-900 truncate">{{ p }}</p>
+                                        <p class="text-xs text-gray-500">${{ random(12, 99) }}.99</p>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <div class="lg:col-span-9">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <p class="text-sm text-gray-500">Showing 1–12 of 74 results</p>
+                    <div class="flex items-center gap-3">
+                        <input class="w-full sm:w-72 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" placeholder="Search products...">
+                        <select class="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300">
+                            <option>Sort by latest</option>
+                            <option>Sort by price: low to high</option>
+                            <option>Sort by price: high to low</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mt-7 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% set products = [
+                        {name:'Premium Dog Food', price:'23.90'},
+                        {name:'Dog Leash', price:'12.90'},
+                        {name:'Dog Bowl', price:'18.90'},
+                        {name:'Pet Carrier', price:'29.90'},
+                        {name:'Dog Bag', price:'16.90'},
+                        {name:'Dog Bed', price:'42.90'},
+                        {name:'Premium Dog Food', price:'24.99'},
+                        {name:'Dog Bowl', price:'14.99'},
+                        {name:'Toy Bundle', price:'9.99'}
+                    ] %}
+
+                    {% for p in products %}
+                        <div class="rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition overflow-hidden">
+                            <div class="aspect-[4/3] bg-gray-100 relative">
+                                <div class="absolute top-3 right-3 flex items-center gap-2">
+                                    <button class="h-9 w-9 rounded-full bg-white/90 border border-gray-200 hover:border-orange-400 transition" title="Wishlist">♡</button>
+                                    <button class="h-9 w-9 rounded-full bg-white/90 border border-gray-200 hover:border-orange-400 transition" title="Add to cart">🛒</button>
+                                </div>
+                            </div>
+                            <div class="p-4">
+                                <p class="font-extrabold text-gray-900">{{ p.name }}</p>
+                                <p class="mt-1 text-sm text-gray-500">${{ p.price }}</p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="mt-10 flex items-center justify-center gap-2">
+                    <button class="h-10 w-10 rounded-xl border border-gray-200 bg-white hover:border-orange-400 hover:text-orange-600 transition">1</button>
+                    <button class="h-10 w-10 rounded-xl border border-gray-200 bg-white hover:border-orange-400 hover:text-orange-600 transition">2</button>
+                    <button class="h-10 w-10 rounded-xl border border-gray-200 bg-white hover:border-orange-400 hover:text-orange-600 transition">3</button>
+                    <button class="h-10 w-20 rounded-xl border border-gray-200 bg-white hover:border-orange-400 hover:text-orange-600 transition">Next →</button>
+                </div>
+
+                <div class="mt-12 grid md:grid-cols-2 gap-6">
+                    <div class="rounded-3xl overflow-hidden border border-gray-100 bg-gray-100 aspect-[16/9]"></div>
+                    <div class="rounded-3xl overflow-hidden border border-gray-100 bg-gray-100 aspect-[16/9]"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}
+
