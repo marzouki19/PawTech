@@ -15,4 +15,23 @@ class AdoptionRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Adoption::class);
     }
+
+    /**
+     * @return Adoption[]
+     */
+    public function searchAdoptions(string $query): array
+    {
+        return $this->createQueryBuilder('a')
+            ->leftJoin('a.user', 'u')
+            ->leftJoin('a.dog', 'd')
+            ->where('LOWER(u.nom) LIKE :q')
+            ->orWhere('LOWER(u.prenom) LIKE :q')
+            ->orWhere('LOWER(u.email) LIKE :q')
+            ->orWhere('LOWER(d.name) LIKE :q')
+            ->orWhere('LOWER(a.housingType) LIKE :q')
+            ->setParameter('q', '%'.mb_strtolower($query).'%')
+            ->orderBy('a.createdAt', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
 }
