@@ -144,7 +144,6 @@ final class PageController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // Handle avatar upload
             $avatarFile = $form['user_image']->getData();
             if ($avatarFile) {
                 $this->handleUserImageUpload($avatarFile, $user);
@@ -223,19 +222,13 @@ final class PageController extends AbstractController
             return $this->redirectToRoute('app_donation');
         }
 
-        // Solution 1: Vérifier si le paramètre existe
         try {
             $stripeKey = $this->getParameter('stripe_public_key');
         } catch (\Exception $e) {
-            $stripeKey = ''; // ou une clé de test
-            // $stripeKey = 'pk_test_51P...'; // clé de test temporaire
+            $stripeKey = '';
         }
 
-        // Solution 2: Utiliser directement $_ENV
-        // $stripeKey = $_ENV['STRIPE_PUBLIC_KEY'] ?? '';
-
-        // Solution 3: Désactiver Stripe si pas configuré
-        // $stripeKey = null;
+        $stripeKey = $_ENV['STRIPE_PUBLIC_KEY'] ?? '';
 
         return $this->render('pages/donation.html.twig', [
             'form' => $form->createView(),
@@ -243,7 +236,6 @@ final class PageController extends AbstractController
         ]);
     }
 
-    //#[Route('/shop', name: 'app_shop', methods: ['GET'])]
     #[Route('/pages/shop', name: 'app_shop', methods: ['GET'])]
     public function shop(
         Request $request,
@@ -251,17 +243,14 @@ final class PageController extends AbstractController
         CategorieRepository $categorieRepository
     ): Response
     {
-        // Récupérer les paramètres de filtrage
         $search = $request->query->get('search', '');
-        $categorieId = $request->query->getInt('categorie', 0); // 0 si non défini
+        $categorieId = $request->query->getInt('categorie', 0);
         $minPrice = $request->query->get('min_price', '');
         $maxPrice = $request->query->get('max_price', '');
         $sort = $request->query->get('sort', 'latest');
         
-        // Récupérer tous les produits (vous pouvez ajouter la méthode findFiltered plus tard)
         $produits = $produitRepository->findAll();
         
-        // Appliquer les filtres manuellement si pas de méthode findFiltered
         if ($categorieId > 0) {
             $produits = array_filter($produits, function($produit) use ($categorieId) {
                 return $produit->getCategorie() && $produit->getCategorie()->getId() === $categorieId;
@@ -288,7 +277,6 @@ final class PageController extends AbstractController
             });
         }
         
-        // Trier les produits
         switch ($sort) {
             case 'price_low':
                 usort($produits, function($a, $b) {
@@ -312,21 +300,19 @@ final class PageController extends AbstractController
                 break;
             case 'latest':
             default:
-                // Garder l'ordre par défaut ou trier par ID décroissant
                 usort($produits, function($a, $b) {
                     return $b->getId() <=> $a->getId();
                 });
                 break;
         }
         
-        // Récupérer toutes les catégories
         $categories = $categorieRepository->findAll();
         
         return $this->render('pages/shop.html.twig', [
             'produits' => $produits,
             'categories' => $categories,
             'search' => $search,
-            'selectedCategorie' => $categorieId, // <-- AJOUTEZ CETTE LIGNE
+            'selectedCategorie' => $categorieId,
             'minPrice' => $minPrice,
             'maxPrice' => $maxPrice,
             'sort' => $sort,

@@ -17,16 +17,13 @@ class CommandeController extends AbstractController
     #[Route('', name: 'app_eshop_commande_index', methods: ['GET'])]
     public function index(Request $request, CommandeRepository $repository): Response
     {
-        // Récupérer les filtres depuis la requête
         $search = $request->query->get('search', '');
         $status_filter = $request->query->get('status', '');
         $page = max(1, (int) $request->query->get('page', 1));
         $perPage = 20;
 
-        // Créer le query builder de base
         $qb = $repository->createQueryBuilder('c');
 
-        // Appliquer les filtres
         if ($search) {
             $search = trim($search);
             if (is_numeric($search)) {
@@ -50,7 +47,6 @@ class CommandeController extends AbstractController
             }
         }
 
-        // Filtrer par statut (booléen isStatut)
         if ($status_filter && $status_filter !== 'all') {
             if ($status_filter === 'completed') {
                 $qb->andWhere('c.statut = true');
@@ -59,11 +55,9 @@ class CommandeController extends AbstractController
             }
         }
 
-        // Trier par date et ID descendant
         $qb->orderBy('c.date', 'DESC')
            ->addOrderBy('c.id', 'DESC');
 
-        // Pagination
         $totalQuery = clone $qb;
         $total = $totalQuery->select('COUNT(c.id)')->getQuery()->getSingleScalarResult();
         
@@ -74,7 +68,6 @@ class CommandeController extends AbstractController
         $commandes = $qb->getQuery()->getResult();
         $totalPages = ceil($total / $perPage);
 
-        // Préparer les données pour le tableau
         $columns = ['ID', 'Date', 'Total', 'Status', 'Actions'];
         $rows = [];
         foreach ($commandes as $c) {

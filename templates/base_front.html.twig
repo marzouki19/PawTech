@@ -155,13 +155,8 @@
                                 </a>
                             {% endmacro %}
 
-                            {{ _self.link('Home', 'app_home', current) }}
-                            {{ _self.link('Dogs', 'app_front_dogs', current) }}
                             {{ _self.link('Shop', 'app_shop', current) }}
-                            {{ _self.link('Veterinarian', 'app_veterinarian_page', current) }}
-                            {{ _self.link('Events', 'app_events', current) }}
                             {{ _self.link('Donation', 'app_donation', current) }}
-                            {{ _self.link('Notifications', 'app_notifications', current) }}
                             {{ _self.link('Contact Us', 'app_contact', current) }}
                             {{ _self.link('About Us', 'app_about', current) }}
                             
@@ -322,9 +317,6 @@
                                         </div>
                                     </div>
                                 {% else %}
-                                    {# User is not logged in #}
-                                    <a href="{{ path('app_signin') }}" class="px-4 py-2 text-sm font-semibold text-orange-600 hover:text-orange-700 transition">Sign In</a>
-                                    <a href="{{ path('app_signup') }}" class="px-4 py-2 rounded-full bg-orange-500 text-white text-sm font-semibold hover:bg-orange-600 transition shadow-sm">Sign Up</a>
                                 {% endif %}
                             </span>
                         </nav>
@@ -338,102 +330,97 @@
                         <span class="font-semibold text-base text-orange-500">PawTech</span>
                     </div>
                     
-                    {# Mobile user menu #}
-                    <div class="flex items-center gap-4">
-                        {% if activeUser %}
-                            {# User is logged in - mobile #}
-                            {% set user = activeUser %}
-                            <div class="relative dropdown">
-                                <button class="flex items-center space-x-1 focus:outline-none">
-                                            <div class="w-8 h-8 rounded-full user-avatar flex items-center justify-center text-white font-bold text-sm overflow-hidden">
-                                                {% set avatarImage = null %}
-                                                {% if user.userImage is defined and user.userImage and user.userImage != 'uploads/users/default.png' and user.userImage != 'uploads/users/default-user.png' %}
-                                                    {% set avatarImage = asset(user.userImage) %}
-                                                {% elseif user.user_image is defined and user.user_image and user.user_image != 'uploads/users/default.png' and user.user_image != 'uploads/users/default-user.png' %}
-                                                    {% set avatarImage = asset(user.user_image) %}
-                                                {% endif %}
-                                                {% if avatarImage %}
-                                                    <img src="{{ avatarImage }}" alt="Avatar" class="w-full h-full object-cover" />
-                                                {% elseif user.prenom is defined and user.nom is defined %}
-                                                    {{ user.prenom|first|upper }}{{ user.nom|first|upper }}
-                                                {% elseif user.email is defined %}
-                                                    {{ user.email|first|upper }}
-                                                {% else %}
-                                                    U
-                                                {% endif %}
-                                            </div>
-                                    <i class="fas fa-chevron-down text-gray-500 text-xs"></i>
-                                </button>
-                                
-                                {# Mobile Dropdown Menu with Role-Based Options #}
-                                <div class="dropdown-menu animate-fade-in w-56">
-                                    {% if user.prenom is defined and user.nom is defined and user.email is defined %}
-                                        <div class="px-4 py-3 border-b">
-                                            <p class="text-sm font-medium text-gray-900">{{ user.prenom }} {{ user.nom }}</p>
-                                            <p class="text-xs text-gray-500">{{ user.email }}</p>
-                                            {# Role Badge #}
-                                            <div class="mt-1">
-                                                {% if isAdmin %}
-                                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
-                                                        <i class="fas fa-shield-alt mr-1"></i> Admin
-                                                    </span>
-                                                {% elseif isVet %}
-                                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                                                        <i class="fas fa-stethoscope mr-1"></i> Vet
-                                                    </span>
-                                                {% elseif isClient %}
-                                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                                                        <i class="fas fa-user mr-1"></i> Client
-                                                    </span>
-                                                {% endif %}
-                                            </div>
+                        {# Mobile user menu #}
+                        <div class="flex items-center gap-4">
+                            {% if activeUser %}
+                                {# User is logged in - mobile #}
+                                {% set user = activeUser %}
+                                <div class="relative dropdown">
+                                    <button class="flex items-center space-x-1 focus:outline-none">
+                                        <div class="w-8 h-8 rounded-full user-avatar flex items-center justify-center text-white font-bold text-sm overflow-hidden">
+                                            {% set avatarImage = null %}
+                                            {% if user.userImage is defined and user.userImage and user.userImage != 'uploads/users/default.png' and user.userImage != 'uploads/users/default-user.png' %}
+                                                {% set avatarImage = asset(user.userImage) %}
+                                            {% elseif user.user_image is defined and user.user_image and user.user_image != 'uploads/users/default.png' and user.user_image != 'uploads/users/default-user.png' %}
+                                                {% set avatarImage = asset(user.user_image) %}
+                                            {% endif %}
+                                            {% if avatarImage %}
+                                                <img src="{{ avatarImage }}" alt="Avatar" class="w-full h-full object-cover" />
+                                            {% elseif user.prenom is defined and user.nom is defined %}
+                                                {{ user.prenom|first|upper }}{{ user.nom|first|upper }}
+                                            {% elseif user.email is defined %}
+                                                {{ user.email|first|upper }}
+                                            {% else %}
+                                                U
+                                            {% endif %}
                                         </div>
-                                    {% endif %}
+                                        <i class="fas fa-chevron-down text-gray-500 text-xs"></i>
+                                    </button>
                                     
-                                    {# Mobile menu items with role-based options #}
-                                    <a href="{{ path('app_profile') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                        <i class="fas fa-user-circle mr-3 text-blue-500 w-4"></i>
-                                        <span>My Profile</span>
-                                    </a>
-                                    
-                                    <a href="{{ path('app_settings') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                        <i class="fas fa-cog mr-3 text-purple-500 w-4"></i>
-                                        <span>Settings</span>
-                                    </a>
-                                    
-                                    {% if isAdmin %}
-                                        <a href="{{ path('app_dashboard') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 border-t border-gray-100 mt-1">
-                                            <i class="fas fa-tachometer-alt mr-3 text-green-500 w-4"></i>
-                                            <span>Dashboard</span>
+                                    {# Mobile Dropdown Menu with Role-Based Options #}
+                                    <div class="dropdown-menu animate-fade-in w-56">
+                                        {% if user.prenom is defined and user.nom is defined and user.email is defined %}
+                                            <div class="px-4 py-3 border-b">
+                                                <p class="text-sm font-medium text-gray-900">{{ user.prenom }} {{ user.nom }}</p>
+                                                <p class="text-xs text-gray-500">{{ user.email }}</p>
+                                                {# Role Badge #}
+                                                <div class="mt-1">
+                                                    {% if isAdmin %}
+                                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                                                            <i class="fas fa-shield-alt mr-1"></i> Admin
+                                                        </span>
+                                                    {% elseif isVet %}
+                                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                                            <i class="fas fa-stethoscope mr-1"></i> Vet
+                                                        </span>
+                                                    {% elseif isClient %}
+                                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                                            <i class="fas fa-user mr-1"></i> Client
+                                                        </span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                        
+                                        {# Mobile menu items with role-based options #}
+                                        <a href="{{ path('app_profile') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                            <i class="fas fa-user-circle mr-3 text-blue-500 w-4"></i>
+                                            <span>My Profile</span>
                                         </a>
-                                    {% endif %}
-                                    
-                                    {% if isClient %}
-                                        <a href="{{ path('app_my_pets') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                            <i class="fas fa-paw mr-3 text-amber-500 w-4"></i>
-                                            <span>My Pets</span>
+                                        
+                                        <a href="{{ path('app_settings') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                            <i class="fas fa-cog mr-3 text-purple-500 w-4"></i>
+                                            <span>Settings</span>
                                         </a>
-                                    {% endif %}
-                                    
-                                    <div class="border-t border-gray-100 mt-1 pt-1">
-                                        <a href="{{ path('app_logout') }}" class="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50">
-                                            <i class="fas fa-sign-out-alt mr-3 w-4"></i>
-                                            <span>Logout</span>
-                                        </a>
+                                        
+                                        {% if isAdmin %}
+                                            <a href="{{ path('app_dashboard') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 border-t border-gray-100 mt-1">
+                                                <i class="fas fa-tachometer-alt mr-3 text-green-500 w-4"></i>
+                                                <span>Dashboard</span>
+                                            </a>
+                                        {% endif %}
+                                        
+                                        {% if isClient %}
+                                            <a href="{{ path('app_my_pets') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                                <i class="fas fa-paw mr-3 text-amber-500 w-4"></i>
+                                                <span>My Pets</span>
+                                            </a>
+                                        {% endif %}
+                                        
+                                        <div class="border-t border-gray-100 mt-1 pt-1">
+                                            <a href="{{ path('app_logout') }}" class="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                                                <i class="fas fa-sign-out-alt mr-3 w-4"></i>
+                                                <span>Logout</span>
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        {% else %}
-                            {# User is not logged in - mobile #}
-                            <div class="flex items-center gap-2">
-                                <a href="{{ path('app_signin') }}" class="text-sm text-gray-700 hover:text-orange-500">Sign In</a>
-                                <a href="{{ path('app_signup') }}" class="text-sm bg-orange-500 text-white px-3 py-1 rounded-full hover:bg-orange-600">Sign Up</a>
-                            </div>
-                        {% endif %}
-                        
-                        <button class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white shadow border border-gray-200 text-gray-700" aria-label="Open menu">
-                            ☰
-                        </button>
+                            {% endif %}
+                            
+                            <button class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white shadow border border-gray-200 text-gray-700" aria-label="Open menu">
+                                ☰
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

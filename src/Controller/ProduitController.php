@@ -3,6 +3,8 @@
 namespace App\Controller;
 
 use App\Entity\Produit;
+use App\Entity\Commande;
+use App\Entity\LigneCommande;
 use App\Form\ProduitType;
 use App\Repository\ProduitRepository;
 use App\Repository\CategorieRepository;
@@ -397,6 +399,70 @@ class ProduitController extends AbstractController
         }
 
         return $this->redirectToRoute('app_shop');
+    }
+
+    #[Route('/cart/checkout', name: 'app_eshop_produit_cart_checkout', methods: ['POST'])]
+    public function cartCheckout(Request $request, EntityManagerInterface $em): Response
+    {
+        $data = json_decode($request->getContent(), true);
+        
+        if (!isset($data['items']) || empty($data['items'])) {
+            return $this->json(['success' => false, 'message' => 'Cart is empty'], 400);
+        }
+        
+        try {
+            $commande = new Commande();
+            $commande->setDate(new \DateTime());
+            $commande->setStatut(true);
+            
+            $total = 0;
+            
+            foreach ($data['items'] as $item) {
+                $produitId = $item['id'];
+                $quantite = $item['quantity'];
+                
+                $produit = $em->getRepository(Produit::class)->find($produitId);
+                
+                if (!$produit) {
+                    continue;
+                }
+                
+                $stockActuel = $produit->getQuantite();
+                if ($stockActuel < $quantite) {
+                    return $this->json([
+                        'success' => false, 
+                        'message' => 'Insufficient stock for product: ' . $produit->getNom()
+                    ], 400);
+                }
+                
+                $ligneCommande = new LigneCommande();
+                $ligneCommande->setQuantite($quantite);
+                $ligneCommande->setPrixUnitaire($produit->getPrix());
+                $ligneCommande->setCommande($commande);
+                $ligneCommande->setProduit($produit);
+                
+                $em->persist($ligneCommande);
+                
+                $produit->setQuantite($stockActuel - $quantite);
+                $em->persist($produit);
+                
+                $total += $produit->getPrix() * $quantite;
+            }
+            
+            $commande->setTotal($total);
+            $em->persist($commande);
+            $em->flush();
+            
+            return $this->json([
+                'success' => true, 
+                'message' => 'Order created successfully!',
+                'orderId' => $commande->getId(),
+                'total' => $total
+            ]);
+            
+        } catch (\Exception $e) {
+            return $this->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
     }
 
     #[Route('/uploads/images/{filename}', name: 'app_uploads_images')]
