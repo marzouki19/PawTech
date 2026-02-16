@@ -101,12 +101,19 @@
                     </div>
 
                     <!-- Description -->
-                    {% if dog.description %}
                     <div class="border-t border-gray-100 pt-4">
-                        <h3 class="font-semibold text-gray-900 mb-2">About</h3>
-                        <p class="text-gray-600 leading-relaxed">{{ dog.description }}</p>
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-semibold text-gray-900">About</h3>
+                            <button id="useAiDescriptionBtn"
+                                    type="button"
+                                    onclick="generateDogDescription(this)"
+                                    class="inline-flex items-center gap-2 rounded-lg bg-orange-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-orange-700 transition">
+                                Use AI
+                            </button>
+                        </div>
+                        <p id="dogDescriptionText" class="text-gray-600 leading-relaxed">{{ dog.description|default('No description yet. Click "Use AI" to generate one.') }}</p>
+                        <p id="dogDescriptionStatus" class="hidden mt-2 text-xs text-gray-500"></p>
                     </div>
-                    {% endif %}
                 </div>
             </div>
         </div>
@@ -293,4 +300,49 @@
             </div>
         </div>
     </div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+window.generateDogDescription = async function(button) {
+    const descriptionText = document.getElementById('dogDescriptionText');
+    const descriptionStatus = document.getElementById('dogDescriptionStatus');
+
+    if (!button || !descriptionText || !descriptionStatus) {
+        console.error('AI description elements not found in DOM.');
+        return;
+    }
+
+    button.disabled = true;
+    const originalLabel = button.textContent;
+    button.textContent = 'Generating...';
+    descriptionStatus.classList.remove('hidden');
+    descriptionStatus.textContent = 'Generating AI description...';
+
+    try {
+        const response = await fetch('{{ path('app_front_dogs_generate_description', {'id': dog.id}) }}', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+        if (!response.ok || !data.ok) {
+            throw new Error(data.message || 'Failed to generate description');
+        }
+
+        descriptionText.textContent = data.description || 'No description returned by API.';
+        descriptionStatus.textContent = 'Description generated successfully.';
+    } catch (error) {
+        console.error('Generate description error:', error);
+        descriptionStatus.textContent = error.message || 'Error while generating description.';
+    } finally {
+        button.disabled = false;
+        button.textContent = originalLabel;
+    }
+};
+</script>
 {% endblock %}

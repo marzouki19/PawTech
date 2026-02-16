@@ -146,6 +146,86 @@ final class FrontDogsController extends AbstractController
         ]);
     }
 
+    #[Route('/front_dogs/dogs/{id}/generate-description', name: 'app_front_dogs_generate_description', methods: ['POST'])]
+    public function generateDescription(Dogs $dog, HttpClientInterface $httpClient): JsonResponse
+    {
+        $sizeMap = [
+            'XS' => 'Small',
+            'S' => 'Small',
+            'M' => 'Medium',
+            'L' => 'Large',
+            'XL' => 'Large',
+        ];
+
+        $rawSize = $dog->getSize();
+        $normalizedSize = $rawSize ? ($sizeMap[$rawSize] ?? $rawSize) : 'Medium';
+
+        $rawGender = $dog->getGender();
+        $normalizedGender = in_array($rawGender, ['Male', 'Female'], true) ? $rawGender : 'Male';
+
+        $payload = [
+            'name' => $dog->getName() ?? 'Unknown',
+            'age' => (int) ($dog->getAge() ?? 0),
+            'breed' => $dog->getBreed() ?? 'Mixed',
+            'gender' => $normalizedGender,
+            'size' => $normalizedSize,
+            'weight' => (float) ($dog->getWeight() ?? 0),
+            'vaccinated' => (bool) $dog->isVaccinated(),
+            'friendly_with_kids' => (bool) $dog->isFriendlyWithKids(),
+            'friendly_with_dogs' => (bool) $dog->isFriendlyWithDogs(),
+            'friendly_with_cats' => (bool) $dog->isFriendlyWithCats(),
+            'health_status' => $dog->getHealthStatus() ?? 'Healthy',
+            'adoption_status' => $dog->getAdoptionStatus() ?? 'Available',
+            'arrival_date' => $dog->getArrivalDate()?->format('Y-m-d') ?? (new \DateTime())->format('Y-m-d'),
+        ];
+
+        try {
+            $apiResponse = $httpClient->request('POST', 'http://127.0.0.1:9000/generate-description', [
+                'json' => $payload,
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json',
+                ],
+                'timeout' => 15,
+            ]);
+
+            $statusCode = $apiResponse->getStatusCode();
+            $data = $apiResponse->toArray(false);
+
+            if ($statusCode >= 400) {
+                $detail = '';
+                if (is_array($data)) {
+                    if (isset($data['detail']) && is_string($data['detail'])) {
+                        $detail = $data['detail'];
+                    } elseif (isset($data['detail']) && is_array($data['detail'])) {
+                        $detail = json_encode($data['detail'], JSON_UNESCAPED_UNICODE);
+                    } else {
+                        $detail = json_encode($data, JSON_UNESCAPED_UNICODE);
+                    }
+                }
+
+                return new JsonResponse([
+                    'ok' => false,
+                    'message' => 'AI API returned an error.'.($detail ? ' '.$detail : ''),
+                    'api_response' => $data,
+                    'payload_sent' => $payload,
+                ], $statusCode);
+            }
+
+            return new JsonResponse([
+                'ok' => true,
+                'description' => $data['description'] ?? '',
+                'api_response' => $data,
+            ]);
+        } catch (\Throwable $e) {
+            return new JsonResponse([
+                'ok' => false,
+                'message' => 'Failed to call AI API.',
+                'error' => $e->getMessage(),
+            ], Response::HTTP_BAD_GATEWAY);
+        }
+    }
+
     #[Route('/front_dogs/apply_adoption/{id}', name: 'app_apply_adoption', methods: ['GET', 'POST'])]
     public function applyAdoption(
         Dogs $dog,
