@@ -54,8 +54,18 @@ final class PublicEventController extends AbstractController
             'telephone' => '',
         ];
 
+        // Check if event has ended (use dateFin if available, otherwise dateDebut)
+        $endDate = $evenement->getDateFin() ?? $evenement->getDateDebut();
+        $eventPassed = $endDate < new \DateTime();
+
         // Handle POST request (form submission)
         if ($request->isMethod('POST')) {
+            // Prevent registration if event has ended
+            if ($eventPassed) {
+                $this->addFlash('error', 'Registration is closed. This event has already ended.');
+                return $this->redirectToRoute('app_event_detail', ['id' => $evenement->getId()]);
+            }
+
             // Get form data
             $formData['prenom'] = trim($request->request->get('prenom', ''));
             $formData['nom'] = trim($request->request->get('nom', ''));
@@ -105,16 +115,21 @@ final class PublicEventController extends AbstractController
                 $user = $userRepo->findOneBy(['email' => $formData['email']]);
 
                 if (!$user) {
+                    // Create new user
                     $user = new User();
                     $user->setEmail($formData['email']);
-                    $user->setNom($formData['nom']);
-                    $user->setPrenom($formData['prenom']);
-                    $user->setPhone($formData['telephone']);
                     $user->setRole('ROLE_USER');
                     $user->setStatus('active');
                     $user->setPassword('temp_password');
                     $user->setUserImage('default.png');
                     $entityManager->persist($user);
+                }
+                
+                // Always update name from form (in case user enters different name)
+                $user->setNom($formData['nom']);
+                $user->setPrenom($formData['prenom']);
+                if (!empty($formData['telephone'])) {
+                    $user->setPhone($formData['telephone']);
                 }
 
                 // Check if already registered
@@ -147,6 +162,7 @@ final class PublicEventController extends AbstractController
             'event' => $evenement,
             'errors' => $errors,
             'formData' => $formData,
+            'eventPassed' => $eventPassed,
         ]);
     }
 }

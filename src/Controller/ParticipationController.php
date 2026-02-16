@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Participation;
 use App\Form\ParticipationType;
 use App\Repository\ParticipationRepository;
+use App\Service\EmailService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -101,12 +102,20 @@ final class ParticipationController extends AbstractController
     }
 
     #[Route('/{id}/confirm', name: 'app_participation_confirm', methods: ['POST'])]
-    public function confirm(Request $request, Participation $participation, EntityManagerInterface $entityManager): Response
+    public function confirm(Request $request, Participation $participation, EntityManagerInterface $entityManager, EmailService $emailService): Response
     {
         if ($this->isCsrfTokenValid('confirm'.$participation->getId(), $request->getPayload()->getString('_token'))) {
             $participation->confirm();
             $entityManager->flush();
-            $this->addFlash('success', 'Participation confirmée.');
+
+            // Send confirmation email to participant
+            $emailSent = $emailService->sendParticipationConfirmation($participation);
+            
+            if ($emailSent) {
+                $this->addFlash('success', 'Participation confirmée et email de confirmation envoyé.');
+            } else {
+                $this->addFlash('warning', 'Participation confirmée mais l\'email n\'a pas pu être envoyé.');
+            }
         }
 
         return $this->redirectToRoute('app_participation_index', [], Response::HTTP_SEE_OTHER);

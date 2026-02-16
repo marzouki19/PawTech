@@ -138,7 +138,20 @@
 
                 {% set spotsLeft = event.capaciteMax ? (event.capaciteMax - event.participations|length) : null %}
                 
-                {% if spotsLeft is not null %}
+                {# Check if event has ended #}
+                {% if eventPassed is defined and eventPassed %}
+                    <div class="mb-4 p-4 rounded-lg bg-gray-100 text-gray-700 border border-gray-200">
+                        <div class="flex items-center gap-3">
+                            <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <div>
+                                <p class="font-semibold">Registration Closed</p>
+                                <p class="text-sm">This event has already ended.</p>
+                            </div>
+                        </div>
+                    </div>
+                {% elseif spotsLeft is not null %}
                     <div class="mb-4 p-3 rounded-lg {{ spotsLeft > 0 ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800' }}">
                         {% if spotsLeft > 0 %}
                             <span class="font-semibold">{{ spotsLeft }}</span> spots remaining
@@ -148,7 +161,7 @@
                     </div>
                 {% endif %}
 
-                {% if spotsLeft is null or spotsLeft > 0 %}
+                {% if (eventPassed is not defined or not eventPassed) and (spotsLeft is null or spotsLeft > 0) %}
                     {# Show general error if there are validation errors #}
                     {% if errors is not empty %}
                         <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
