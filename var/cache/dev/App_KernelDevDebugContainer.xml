@@ -360,6 +360,7 @@
     <service id="App\Controller\ConsultationController" class="App\Controller\ConsultationController" public="true" autowire="true" autoconfigure="true">
       <tag name="controller.service_arguments"/>
       <tag name="container.service_subscriber"/>
+      <argument type="service" id="monolog.logger"/>
       <call method="setContainer">
         <argument type="service" id=".service_locator.O2p6Lk7.App\Controller\ConsultationController"/>
       </call>
@@ -400,6 +401,12 @@
       <tag name="doctrine.repository_service"/>
       <argument type="service" id="doctrine"/>
     </service>
+    <service id="App\Service\TwilioNotificationService" class="App\Service\TwilioNotificationService" autowire="true" autoconfigure="true">
+      <argument>%env(TWILIO_ACCOUNT_SID)%</argument>
+      <argument>%env(TWILIO_AUTH_TOKEN)%</argument>
+      <argument>%env(TWILIO_PHONE_NUMBER)%</argument>
+      <argument type="service" id="monolog.logger"/>
+    </service>
     <service id="argument_metadata_factory" class="Symfony\Component\HttpKernel\ControllerMetadata\ArgumentMetadataFactory"/>
     <service id="argument_resolver.backed_enum_resolver" class="Symfony\Component\HttpKernel\Controller\ArgumentResolver\BackedEnumValueResolver">
       <tag priority="100" name="Symfony\Component\HttpKernel\Controller\ArgumentResolver\BackedEnumValueResolver">controller.argument_value_resolver</tag>
@@ -427,7 +434,7 @@
     </service>
     <service id="argument_resolver.service" class="Symfony\Component\HttpKernel\Controller\ArgumentResolver\ServiceValueResolver">
       <tag priority="-50" name="Symfony\Component\HttpKernel\Controller\ArgumentResolver\ServiceValueResolver">controller.argument_value_resolver</tag>
-      <argument type="service" id=".service_locator.4EIfw7o"/>
+      <argument type="service" id=".service_locator.uKroyLx"/>
     </service>
     <service id="argument_resolver.default" class="Symfony\Component\HttpKernel\Controller\ArgumentResolver\DefaultValueResolver">
       <tag priority="-100" name="Symfony\Component\HttpKernel\Controller\ArgumentResolver\DefaultValueResolver">controller.argument_value_resolver</tag>
@@ -3322,7 +3329,7 @@
     </service>
     <service id="argument_resolver.not_tagged_controller" class="Symfony\Component\HttpKernel\Controller\ArgumentResolver\NotTaggedControllerValueResolver">
       <tag name="controller.argument_value_resolver" priority="-200"/>
-      <argument type="service" id=".service_locator.4EIfw7o"/>
+      <argument type="service" id=".service_locator.uKroyLx"/>
     </service>
     <service id="debug.log_processor" class="Symfony\Bridge\Monolog\Processor\DebugProcessor">
       <tag name="kernel.reset" method="reset"/>
@@ -7577,10 +7584,11 @@
         <argument key="repo" type="service_closure" id="App\Repository\ConsultationRepository"/>
       </argument>
     </service>
-    <service id=".service_locator.9kKwU2t" class="Symfony\Component\DependencyInjection\ServiceLocator">
+    <service id=".service_locator.f9Tu_kp" class="Symfony\Component\DependencyInjection\ServiceLocator">
       <tag name="container.service_locator"/>
       <argument type="collection">
         <argument key="em" type="service_closure" id="doctrine.orm.default_entity_manager"/>
+        <argument key="twilioService" type="service_closure" id="App\Service\TwilioNotificationService"/>
       </argument>
     </service>
     <service id=".service_locator.dKSU_jY" class="Symfony\Component\DependencyInjection\ServiceLocator">
@@ -7623,13 +7631,13 @@
         <argument key="suivi" type="service_closure" id=".errored..service_locator.plbXKuP.App\Entity\Suivi"/>
       </argument>
     </service>
-    <service id=".service_locator.4EIfw7o" class="Symfony\Component\DependencyInjection\ServiceLocator">
+    <service id=".service_locator.uKroyLx" class="Symfony\Component\DependencyInjection\ServiceLocator">
       <tag name="container.service_locator"/>
       <argument type="collection">
         <argument key="App\Controller\ConsultationController::delete" type="service_closure" id=".service_locator.dKSU_jY"/>
         <argument key="App\Controller\ConsultationController::edit" type="service_closure" id=".service_locator.dKSU_jY"/>
         <argument key="App\Controller\ConsultationController::index" type="service_closure" id=".service_locator.NpEkuJn"/>
-        <argument key="App\Controller\ConsultationController::new" type="service_closure" id=".service_locator.9kKwU2t"/>
+        <argument key="App\Controller\ConsultationController::new" type="service_closure" id=".service_locator.f9Tu_kp"/>
         <argument key="App\Controller\ConsultationController::search" type="service_closure" id=".service_locator.NpEkuJn"/>
         <argument key="App\Controller\ConsultationController::sortByDate" type="service_closure" id=".service_locator.NpEkuJn"/>
         <argument key="App\Controller\PageController::index" type="service_closure" id=".service_locator.CsMkqUa"/>
@@ -7649,7 +7657,7 @@
         <argument key="App\Controller\ConsultationController:delete" type="service_closure" id=".service_locator.dKSU_jY"/>
         <argument key="App\Controller\ConsultationController:edit" type="service_closure" id=".service_locator.dKSU_jY"/>
         <argument key="App\Controller\ConsultationController:index" type="service_closure" id=".service_locator.NpEkuJn"/>
-        <argument key="App\Controller\ConsultationController:new" type="service_closure" id=".service_locator.9kKwU2t"/>
+        <argument key="App\Controller\ConsultationController:new" type="service_closure" id=".service_locator.f9Tu_kp"/>
         <argument key="App\Controller\ConsultationController:search" type="service_closure" id=".service_locator.NpEkuJn"/>
         <argument key="App\Controller\ConsultationController:sortByDate" type="service_closure" id=".service_locator.NpEkuJn"/>
         <argument key="App\Controller\PageController:index" type="service_closure" id=".service_locator.CsMkqUa"/>
@@ -9888,7 +9896,7 @@
     <service id="doctrine.fixtures.provider" alias="doctrine.fixtures.loader"/>
     <service id="container.env_var_processors_locator" alias=".service_locator.w7.f4fT" public="true"/>
     <service id="twig.loader.filesystem" alias="twig.loader.native_filesystem"/>
-    <service id="argument_resolver.controller_locator" alias=".service_locator.4EIfw7o"/>
+    <service id="argument_resolver.controller_locator" alias=".service_locator.uKroyLx"/>
     <service id="doctrine.id_generator_locator" alias=".service_locator.KLVvNIq"/>
     <service id="twig.loader" alias="twig.loader.native_filesystem"/>
     <service id=".Psr\Log\LoggerInterface $request.logger" alias="monolog.logger.request"/>
@@ -9930,7 +9938,7 @@
     <service id=".service_locator.8IbU9zc" alias=".service_locator.NjUBG3v"/>
     <service id=".service_locator.oGltwy6" alias=".service_locator.p3X5T9U"/>
     <service id=".service_locator.mqByo7T" alias=".service_locator.plbXKuP"/>
-    <service id=".service_locator.CvNTdGm" alias=".service_locator.4EIfw7o"/>
+    <service id=".service_locator.ykI6yvk" alias=".service_locator.uKroyLx"/>
     <service id=".service_locator.BFrsqsn" alias=".service_locator.F9PKc.7"/>
     <service id=".service_locator.QuTPASE" alias=".service_locator.6x2EhWY"/>
     <service id=".service_locator.XtmiKbi" alias=".service_locator.MfxSDRP"/>
@@ -9957,7 +9965,7 @@
     <service id="security.event_dispatcher.main" alias="debug.security.event_dispatcher.main"/>
     <service id=".service_locator.gFlme_s" alias=".service_locator.y4_Zrx."/>
     <service id=".service_locator.9v0OofP" alias=".service_locator.NpEkuJn"/>
-    <service id=".service_locator.gaTSUXr" alias=".service_locator.9kKwU2t"/>
+    <service id=".service_locator.XKqbPFG" alias=".service_locator.f9Tu_kp"/>
     <service id=".service_locator.CwW3Xb_" alias=".service_locator.dKSU_jY"/>
     <service id=".service_locator.SPFAmCQ" alias=".service_locator.NjUBG3v"/>
     <service id=".service_locator.9e2t_lq" alias=".service_locator.CsMkqUa"/>
