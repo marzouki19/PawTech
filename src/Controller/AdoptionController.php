@@ -7,11 +7,14 @@ use App\Entity\Dogs;
 use App\Form\AdoptionAdminType;
 use App\Repository\AdoptionRepository;
 use App\Repository\DogsRepository;
+use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 #[Route('/adoption')]
 final class AdoptionController extends AbstractController
@@ -95,6 +98,81 @@ final class AdoptionController extends AbstractController
             'dog' => $dog,
             'adoptions' => $adoptions,
         ]);
+    }
+
+    #[Route('/dog/{id}/auto-adopt-match', name: 'app_adoption_auto_adopt_match', requirements: ['id' => '\\d+'], methods: ['POST'])]
+    public function autoAdoptMatch(
+        Dogs $dog,
+        HttpClientInterface $httpClient,
+        UserRepository $userRepository
+    ): JsonResponse {
+        $weight = (float) ($dog->getWeight() ?? 0);
+
+        try {
+            $response = $httpClient->request('POST', 'http://127.0.0.1:8010/match', [
+                'json' => [
+                    'dog_id' => (string) $dog->getId(),
+                    'weight' => $weight,
+                ],
+                'timeout' => 12,
+            ]);
+
+            $statusCode = $response->getStatusCode();
+            $payload = $response->toArray(false);
+
+            if ($statusCode >= 400) {
+                return $this->json([
+                    'ok' => false,
+                    'message' => 'AUTO ADOPT API returned an error.',
+                    'api_response' => $payload,
+                ], $statusCode);
+            }
+
+            $ranked = is_array($payload['users_ranked'] ?? null) ? $payload['users_ranked'] : [];
+            $userIds = array_values(array_unique(array_map(
+                static fn (array $item): int => (int) ($item['user'] ?? 0),
+                $ranked
+            )));
+            $userIds = array_values(array_filter($userIds, static fn (int $id): bool => $id > 0));
+
+            $usersById = [];
+            if ($userIds !== []) {
+                $users = $userRepository->createQueryBuilder('u')
+                    ->andWhere('u.id IN (:ids)')
+                    ->setParameter('ids', $userIds)
+                    ->getQuery()
+                    ->getResult();
+
+                foreach ($users as $user) {
+                    $usersById[$user->getId()] = $user;
+                }
+            }
+
+            $rankedWithNames = array_map(static function (array $item) use ($usersById): array {
+                $userId = (int) ($item['user'] ?? 0);
+                $matchedUser = $usersById[$userId] ?? null;
+
+                return [
+                    'user_id' => (string) $userId,
+                    'name' => $matchedUser ? trim((string) $matchedUser->getFullName()) : ('User #' . $userId),
+                    'accuracy' => (float) ($item['accuracy'] ?? 0),
+                    'records_used' => (int) ($item['records_used'] ?? 0),
+                ];
+            }, $ranked);
+
+            return $this->json([
+                'ok' => true,
+                'dog_id' => (string) ($payload['dog_id'] ?? (string) $dog->getId()),
+                'matches_found' => (int) ($payload['matches_found'] ?? count($rankedWithNames)),
+                'users_ranked' => $rankedWithNames,
+            ]);
+        } catch (\Throwable $e) {
+            return $this->json([
+                'ok' => false,
+                'message' => 'Failed to call AUTO ADOPT API.',
+                'error' => $e->getMessage(),
+            ], Response::HTTP_BAD_GATEWAY);
+        }
     }
 
     #[Route('/new', name: 'app_adoption_new', methods: ['GET', 'POST'])]
