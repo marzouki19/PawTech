@@ -97,6 +97,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255)]
     private ?string $user_image = null;
 
+    #[ORM\Column(length: 255)]
+    private ?string $user_face = null;
+
+
     #[ORM\Column(nullable: true)]
     #[Assert\NotBlank(message: "The order number cannot be empty.")]
     private ?int $order_number = null;
@@ -278,6 +282,20 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setZoneAffectee(?string $zone_affectee): static
     {
         $this->zone_affectee = $zone_affectee;
+
+        return $this;
+    }
+
+
+
+    public function getUserFace(): ?string
+    {
+        return $this->user_face;
+    }
+
+    public function setUserFace(string $user_face): static
+    {
+        $this->user_face = $user_face;
 
         return $this;
     }

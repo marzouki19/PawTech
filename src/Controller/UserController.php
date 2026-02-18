@@ -287,13 +287,47 @@ final class UserController extends AbstractController
             // Set default values for new user
             $user->setRole('Client');
             $user->setStatus('Actif');
-            $user->setUserImage('uploads/users/default.png');
+            
+            // Handle face image - store temporarily first
+            $faceImageData = null;
+            if ($form->has('user_face') && $form->get('user_face')->getData()) {
+                $faceImageData = $form->get('user_face')->getData();
+            }
+            
             // Hash password if present
             if ($form->has('password') && $form->get('password')->getData()) {
                 $user->setPassword($passwordHasher->hashPassword($user, $form->get('password')->getData()));
             }
+            
             $entityManager->persist($user);
             $entityManager->flush();
+            
+            // After user is created, save face image to user_face folder and database
+            if ($faceImageData && $user->getId()) {
+                $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/user_face';
+                if (!file_exists($uploadDir)) {
+                    mkdir($uploadDir, 0777, true);
+                }
+                $userId = $user->getId();
+                $faceImageFileName = $userId . '.png';
+                $faceImagePath = $uploadDir . '/' . $faceImageFileName;
+                $faceImageDataClean = str_replace('data:image/png;base64,', '', $faceImageData);
+                $faceImageDataClean = str_replace('data:image/jpeg;base64,', '', $faceImageDataClean);
+                $faceImageDataClean = str_replace(' ', '+', $faceImageDataClean);
+                $decodedImage = base64_decode($faceImageDataClean, true);
+                if ($decodedImage === false) {
+                    $this->addFlash('error', 'Invalid face image data');
+                    return $this->redirectToRoute('app_signup');
+                }
+                if (file_put_contents($faceImagePath, $decodedImage)) {
+                    $facePath = 'uploads/user_face/' . $faceImageFileName;
+                    $user->setUserFace($facePath);
+                    $entityManager->flush();
+                } else {
+                    $this->addFlash('error', 'Failed to save face image');
+                }
+            }
+            
             return $this->redirectToRoute('app_signin');
         }
 
@@ -326,9 +360,12 @@ final class UserController extends AbstractController
             $password = (string) $request->request->get('password', '');
             $lastEmail = $email;
 
-            if ($email === '' || $password === '') {
+            // Handle face image upload
+            $faceImageData = $request->request->get('user_face', null);
+
+            if ($email === '' && !$faceImageData) {
                 $error = [
-                    'messageKey' => 'Email and password are required.',
+                    'messageKey' => 'Email or face image required.',
                     'messageData' => [],
                 ];
                 return $this->render('sign/signin.html.twig', [
@@ -337,8 +374,140 @@ final class UserController extends AbstractController
                 ]);
             }
 
-            $user = $userRepository->findOneBy(['email' => $email]);
+            // If face image is provided, use Python script for face login
+            if ($faceImageData) {
+                $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/temp_faces';
+                if (!file_exists($uploadDir)) {
+                    mkdir($uploadDir, 0777, true);
+                }
+                $faceImageFileName = 'face_signin_' . uniqid() . '.png';
+                $faceImagePath = $uploadDir . '/' . $faceImageFileName;
+                $faceImageData = str_replace('data:image/png;base64,', '', $faceImageData);
+                $faceImageData = str_replace('data:image/jpeg;base64,', '', $faceImageData);
+                $faceImageData = str_replace(' ', '+', $faceImageData);
+                $decodedImage = base64_decode($faceImageData);
+                file_put_contents($faceImagePath, $decodedImage);
 
+                // Call Python script with timeout
+                $pythonScript = $this->getParameter('kernel.project_dir') . '/face_login.py';
+                $command = 'python ' . escapeshellarg($pythonScript) . ' ' . escapeshellarg($faceImagePath);
+                
+                // Use proc_open with timeout for better control
+                $descriptors = [
+                    0 => ['pipe', 'r'],  // stdin
+                    1 => ['pipe', 'w'],  // stdout
+                    2 => ['pipe', 'w'],  // stderr
+                ];
+                
+                $process = proc_open($command, $descriptors, $pipes);
+                
+                if (is_resource($process)) {
+                    // Close stdin immediately
+                    fclose($pipes[0]);
+                    
+                    // Set timeout for 30 seconds
+                    $timeout = 30;
+                    $startTime = time();
+                    $output = '';
+                    
+                    while (true) {
+                        $read = [$pipes[1]];
+                        $write = null;
+                        $except = null;
+                        
+                        if (stream_select($read, $write, $except, 0, 200000) === false || empty($read)) {
+                            break;
+                        }
+                        
+                        $data = fread($pipes[1], 8192);
+                        if ($data === '' || $data === false) {
+                            break;
+                        }
+                        $output .= $data;
+                        
+                        // Check timeout
+                        if (time() - $startTime > $timeout) {
+                            proc_terminate($process, 9);
+                            fclose($pipes[1]);
+                            fclose($pipes[2]);
+                            proc_close($process);
+                            $error = ['messageKey' => 'Face recognition timed out.', 'messageData' => []];
+                            if (file_exists($faceImagePath)) unlink($faceImagePath);
+                            return $this->render('sign/signin.html.twig', ['error' => $error, 'last_email' => $lastEmail]);
+                        }
+                    }
+                    
+                    fclose($pipes[1]);
+                    fclose($pipes[2]);
+                    $result = proc_close($process);
+                    $output = array_filter(array_map('trim', explode("\n", $output)));
+                } else {
+                    $result = -1;
+                    $output = [];
+                }
+
+                if ($result === 0 && !empty($output)) {
+                    $outputText = trim(implode(' ', $output));
+                    
+                    // Check if output is a valid user ID (numeric)
+                    if (is_numeric($outputText)) {
+                        $userId = $outputText;
+                        $user = $userRepository->find($userId);
+                        if ($user) {
+                            // Save the face image path to user_face
+                            $publicPath = 'uploads/user_face/' . $faceImageFileName;
+                            $user->setUserFace($publicPath);
+                            $entityManager->flush();
+                            $roles = $user->getRoles();
+                            $session->set('user', [
+                                'id' => $user->getId(),
+                                'email' => $user->getEmail(),
+                                'prenom' => $user->getPrenom(),
+                                'nom' => $user->getNom(),
+                                'userImage' => $user->getUserImage(),
+                                'role' => $roles[0] ?? 'ROLE_USER',
+                            ]);
+                            return $this->redirectToRoute('app_home');
+                        } else {
+                            $error = [
+                                'messageKey' => 'Face not recognized. User account not found.',
+                                'messageData' => [],
+                            ];
+                        }
+                    } elseif ($outputText === 'No face detected in input image') {
+                        $error = [
+                            'messageKey' => 'No face detected. Please position your face in front of the camera.',
+                            'messageData' => [],
+                        ];
+                    } elseif ($outputText === 'Multiple faces detected - please use single face image') {
+                        $error = [
+                            'messageKey' => 'Multiple faces detected. Please use only one face.',
+                            'messageData' => [],
+                        ];
+                    } else {
+                        $error = [
+                            'messageKey' => 'Face does not match any registered face. Please try again or use email/password.',
+                            'messageData' => [],
+                        ];
+                    }
+                } else {
+                    $error = [
+                        'messageKey' => 'Face recognition failed. Please try again or use email/password.',
+                        'messageData' => [],
+                    ];
+                }
+                // Clean up temp image
+                if (file_exists($faceImagePath)) {
+                    unlink($faceImagePath);
+                }
+                return $this->render('sign/signin.html.twig', [
+                    'error' => $error,
+                    'last_email' => $lastEmail,
+                ]);
+            }
+
+            // Fallback to email/password login
+            $user = $userRepository->findOneBy(['email' => $email]);
             if ($user) {
                 if (!$passwordHasher->isPasswordValid($user, $password)) {
                     $error = [
@@ -347,7 +516,6 @@ final class UserController extends AbstractController
                     ];
                 } else {
                     $roles = $user->getRoles();
-
                     $session->set('user', [
                         'id' => $user->getId(),
                         'email' => $user->getEmail(),
@@ -356,13 +524,11 @@ final class UserController extends AbstractController
                         'userImage' => $user->getUserImage(),
                         'role' => $roles[0] ?? 'ROLE_USER',
                     ]);
-
                     return $this->redirectToRoute('app_home');
                 }
             } else {
                 $username = strtok($email, '@') ?: 'User';
                 $firstName = ucfirst($username);
-
                 $user = new User();
                 $user->setPrenom($firstName);
                 $user->setNom('User');
@@ -372,10 +538,8 @@ final class UserController extends AbstractController
                 $user->setStatus('Actif');
                 $user->setUserImage('uploads/users/default.png');
                 $user->setPassword($passwordHasher->hashPassword($user, $password));
-
                 $entityManager->persist($user);
                 $entityManager->flush();
-
                 $roles = $user->getRoles();
                 $session->set('user', [
                     'id' => $user->getId(),
@@ -385,7 +549,6 @@ final class UserController extends AbstractController
                     'userImage' => $user->getUserImage(),
                     'role' => $roles[0] ?? 'ROLE_USER',
                 ]);
-
                 return $this->redirectToRoute('app_home');
             }
         }

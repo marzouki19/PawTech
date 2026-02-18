@@ -150,14 +150,106 @@
 
                 <div class="space-y-3">
                     <a href="{{ path('app_google_auth_start') }}" class="w-full flex items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-700 font-semibold hover:border-gray-300 hover:bg-gray-50 transition">
-                        <svg class="h-5 w-5" viewBox="0 0 48 48" aria-hidden="true">
-                            <path fill="#FFC107" d="M43.6 20.4H42V20H24v8h11.3C33.9 32.7 29.4 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.1 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.6z"/>
-                            <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.1 18.9 12 24 12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.1 6.1 29.3 4 24 4c-7.7 0-14.4 3.9-18 10.7z"/>
-                            <path fill="#4CAF50" d="M24 44c5.2 0 10-2 13.6-5.2l-6.3-5.3c-1.9 1.3-4.3 2.1-7.3 2.1-5.4 0-10-3.3-11.6-7.9l-6.5 5C9.5 39.9 16.3 44 24 44z"/>
-                            <path fill="#1976D2" d="M43.6 20.4H42V20H24v8h11.3c-1.1 2.9-3.4 5.2-6.3 6.6l6.3 5.3C39 36.4 44 30.8 44 24c0-1.3-.1-2.7-.4-3.6z"/>
-                        </svg>
-                        Continue with Google
+                        <svg class="h-14 w-14" viewBox="0 0 48 48" aria-hidden="true">
+                                <path fill="#FFC107" d="M43.6 20.4H42V20H24v8h11.3C33.9 32.7 29.4 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.1 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.6z"/>
+                                <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.1 18.9 12 24 12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.1 6.1 29.3 4 24 4c-7.7 0-14.4 3.9-18 10.7z"/>
+                                <path fill="#4CAF50" d="M24 44c5.2 0 10-2 13.6-5.2l-6.3-5.3c-1.9 1.3-4.3 2.1-7.3 2.1-5.4 0-10-3.3-11.6-7.9l-6.5 5C9.5 39.9 16.3 44 24 44z"/>
+                                <path fill="#1976D2" d="M43.6 20.4H42V20H24v8h11.3c-1.1 2.9-3.4 5.2-6.3 6.6l6.3 5.3C39 36.4 44 30.8 44 24c0-1.3-.1-2.7-.4-3.6z"/>
+                            </svg>
                     </a>
+                          <!-- Face Scan Circle -->
+                                                            <div class="flex justify-center mb-4">
+                                                                <button type="button" onclick="openFaceScanModal()" class="w-20 h-20 rounded-full bg-white flex items-center justify-center shadow border border-gray-200 hover:shadow-lg transition">
+                                                                    <svg class="h-14 w-14 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                                        <circle cx="12" cy="12" r="10" stroke="#4F46E5" stroke-width="2" fill="#EEF2FF"/>
+                                                                        <path d="M9.5 10.5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5-.62 2.5-2.5 2.5-2.5-1.12-2.5-2.5z" fill="#6366F1"/>
+                                                                        <rect x="10.5" y="14" width="3" height="1.5" rx="0.75" fill="#6366F1"/>
+                                                                    </svg>
+                                                                </button>
+                                                            </div>
+                                                            <!-- Hidden input for face image -->
+                                                            <input type="hidden" name="user_face" id="face-image-input" style="display: none;" />
+                                                            <!-- Face capture status -->
+                                                            <div id="face-capture-status" class="text-sm text-gray-500 text-center"></div>
+                                                            <!-- Preview container -->
+                                                            <div id="face-preview-container" class="hidden flex justify-center mb-2">
+                                                                <img id="face-preview" src="" alt="Face preview" class="w-24 h-24 rounded-full border-2 border-orange-500 object-cover">
+                                                            </div>
+                                                            <!-- Face Scan Modal -->
+                                                            <div id="faceScanModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 hidden">
+                                                                <div class="bg-white rounded-xl p-8 relative flex flex-col items-center">
+                                                                    <button onclick="closeFaceScanModal()" class="absolute top-6 right-6 text-gray-400 hover:text-gray-700 text-3xl font-bold">&times;</button>
+                                                                    <h2 class="text-lg font-semibold mb-4">Face Recognition</h2>
+                                                                    <video id="face-video" autoplay playsinline class="rounded-xl border mb-4" width="320" height="240"></video>
+                                                                    <button type="button" onclick="captureFaceImage()" class="bg-blue-500 text-white px-4 py-2 rounded shadow hover:bg-blue-600 transition">Capture Face</button>
+                                                                </div>
+                                                            </div>
+                                                            <script>
+                                                            let faceStream = null;
+                                                            function openFaceScanModal() {
+                                                                document.getElementById('faceScanModal').classList.remove('hidden');
+                                                                const video = document.getElementById('face-video');
+                                                                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                                                                    navigator.mediaDevices.getUserMedia({ video: true }).then(function(stream) {
+                                                                        faceStream = stream;
+                                                                        video.srcObject = stream;
+                                                                        video.play();
+                                                                    });
+                                                                }
+                                                            }
+                                                            function closeFaceScanModal() {
+                                                                document.getElementById('faceScanModal').classList.add('hidden');
+                                                                if (faceStream) {
+                                                                    faceStream.getTracks().forEach(track => track.stop());
+                                                                    faceStream = null;
+                                                                }
+                                                            }
+                                                            function captureFaceImage() {
+                                                                const video = document.getElementById('face-video');
+                                                                const canvas = document.createElement('canvas');
+                                                                canvas.width = video.videoWidth;
+                                                                canvas.height = video.videoHeight;
+                                                                canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+                                                                const dataUrl = canvas.toDataURL('image/png');
+                                                                document.getElementById('face-image-input').value = dataUrl;
+                                                                document.getElementById('face-preview').src = dataUrl;
+                                                                document.getElementById('face-preview-container').classList.remove('hidden');
+                                                                document.getElementById('face-capture-status').innerHTML = '<span class="text-green-600"><i class="fas fa-check-circle"></i> Face captured! Logging in...</span>';
+                                                                closeFaceScanModal();
+                                                                
+                                                                // Auto-submit form after capturing face
+                                                                setTimeout(function() {
+                                                                    document.getElementById('signin-form').submit();
+                                                                }, 500);
+                                                            }
+                                                            </script>
+                                        <!-- Face Scan Circle -->
+                                        <!--<div class="flex justify-center mb-4">
+                                            <button type="button" onclick="openFaceScanModal()" class="w-20 h-20 rounded-full bg-white flex items-center justify-center shadow border border-gray-200 hover:shadow-lg transition">
+                                                <svg class="h-14 w-14 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <circle cx="12" cy="12" r="10" stroke="#4F46E5" stroke-width="2" fill="#EEF2FF"/>
+                                                    <path d="M9.5 10.5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5-.62 2.5-2.5 2.5-2.5-1.12-2.5-2.5z" fill="#6366F1"/>
+                                                    <rect x="10.5" y="14" width="3" height="1.5" rx="0.75" fill="#6366F1"/>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        
+                                        <input type="hidden" name="user_face" id="face-image-input" style="display: none;" />
+                                        
+                                        <div id="face-capture-status" class="text-sm text-gray-500 text-center"></div>
+                                        
+                                        <div id="face-preview-container" class="hidden flex justify-center mb-2">
+                                            <img id="face-preview" src="" alt="Face preview" class="w-24 h-24 rounded-full border-2 border-orange-500 object-cover">
+                                        </div>
+                                        
+                                        <div id="faceScanModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 hidden">
+                                            <div class="bg-white rounded-xl p-8 relative flex flex-col items-center">
+                                                <button onclick="closeFaceScanModal()" class="absolute top-6 right-6 text-gray-400 hover:text-gray-700 text-3xl font-bold">&times;</button>
+                                                <h2 class="text-lg font-semibold mb-4">Face Recognition</h2>
+                                                <video id="face-video" autoplay playsinline class="rounded-xl border mb-4" width="320" height="240"></video>
+                                                <button type="button" onclick="captureFaceImage()" class="bg-blue-500 text-white px-4 py-2 rounded shadow hover:bg-blue-600 transition">Capture Face</button>
+                                            </div>
+                                        </div>-->
                     <div class="flex items-center gap-3 text-xs text-gray-400">
                         <span class="h-px flex-1 bg-gray-200"></span>
                         <span>or</span>
@@ -167,6 +259,7 @@
                 
                 {# Sign in form #}
                 <form method="post" action="{{ path('app_signin') }}" class="space-y-5" id="signin-form">
+                                                      
                     
                     {# Email #}
                     <div>

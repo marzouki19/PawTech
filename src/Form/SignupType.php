@@ -38,6 +38,11 @@ class SignupType extends AbstractType
             ->add('telephone', null, [
                 'required' => false,
             ])
+            // Add unmapped face_image field for hidden input
+            ->add('user_face', \Symfony\Component\Form\Extension\Core\Type\HiddenType::class, [
+                'mapped' => false,
+                'required' => false,
+            ])
             
             ->add('password', RepeatedType::class, [
                 'type' => PasswordType::class,
