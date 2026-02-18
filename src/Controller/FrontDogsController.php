@@ -20,7 +20,11 @@ final class FrontDogsController extends AbstractController
 {
     #[Route('/front_dogs/dogs', name: 'app_front_dogs', methods: ['GET'])]
     #[Route('/dogs', name: 'app_dogs', methods: ['GET'])]
-    public function index(Request $request, DogsRepository $dogsRepository): Response
+    public function index(
+        Request $request,
+        DogsRepository $dogsRepository,
+        AdoptionRepository $adoptionRepository
+    ): Response
     {
         $session = $request->getSession();
         $showRecommendationModal = !$session->get('front_dogs_recommendation_modal_seen', false);
@@ -29,19 +33,45 @@ final class FrontDogsController extends AbstractController
         }
 
         $selectedStatus = $request->query->get('status');
-        $allowedStatuses = ['Available', 'Reserved'];
-
-        if (in_array($selectedStatus, $allowedStatuses, true)) {
-            $dogs = $dogsRepository->findBy(['adoption_status' => $selectedStatus], ['name' => 'ASC']);
-        } else {
+        if ($selectedStatus !== 'Available') {
             $selectedStatus = null;
-            $dogs = $dogsRepository->findBy(['adoption_status' => $allowedStatuses], ['name' => 'ASC']);
+        }
+
+        $dogs = $dogsRepository->findBy(['adoption_status' => 'Available'], ['name' => 'ASC']);
+
+        $reservedDogs = $dogsRepository->findBy(['adoption_status' => 'Reserved'], ['arrival_date' => 'DESC']);
+        $sessionUser = $session->get('user');
+        $sessionUserId = $sessionUser instanceof User
+            ? $sessionUser->getId()
+            : (is_array($sessionUser) ? (int) ($sessionUser['id'] ?? 0) : 0);
+
+        if ($sessionUserId > 0 && $reservedDogs !== []) {
+            $requestedDogRows = $adoptionRepository
+                ->createQueryBuilder('a')
+                ->select('IDENTITY(a.dog) AS dog_id')
+                ->andWhere('IDENTITY(a.user) = :userId')
+                ->setParameter('userId', $sessionUserId)
+                ->getQuery()
+                ->getArrayResult();
+
+            $requestedDogIds = array_values(array_unique(array_map(
+                static fn (array $row): int => (int) ($row['dog_id'] ?? 0),
+                $requestedDogRows
+            )));
+
+            if ($requestedDogIds !== []) {
+                $reservedDogs = array_values(array_filter(
+                    $reservedDogs,
+                    static fn (Dogs $dog): bool => !in_array((int) $dog->getId(), $requestedDogIds, true)
+                ));
+            }
         }
 
         return $this->render('front_dogs/dogs.html.twig', [
             'dogs' => $dogs,
+            'reservedDogs' => $reservedDogs,
             'selectedStatus' => $selectedStatus,
-            'sessionUser' => $request->getSession()->get('user'),
+            'sessionUser' => $sessionUser,
             'showRecommendationModal' => $showRecommendationModal,
         ]);
     }
@@ -75,7 +105,7 @@ final class FrontDogsController extends AbstractController
         unset($payload['top_n']);
 
         try {
-            $apiResponse = $httpClient->request('POST', 'http://127.0.0.1:8002/recommend', [
+            $apiResponse = $httpClient->request('POST', 'http://127.0.0.1:8050/recommend', [
                 'json' => [
                     'user_profile' => $userProfile,
                     'filters' => $filters,
@@ -239,8 +269,8 @@ final class FrontDogsController extends AbstractController
             return $this->redirectToRoute('app_signin');
         }
 
-        if (in_array($dog->getAdoptionStatus(), ['Reserved', 'Adopted'], true)) {
-            $this->addFlash('error', 'This dog is not available for new adoption applications.');
+        if ($dog->getAdoptionStatus() === 'Adopted') {
+            $this->addFlash('error', 'This dog is already adopted and not available for new applications.');
             return $this->redirectToRoute('app_front_dogs_show', ['id' => $dog->getId()]);
         }
 

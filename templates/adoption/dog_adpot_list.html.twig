@@ -8,6 +8,7 @@
 {% block main %}
 <div x-data="{
     deleteModalOpen: false,
+    dogInfoModalOpen: false,
     deleteAction: '',
     deleteToken: '',
     deleteLabel: '',
@@ -31,7 +32,14 @@
                 <h1 class="text-2xl font-bold text-gray-900">Adoption Requests for {{ dog.name }}</h1>
                 <p class="mt-1 text-sm text-gray-600">Breed: {{ dog.breed }} | Status: {{ dog.adoptionStatus }}</p>
             </div>
-            <div class="text-sm text-gray-600">Total requests: <span class="font-semibold text-gray-900">{{ adoptions|length }}</span></div>
+            <div class="flex items-center gap-3">
+                <div class="text-sm text-gray-600">Total requests: <span class="font-semibold text-gray-900">{{ adoptions|length }}</span></div>
+                <button type="button"
+                        @click="dogInfoModalOpen = true"
+                        class="px-4 py-2 rounded-lg border border-blue-200 text-sm font-semibold text-blue-600 hover:bg-blue-50">
+                    Dog Information
+                </button>
+            </div>
         </div>
     </div>
 
@@ -71,6 +79,73 @@
             {% endfor %}
         </div>
     {% endif %}
+</div>
+
+<div x-show="dogInfoModalOpen"
+     class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
+     @click.self="dogInfoModalOpen = false"
+     @keydown.escape.window="dogInfoModalOpen = false"
+     style="display: none;"
+     x-transition:enter="transition ease-out duration-300"
+     x-transition:enter-start="opacity-0 scale-95"
+     x-transition:enter-end="opacity-100 scale-100"
+     x-transition:leave="transition ease-in duration-200"
+     x-transition:leave-start="opacity-100 scale-100"
+     x-transition:leave-end="opacity-0 scale-95">
+    <div @click.stop class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden">
+        <div class="sticky top-0 bg-white border-b border-gray-200 px-8 py-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-900">Dog Information</h2>
+                    <p class="mt-1 text-sm text-gray-600">Complete profile for {{ dog.name }}</p>
+                </div>
+                <button @click="dogInfoModalOpen = false" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="px-8 py-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="rounded-xl bg-gray-100 overflow-hidden h-56">
+                    {% if dog.image %}
+                        {% set rawImage = dog.image|trim %}
+                        {% if rawImage starts with 'data:image' %}
+                            {% set imageSrc = rawImage %}
+                        {% elseif rawImage starts with 'http://' or rawImage starts with 'https://' %}
+                            {% set imageSrc = rawImage %}
+                        {% elseif rawImage starts with 'uploads/' or rawImage starts with 'images/' %}
+                            {% set imageSrc = asset(rawImage) %}
+                        {% else %}
+                            {% set imageSrc = 'data:image/webp;base64,' ~ rawImage %}
+                        {% endif %}
+                        <img src="{{ imageSrc }}" alt="{{ dog.name }}" class="h-full w-full object-cover">
+                    {% else %}
+                        <div class="flex h-full w-full items-center justify-center text-6xl font-bold text-gray-300">{{ dog.name|slice(0, 1)|upper }}</div>
+                    {% endif %}
+                </div>
+                <dl class="grid grid-cols-1 gap-3 text-sm">
+                    <div><dt class="text-gray-500">Name</dt><dd class="font-semibold text-gray-900">{{ dog.name }}</dd></div>
+                    <div><dt class="text-gray-500">Breed</dt><dd class="font-semibold text-gray-900">{{ dog.breed ?: '-' }}</dd></div>
+                    <div><dt class="text-gray-500">Age</dt><dd class="font-semibold text-gray-900">{{ dog.age is not null ? dog.age ~ ' years' : '-' }}</dd></div>
+                    <div><dt class="text-gray-500">Gender</dt><dd class="font-semibold text-gray-900">{{ dog.gender ?: '-' }}</dd></div>
+                    <div><dt class="text-gray-500">Size</dt><dd class="font-semibold text-gray-900">{{ dog.size ?: '-' }}</dd></div>
+                    <div><dt class="text-gray-500">Weight</dt><dd class="font-semibold text-gray-900">{{ dog.weight is not null ? dog.weight ~ ' kg' : '-' }}</dd></div>
+                    <div><dt class="text-gray-500">Health</dt><dd class="font-semibold text-gray-900">{{ dog.healthStatus ?: '-' }}</dd></div>
+                    <div><dt class="text-gray-500">Adoption Status</dt><dd class="font-semibold text-gray-900">{{ dog.adoptionStatus ?: '-' }}</dd></div>
+                    <div><dt class="text-gray-500">Arrival Date</dt><dd class="font-semibold text-gray-900">{{ dog.arrivalDate ? dog.arrivalDate|date('d/m/Y') : '-' }}</dd></div>
+                    <div><dt class="text-gray-500">Microchip Number</dt><dd class="font-semibold text-gray-900">{{ dog.microchipNumber ?: '-' }}</dd></div>
+                </dl>
+            </div>
+            <div class="flex justify-end mt-6">
+                <button type="button" @click="dogInfoModalOpen = false"
+                        class="px-6 py-2.5 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div x-show="deleteModalOpen"
