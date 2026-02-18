@@ -1,0 +1,52 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Adoption index{% endblock %}
+
+{% block body %}
+    <h1>Adoption index</h1>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>User</th>
+                <th>Dog</th>
+                <th>CreatedAt</th>
+                <th>ApplicantAge</th>
+                <th>Income</th>
+                <th>HousingType</th>
+                <th>HasYard</th>
+                <th>FamilySize</th>
+                <th>HoursAwayPerDay</th>
+                <th>actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for adoption in adoptions %}
+            <tr>
+                <td>{{ adoption.id }}</td>
+                <td>{{ adoption.user ? adoption.user.fullName : '' }}</td>
+                <td>{{ adoption.dog ? adoption.dog.name : '' }}</td>
+                <td>{{ adoption.createdAt ? adoption.createdAt|date('Y-m-d H:i:s') : '' }}</td>
+                <td>{{ adoption.applicantAge }}</td>
+                <td>{{ adoption.income }}</td>
+                <td>{{ adoption.housingType }}</td>
+                <td>{{ adoption.hasYard ? 'Yes' : 'No' }}</td>
+                <td>{{ adoption.familySize }}</td>
+                <td>{{ adoption.hoursAwayPerDay }}</td>
+                <td>
+                    <a href="{{ path('app_adoption_show', {'id': adoption.id}) }}">show</a>
+                    <a href="{{ path('app_adoption_edit', {'id': adoption.id}) }}">edit</a>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="11">no records found</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ path('app_adoption_new') }}">Create new</a>
+{% endblock %}
+

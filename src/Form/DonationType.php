@@ -19,55 +19,57 @@ class DonationType extends AbstractType
         $builder
             ->add('montant', NumberType::class, [
                 'label' => 'Amount (TND)',
-                'required' => false, // Désactive validation HTML5
+                'required' => true,
                 'scale' => 2,
+                'html5' => true,
                 'attr' => [
-                    'class' => 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-paw-orange focus:border-paw-orange',
-                    'placeholder' => '0.00',
-                ]
+                    'placeholder' => '50.00',
+                    'min' => '1',
+                    'max' => '100000',
+                    'step' => '0.01',
+                    'inputmode' => 'decimal',
+                ],
             ])
             ->add('date', DateType::class, [
                 'label' => 'Date',
-                'required' => false, // Désactive validation HTML5
+                'required' => true,
                 'widget' => 'single_text',
-                'html5' => false,
-                'format' => 'dd/MM/yyyy',
-                'empty_data' => new \DateTime(),
+                'html5' => true,
+                'input' => 'datetime_immutable',
                 'attr' => [
-                    'class' => 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-paw-orange focus:border-paw-orange',
-                    'placeholder' => 'dd/mm/yyyy'
-                ]
+                    'max' => (new \DateTimeImmutable('today'))->format('Y-m-d'),
+                ],
             ])
             ->add('donateur', TextType::class, [
                 'label' => 'Donor',
-                'required' => false, // Désactive validation HTML5
+                'required' => true,
                 'attr' => [
-                    'class' => 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-paw-orange focus:border-paw-orange',
-                    'placeholder' => 'Donor name'
-                ]
+                    'placeholder' => 'John Doe',
+                    'maxlength' => 100,
+                    'autocomplete' => 'name',
+                ],
             ])
             ->add('email', EmailType::class, [
                 'label' => 'Email',
-                'required' => false, // Désactive validation HTML5 - champ optionnel
+                'required' => true,
                 'attr' => [
-                    'class' => 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-paw-orange focus:border-paw-orange',
-                    'placeholder' => 'email@example.com'
-                ]
+                    'placeholder' => 'donor@example.com',
+                    'maxlength' => 255,
+                    'autocomplete' => 'email',
+                ],
             ])
             ->add('reference', TextType::class, [
                 'label' => 'Reference',
-                'required' => false, // Désactive validation HTML5
+                'required' => false,
+                'empty_data' => '',
                 'attr' => [
-                    'class' => 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-paw-orange focus:border-paw-orange',
-                    'placeholder' => 'Payment reference'
-                ]
+                    'placeholder' => 'DON-2026-0001',
+                    'maxlength' => 100,
+                ],
             ])
             ->add('statut', CheckboxType::class, [
                 'label' => 'Validated',
-                'required' => false, // Désactive validation HTML5
-                'attr' => [
-                    'class' => 'h-4 w-4 text-paw-orange border-gray-300 rounded focus:ring-paw-orange mr-2'
-                ]
+                'required' => false,
             ]);
     }
 
@@ -75,9 +77,6 @@ class DonationType extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => Donation::class,
-            'attr' => [
-                'novalidate' => 'novalidate', // Désactive validation HTML5
-            ]
         ]);
     }
 }
