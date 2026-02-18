@@ -3,8 +3,10 @@
 namespace App\Controller;
 
 use App\Entity\Adoption;
+use App\Entity\Dogs;
 use App\Form\AdoptionAdminType;
 use App\Repository\AdoptionRepository;
+use App\Repository\DogsRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -15,47 +17,83 @@ use Symfony\Component\Routing\Attribute\Route;
 final class AdoptionController extends AbstractController
 {
     #[Route(name: 'app_adoption_index', methods: ['GET'])]
-    public function index(Request $request, AdoptionRepository $adoptionRepository): Response
+    public function index(AdoptionRepository $adoptionRepository, DogsRepository $dogsRepository): Response
     {
-        $housingFilter = $request->query->get('housing');
+        $rows = $adoptionRepository->createQueryBuilder('a')
+            ->select('IDENTITY(a.dog) AS dog_id, COUNT(a.id) AS requestsCount, MAX(a.createdAt) AS lastRequestAt')
+            ->groupBy('a.dog')
+            ->orderBy('requestsCount', 'DESC')
+            ->addOrderBy('lastRequestAt', 'DESC')
+            ->getQuery()
+            ->getResult();
 
-        $queryBuilder = $adoptionRepository->createQueryBuilder('a')
-            ->leftJoin('a.user', 'u')
-            ->leftJoin('a.dog', 'd')
-            ->addSelect('u', 'd')
-            ->orderBy('a.createdAt', 'DESC')
-            ->addOrderBy('a.id', 'DESC');
+        $dogIds = array_values(array_unique(array_map(
+            static fn (array $row): int => (int) ($row['dog_id'] ?? 0),
+            $rows
+        )));
 
-        if (in_array($housingFilter, ['apartment', 'house', 'farm', 'other'], true)) {
-            $queryBuilder->andWhere('a.housingType = :housing')->setParameter('housing', $housingFilter);
-        } else {
-            $housingFilter = null;
+        $dogsById = [];
+        if ($dogIds !== []) {
+            $dogs = $dogsRepository->createQueryBuilder('d')
+                ->andWhere('d.id IN (:ids)')
+                ->setParameter('ids', $dogIds)
+                ->getQuery()
+                ->getResult();
+
+            foreach ($dogs as $dog) {
+                $dogsById[$dog->getId()] = $dog;
+            }
         }
 
-        $adoptions = $queryBuilder->getQuery()->getResult();
+        $dogCards = [];
+        foreach ($rows as $row) {
+            $dogId = (int) ($row['dog_id'] ?? 0);
+            if ($dogId <= 0 || !isset($dogsById[$dogId])) {
+                continue;
+            }
 
-        $totalCount = (int) $adoptionRepository->createQueryBuilder('a')
-            ->select('COUNT(a.id)')
-            ->getQuery()
-            ->getSingleScalarResult();
+            $lastRequestAt = $row['lastRequestAt'] ?? null;
+            if (is_string($lastRequestAt) && $lastRequestAt !== '') {
+                try {
+                    $lastRequestAt = new \DateTimeImmutable($lastRequestAt);
+                } catch (\Throwable) {
+                    $lastRequestAt = null;
+                }
+            }
 
-        $withYardCount = (int) $adoptionRepository->createQueryBuilder('a')
-            ->select('COUNT(a.id)')
-            ->andWhere('a.hasYard = :yard')
-            ->setParameter('yard', true)
-            ->getQuery()
-            ->getSingleScalarResult();
-
-        $withoutYardCount = max(0, $totalCount - $withYardCount);
+            $dogCards[] = [
+                'dog' => $dogsById[$dogId],
+                'requests_count' => (int) ($row['requestsCount'] ?? 0),
+                'last_request_at' => $lastRequestAt,
+            ];
+        }
 
         return $this->render('adoption/index.html.twig', [
             'active' => 'adoption',
             'page_title' => 'Adoptions',
+            'dog_cards' => $dogCards,
+            'total_dogs' => count($dogCards),
+        ]);
+    }
+
+    #[Route('/dog/{id}/requests', name: 'app_adoption_dog_adpot_list', requirements: ['id' => '\\d+'], methods: ['GET'])]
+    public function dogAdpotList(Dogs $dog, AdoptionRepository $adoptionRepository): Response
+    {
+        $adoptions = $adoptionRepository->createQueryBuilder('a')
+            ->leftJoin('a.user', 'u')
+            ->addSelect('u')
+            ->andWhere('a.dog = :dog')
+            ->setParameter('dog', $dog)
+            ->orderBy('a.createdAt', 'DESC')
+            ->addOrderBy('a.id', 'DESC')
+            ->getQuery()
+            ->getResult();
+
+        return $this->render('adoption/dog_adpot_list.html.twig', [
+            'active' => 'adoption',
+            'page_title' => 'Dog Adoption Requests',
+            'dog' => $dog,
             'adoptions' => $adoptions,
-            'current_housing' => $housingFilter,
-            'total_records' => $totalCount,
-            'with_yard_records' => $withYardCount,
-            'without_yard_records' => $withoutYardCount,
         ]);
     }
 
@@ -120,11 +158,17 @@ final class AdoptionController extends AbstractController
     #[Route('/{id}', name: 'app_adoption_delete', requirements: ['id' => '\\d+'], methods: ['POST'])]
     public function delete(Request $request, Adoption $adoption, EntityManagerInterface $entityManager): Response
     {
+        $dogId = (int) $request->getPayload()->get('dog_id', 0);
+
         if ($this->isCsrfTokenValid('delete' . $adoption->getId(), $request->getPayload()->getString('_token'))) {
             $entityManager->remove($adoption);
             $entityManager->flush();
 
             $this->addFlash('success', 'Adoption deleted successfully.');
+        }
+
+        if ($dogId > 0) {
+            return $this->redirectToRoute('app_adoption_dog_adpot_list', ['id' => $dogId], Response::HTTP_SEE_OTHER);
         }
 
         return $this->redirectToRoute('app_adoption_index', [], Response::HTTP_SEE_OTHER);

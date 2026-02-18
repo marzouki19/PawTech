@@ -23,24 +23,44 @@ class AdoptionAdminType extends AbstractType
             ->add('user', EntityType::class, [
                 'class' => User::class,
                 'choice_label' => static function (User $user): string {
-                    return sprintf('%s (%s)', $user->getFullName(), $user->getEmail());
+                    return sprintf('%s (%s)', $user->getNom(), $user->getEmail());
                 },
+                'placeholder' => 'Select applicant',
+                'required' => true,
             ])
             ->add('dog', EntityType::class, [
                 'class' => Dogs::class,
                 'choice_label' => static function (Dogs $dog): string {
                     return sprintf('%s (#%d)', $dog->getName(), $dog->getId());
                 },
+                'placeholder' => 'Select dog',
+                'required' => true,
             ])
             ->add('createdAt', DateTimeType::class, [
                 'widget' => 'single_text',
+                'required' => true,
+                'input' => 'datetime_immutable',
+                'attr' => [
+                    'max' => (new \DateTimeImmutable())->format('Y-m-d\\TH:i'),
+                ],
             ])
             ->add('applicantAge', IntegerType::class, [
                 'required' => true,
+                'attr' => [
+                    'min' => 18,
+                    'max' => 120,
+                    'inputmode' => 'numeric',
+                ],
             ])
             ->add('income', NumberType::class, [
                 'scale' => 2,
                 'required' => true,
+                'attr' => [
+                    'min' => 0,
+                    'max' => 1000000,
+                    'step' => '0.01',
+                    'inputmode' => 'decimal',
+                ],
             ])
             ->add('housingType', ChoiceType::class, [
                 'choices' => [
@@ -50,15 +70,26 @@ class AdoptionAdminType extends AbstractType
                     'Other' => 'other',
                 ],
                 'required' => true,
+                'placeholder' => 'Select one',
             ])
             ->add('hasYard', CheckboxType::class, [
                 'required' => false,
             ])
             ->add('familySize', IntegerType::class, [
                 'required' => true,
+                'attr' => [
+                    'min' => 1,
+                    'max' => 20,
+                    'inputmode' => 'numeric',
+                ],
             ])
             ->add('hoursAwayPerDay', IntegerType::class, [
                 'required' => true,
+                'attr' => [
+                    'min' => 0,
+                    'max' => 24,
+                    'inputmode' => 'numeric',
+                ],
             ]);
     }
 
@@ -69,4 +100,3 @@ class AdoptionAdminType extends AbstractType
         ]);
     }
 }
-

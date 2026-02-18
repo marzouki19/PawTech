@@ -1,0 +1,125 @@
+{% extends 'layout.html.twig' %}
+
+{% block title %}Dog Adoption Requests | PawTech{% endblock %}
+
+{% set active = 'adoption' %}
+{% set page_title = 'Dog Adoption Requests' %}
+
+{% block main %}
+<div x-data="{
+    deleteModalOpen: false,
+    deleteAction: '',
+    deleteToken: '',
+    deleteLabel: '',
+    openDelete(action, token, label) {
+        this.deleteAction = action;
+        this.deleteToken = token;
+        this.deleteLabel = label;
+        this.deleteModalOpen = true;
+    }
+}">
+<div class="px-4 sm:px-6 lg:px-8 py-8 max-w-7xl mx-auto">
+    <div class="bg-white rounded-2xl border border-gray-200 p-6 mb-8 shadow-sm">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <a href="{{ path('app_adoption_index') }}" class="inline-flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-gray-800 mb-2">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Back to dogs grid
+                </a>
+                <h1 class="text-2xl font-bold text-gray-900">Adoption Requests for {{ dog.name }}</h1>
+                <p class="mt-1 text-sm text-gray-600">Breed: {{ dog.breed }} | Status: {{ dog.adoptionStatus }}</p>
+            </div>
+            <div class="text-sm text-gray-600">Total requests: <span class="font-semibold text-gray-900">{{ adoptions|length }}</span></div>
+        </div>
+    </div>
+
+    {% if adoptions is empty %}
+        <div class="rounded-2xl border border-dashed border-gray-200 p-12 text-center bg-white">
+            <p class="text-sm font-semibold text-gray-600">No adoption requests found for this dog.</p>
+        </div>
+    {% else %}
+        <div class="space-y-4">
+            {% for adoption in adoptions %}
+                <div class="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
+                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                        <div>
+                            <p class="text-sm text-gray-500">Request #{{ adoption.id }} - {{ adoption.createdAt ? adoption.createdAt|date('d/m/Y H:i') : '-' }}</p>
+                            <h3 class="text-lg font-semibold text-gray-900 mt-1">{{ adoption.user ? adoption.user.fullName : '-' }}</h3>
+                            <p class="text-sm text-gray-500">{{ adoption.user ? adoption.user.email : '-' }}</p>
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+                            <div><span class="text-gray-500">Age:</span> <span class="font-semibold">{{ adoption.applicantAge }}</span></div>
+                            <div><span class="text-gray-500">Income:</span> <span class="font-semibold">{{ adoption.income|number_format(2, ',', ' ') }} TND</span></div>
+                            <div><span class="text-gray-500">Housing:</span> <span class="font-semibold">{{ adoption.housingType|title }}</span></div>
+                            <div><span class="text-gray-500">Yard:</span> <span class="font-semibold">{{ adoption.hasYard ? 'Yes' : 'No' }}</span></div>
+                            <div><span class="text-gray-500">Family:</span> <span class="font-semibold">{{ adoption.familySize }}</span></div>
+                            <div><span class="text-gray-500">Hours Away:</span> <span class="font-semibold">{{ adoption.hoursAwayPerDay }} h</span></div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <a href="{{ path('app_adoption_show', {'id': adoption.id}) }}" class="px-4 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50">View</a>
+                            <a href="{{ path('app_adoption_edit', {'id': adoption.id}) }}" class="px-4 py-2 rounded-lg border border-orange-200 text-sm font-semibold text-orange-600 hover:bg-orange-50">Edit</a>
+                            <button type="button"
+                                    class="px-4 py-2 rounded-lg border border-red-200 text-sm font-semibold text-red-600 hover:bg-red-50"
+                                    @click="openDelete('{{ path('app_adoption_delete', {'id': adoption.id}) }}', '{{ csrf_token('delete' ~ adoption.id) }}', 'Request #{{ adoption.id }}')">
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+
+<div x-show="deleteModalOpen"
+     class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
+     @click.self="deleteModalOpen = false"
+     @keydown.escape.window="deleteModalOpen = false"
+     style="display: none;"
+     x-transition:enter="transition ease-out duration-300"
+     x-transition:enter-start="opacity-0 scale-95"
+     x-transition:enter-end="opacity-100 scale-100"
+     x-transition:leave="transition ease-in duration-200"
+     x-transition:leave-start="opacity-100 scale-100"
+     x-transition:leave-end="opacity-0 scale-95">
+    <div @click.stop class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4">
+        <div class="sticky top-0 bg-white border-b border-gray-200 px-8 py-6 rounded-t-2xl">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-900">Delete Adoption Request</h2>
+                    <p class="mt-1 text-sm text-gray-600">Are you sure you want to delete <span class="font-semibold" x-text="deleteLabel"></span>?</p>
+                </div>
+                <button @click="deleteModalOpen = false" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="px-8 py-6">
+            <form method="post" :action="deleteAction">
+                <input type="hidden" name="_token" :value="deleteToken">
+                <input type="hidden" name="dog_id" value="{{ dog.id }}">
+                <div class="flex justify-end gap-3">
+                    <button type="button" @click="deleteModalOpen = false"
+                            class="px-6 py-2.5 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="px-6 py-2.5 rounded-lg bg-red-600 text-sm font-semibold text-white shadow hover:bg-red-700">
+                        Delete
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+{% endblock %}
