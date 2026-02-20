@@ -7,6 +7,7 @@ use App\Form\EvenementType;
 use App\Repository\EvenementRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -34,6 +35,40 @@ final class EvenementController extends AbstractController
             'evenements' => $evenements,
             'active' => 'evenement',
         ]);
+    }
+
+    #[Route('/filter', name: 'app_evenement_filter', methods: ['GET'])]
+    public function filter(Request $request, EvenementRepository $evenementRepository): JsonResponse
+    {
+        $q = $request->query->get('q', '');
+        $type = $request->query->get('type', '');
+        $statut = $request->query->get('statut', '');
+        $sort = $request->query->get('sort', 'dateDebut_DESC');
+
+        $evenements = $evenementRepository->findWithAdminFilters(
+            $q ?: null,
+            $type ?: null,
+            $statut ?: null,
+            $sort
+        );
+
+        $data = [];
+        foreach ($evenements as $e) {
+            $data[] = [
+                'id' => $e->getId(),
+                'titre' => $e->getTitre(),
+                'type' => $e->getType(),
+                'dateDebut' => $e->getDateDebut()->format('d/m/Y'),
+                'heureDebut' => $e->getDateDebut()->format('H:i'),
+                'ville' => $e->getVille(),
+                'capaciteMax' => $e->getCapaciteMax(),
+                'statut' => $e->getStatut(),
+                'showUrl' => $this->generateUrl('app_evenement_show', ['id' => $e->getId()]),
+                'editUrl' => $this->generateUrl('app_evenement_edit', ['id' => $e->getId()]),
+            ];
+        }
+
+        return new JsonResponse(['ok' => true, 'count' => count($data), 'items' => $data]);
     }
 
     #[Route('/new', name: 'app_evenement_new', methods: ['GET', 'POST'])]

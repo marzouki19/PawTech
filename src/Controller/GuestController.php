@@ -7,6 +7,7 @@ use App\Form\GuestType;
 use App\Repository\GuestRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -35,6 +36,38 @@ final class GuestController extends AbstractController
             'role' => $role,
             'sort' => $sort,
         ]);
+    }
+
+    #[Route('/filter', name: 'app_guest_filter', methods: ['GET'])]
+    public function filter(Request $request, GuestRepository $guestRepository): JsonResponse
+    {
+        $q = $request->query->get('q', '');
+        $role = $request->query->get('role', '');
+        $sort = $request->query->get('sort', 'nom_asc');
+
+        $guests = $guestRepository->findWithAdminFilters(
+            $q ?: null,
+            $role ?: null,
+            $sort
+        );
+
+        $data = [];
+        foreach ($guests as $g) {
+            $data[] = [
+                'id' => $g->getId(),
+                'fullName' => $g->getFullName(),
+                'email' => $g->getEmail(),
+                'organisation' => $g->getOrganisation(),
+                'role' => $g->getRole(),
+                'evenementId' => $g->getEvenement()->getId(),
+                'evenementTitre' => $g->getEvenement()->getTitre(),
+                'showUrl' => $this->generateUrl('app_guest_show', ['id' => $g->getId()]),
+                'editUrl' => $this->generateUrl('app_guest_edit', ['id' => $g->getId()]),
+                'evenementUrl' => $this->generateUrl('app_evenement_show', ['id' => $g->getEvenement()->getId()]),
+            ];
+        }
+
+        return new JsonResponse(['ok' => true, 'count' => count($data), 'items' => $data]);
     }
 
     #[Route('/new', name: 'app_guest_new', methods: ['GET', 'POST'])]

@@ -4,6 +4,9 @@ import numpy as np
 import pandas as pd
 from sklearn.neighbors import NearestNeighbors
 from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import cross_val_score, train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from datetime import datetime
 import os
 
@@ -240,6 +243,99 @@ def dataset_info():
         'avg_satisfaction': round(dataset['satisfaction_score'].mean(), 3)
     })
 
+@app.route('/model/accuracy', methods=['GET'])
+def model_accuracy():
+    """
+    Calculate model accuracy using cross-validation
+    This tests: Can we predict what event type a user will like based on their preferences?
+    """
+    if dataset.empty:
+        return jsonify({'ok': False, 'message': 'No dataset loaded'})
+    
+    try:
+        # Prepare features (user preferences) and labels (what they liked)
+        X = []
+        y = []
+        
+        for _, row in dataset.iterrows():
+            feature_vector = encode_preferences(
+                row['preferred_type'],
+                row['preferred_city'],
+                row['preferred_timeframe'],
+                row['group_size']
+            )
+            X.append(feature_vector)
+            y.append(row['liked_event_type'])
+        
+        X = np.array(X)
+        y = np.array(y)
+        
+        # Encode labels for classification
+        label_enc = LabelEncoder()
+        y_encoded = label_enc.fit_transform(y)
+        
+        # Get the k value from query parameter (default 5)
+        k = request.args.get('k', default=5, type=int)
+        k = min(k, len(X) - 1)  # Can't have k >= n_samples
+        
+        # Split data: 80% train, 20% test
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y_encoded, test_size=0.2, random_state=42
+        )
+        
+        # Train KNN classifier
+        knn_classifier = KNeighborsClassifier(n_neighbors=k, metric='euclidean')
+        knn_classifier.fit(X_train, y_train)
+        
+        # Predict on test set
+        y_pred = knn_classifier.predict(X_test)
+        
+        # Calculate metrics
+        accuracy = accuracy_score(y_test, y_pred)
+        
+        # Cross-validation (5-fold)
+        cv_scores = cross_val_score(knn_classifier, X, y_encoded, cv=5)
+        
+        # Try different k values to find best
+        k_results = []
+        for test_k in [3, 5, 7, 10, 15]:
+            if test_k < len(X):
+                knn_temp = KNeighborsClassifier(n_neighbors=test_k)
+                cv_temp = cross_val_score(knn_temp, X, y_encoded, cv=5)
+                k_results.append({
+                    'k': test_k,
+                    'accuracy': round(cv_temp.mean() * 100, 2)
+                })
+        
+        # Find best k
+        best_k = max(k_results, key=lambda x: x['accuracy']) if k_results else {'k': k, 'accuracy': accuracy * 100}
+        
+        return jsonify({
+            'ok': True,
+            'current_k': k,
+            'accuracy': round(accuracy * 100, 2),
+            'cross_validation': {
+                'folds': 5,
+                'mean_accuracy': round(cv_scores.mean() * 100, 2),
+                'std_deviation': round(cv_scores.std() * 100, 2),
+                'fold_scores': [round(s * 100, 2) for s in cv_scores]
+            },
+            'k_comparison': k_results,
+            'best_k': best_k,
+            'dataset_size': len(dataset),
+            'test_size': len(X_test),
+            'tips_to_improve': [
+                'Add more data to the dataset (current: {} records)'.format(len(dataset)),
+                'Best k value appears to be: {}'.format(best_k['k']),
+                'Add more features (e.g., age, past attendance)',
+                'Balance the dataset (equal samples per event type)',
+                'Collect real user feedback data'
+            ]
+        })
+        
+    except Exception as e:
+        return jsonify({'ok': False, 'message': str(e)}), 500
+
 @app.route('/recommend', methods=['POST'])
 def recommend_events():
     """
@@ -327,9 +423,10 @@ if __name__ == '__main__':
     print(f"\n  Dataset: {len(dataset)} records loaded")
     print(f"  Model: {'Trained' if model_trained else 'Not trained'}")
     print("\n  Endpoints:")
-    print("    GET  /health       - Health check")
-    print("    GET  /dataset/info - Dataset information")
-    print("    POST /recommend    - Get recommendations")
+    print("    GET  /health         - Health check")
+    print("    GET  /dataset/info   - Dataset information")
+    print("    GET  /model/accuracy - Model accuracy metrics")
+    print("    POST /recommend      - Get recommendations")
     print("\n  Server: http://127.0.0.1:8003")
     print("=" * 60 + "\n")
     

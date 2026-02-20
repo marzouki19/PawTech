@@ -8,6 +8,7 @@ use App\Repository\ParticipationRepository;
 use App\Service\EmailService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -36,6 +37,41 @@ final class ParticipationController extends AbstractController
             'statut' => $statut,
             'sort' => $sort,
         ]);
+    }
+
+    #[Route('/filter', name: 'app_participation_filter', methods: ['GET'])]
+    public function filter(Request $request, ParticipationRepository $participationRepository): JsonResponse
+    {
+        $q = $request->query->get('q', '');
+        $statut = $request->query->get('statut', '');
+        $sort = $request->query->get('sort', 'dateParticipation_desc');
+
+        $participations = $participationRepository->findWithAdminFilters(
+            $q ?: null,
+            $statut ?: null,
+            $sort
+        );
+
+        $data = [];
+        foreach ($participations as $p) {
+            $data[] = [
+                'id' => $p->getId(),
+                'userFullName' => $p->getUser()->getFullName(),
+                'userEmail' => $p->getUser()->getEmail(),
+                'evenementId' => $p->getEvenement()->getId(),
+                'evenementTitre' => $p->getEvenement()->getTitre(),
+                'evenementVille' => $p->getEvenement()->getVille(),
+                'dateParticipation' => $p->getDateParticipation()->format('d/m/Y'),
+                'statut' => $p->getStatut(),
+                'showUrl' => $this->generateUrl('app_participation_show', ['id' => $p->getId()]),
+                'editUrl' => $this->generateUrl('app_participation_edit', ['id' => $p->getId()]),
+                'evenementUrl' => $this->generateUrl('app_evenement_show', ['id' => $p->getEvenement()->getId()]),
+                'confirmUrl' => $this->generateUrl('app_participation_confirm', ['id' => $p->getId()]),
+                'cancelUrl' => $this->generateUrl('app_participation_cancel', ['id' => $p->getId()]),
+            ];
+        }
+
+        return new JsonResponse(['ok' => true, 'count' => count($data), 'items' => $data]);
     }
 
     #[Route('/new', name: 'app_participation_new', methods: ['GET', 'POST'])]

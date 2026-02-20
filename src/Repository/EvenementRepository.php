@@ -55,7 +55,7 @@ class EvenementRepository extends ServiceEntityRepository
         }
 
         if ($search) {
-            $qb->andWhere('e.titre LIKE :q OR e.description LIKE :q')
+            $qb->andWhere('e.titre LIKE :q OR e.description LIKE :q OR e.type LIKE :q OR e.ville LIKE :q OR e.lieu LIKE :q')
                ->setParameter('q', '%' . $search . '%');
         }
 

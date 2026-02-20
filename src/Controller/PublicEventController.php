@@ -37,6 +37,53 @@ final class PublicEventController extends AbstractController
         ]);
     }
 
+    /**
+     * AJAX endpoint for filtering events
+     */
+    #[Route('/filter', name: 'app_events_filter', methods: ['GET'])]
+    public function filterEvents(Request $request, EvenementRepository $evenementRepository): JsonResponse
+    {
+        $type = $request->query->get('type', '');
+        $ville = $request->query->get('ville', '');
+        $q = $request->query->get('q', '');
+
+        $events = $evenementRepository->findActiveWithFilters(
+            $type ?: null, 
+            $ville ?: null, 
+            $q ?: null
+        );
+
+        // Default images by type
+        $typeImages = [
+            'VACCINATION' => 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&h=225&fit=crop',
+            'ADOPTION' => 'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=400&h=225&fit=crop',
+            'SENSIBILISATION' => 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=400&h=225&fit=crop',
+            'COLLECTE_DONS' => 'https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=400&h=225&fit=crop',
+        ];
+        $defaultImage = 'https://images.unsplash.com/photo-1534361960057-19889db9621e?w=400&h=225&fit=crop';
+
+        $eventsData = [];
+        foreach ($events as $event) {
+            $eventsData[] = [
+                'id' => $event->getId(),
+                'titre' => $event->getTitre(),
+                'type' => $event->getType(),
+                'ville' => $event->getVille(),
+                'lieu' => $event->getLieu(),
+                'date_debut' => $event->getDateDebut()->format('M d, Y'),
+                'description' => substr($event->getDescription() ?? '', 0, 100) . '...',
+                'image' => $event->getImage() ?: ($typeImages[$event->getType()] ?? $defaultImage),
+                'url' => $this->generateUrl('app_event_detail', ['id' => $event->getId()]),
+            ];
+        }
+
+        return new JsonResponse([
+            'ok' => true,
+            'count' => count($eventsData),
+            'events' => $eventsData,
+        ]);
+    }
+
     #[Route('/{id}', name: 'app_event_detail', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
     public function detail(
         Request $request,
