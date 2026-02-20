@@ -198,6 +198,18 @@
                     <div id="face-preview-container" class="hidden flex justify-center mb-2">
                         <img id="face-preview" src="" alt="Face preview" class="w-24 h-24 rounded-full border-2 border-orange-500 object-cover">
                     </div>
+
+                    {# Verify Identity Button #}
+                    <div class="flex justify-center">
+                        <button
+                            type="button"
+                            id="verify-identity-btn"
+                            onclick="verifyEndentity()"
+                            class="hidden rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition"
+                        >
+                            verify endentity
+                        </button>
+                    </div>
                     
                     {# Face Scan Modal #}
                     <div id="faceScanModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
@@ -206,6 +218,16 @@
                             <h2 class="text-lg font-semibold mb-4 text-gray-800">Face Recognition</h2>
                             <video id="face-video" autoplay playsinline class="rounded-xl border border-gray-200 mb-4" width="280" height="210"></video>
                             <button type="button" onclick="captureFaceImage()" class="w-full bg-orange-500 text-white px-4 py-2.5 rounded-xl font-medium hover:bg-orange-600 transition">Capture Face</button>
+                        </div>
+                    </div>
+
+                    {# Welcome Modal #}
+                    <div id="faceWelcomeModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
+                        <div class="bg-white rounded-2xl p-6 w-full max-w-sm relative text-center shadow-xl">
+                            <button type="button" onclick="closeFaceWelcomeModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-2xl font-bold">&times;</button>
+                            <h3 class="text-2xl font-bold text-gray-900 mb-2">Welcome</h3>
+                            <p id="face-welcome-text" class="text-gray-700 text-base"></p>
+                            <button type="button" onclick="closeFaceWelcomeModal()" class="mt-5 w-full rounded-xl bg-blue-600 px-4 py-2.5 text-white font-medium hover:bg-blue-700 transition">OK</button>
                         </div>
                     </div>
                     
@@ -224,6 +246,15 @@
 
                     <script>
                         let faceStream = null;
+                        let capturedFaceImage = '';
+                        function openFaceWelcomeModal(username) {
+                            const text = document.getElementById('face-welcome-text');
+                            text.textContent = username ? username : 'User';
+                            document.getElementById('faceWelcomeModal').classList.remove('hidden');
+                        }
+                        function closeFaceWelcomeModal() {
+                            document.getElementById('faceWelcomeModal').classList.add('hidden');
+                        }
                         function openFaceScanModal() {
                             document.getElementById('faceScanModal').classList.remove('hidden');
                             const video = document.getElementById('face-video');
@@ -249,14 +280,57 @@
                             canvas.height = video.videoHeight;
                             canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
                             const dataUrl = canvas.toDataURL('image/png');
+                            capturedFaceImage = dataUrl;
                             document.getElementById('face-image-input').value = dataUrl;
                             document.getElementById('face-preview').src = dataUrl;
                             document.getElementById('face-preview-container').classList.remove('hidden');
-                            document.getElementById('face-capture-status').innerHTML = '<span class="text-green-600"><i class="fas fa-check-circle"></i> Face captured!</span>';
+                            document.getElementById('face-capture-status').innerHTML = '<span class="text-green-600"><i class="fas fa-check-circle"></i> Face captured! Click verify endentity.</span>';
+                            document.getElementById('verify-identity-btn').classList.remove('hidden');
                             closeFaceScanModal();
-                            setTimeout(function() {
-                                document.getElementById('signin-form').submit();
-                            }, 500);
+                        }
+
+                        async function verifyEndentity() {
+                            const statusEl = document.getElementById('face-capture-status');
+                            const buttonEl = document.getElementById('verify-identity-btn');
+
+                            if (!capturedFaceImage) {
+                                statusEl.innerHTML = '<span class="text-red-600"><i class="fas fa-exclamation-circle"></i> Capture a face image first.</span>';
+                                return;
+                            }
+
+                            buttonEl.disabled = true;
+                            buttonEl.classList.add('opacity-60', 'cursor-not-allowed');
+                            statusEl.innerHTML = '<span class="text-blue-600"><i class="fas fa-spinner fa-spin"></i> Verifying identity...</span>';
+
+                            try {
+                                const response = await fetch('{{ path('app_verify_face_proxy') }}', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({
+                                        user_face: capturedFaceImage,
+                                    }),
+                                });
+
+                                const result = await response.json();
+
+                                if (result && result.message === 'yes') {
+                                    const username = result.username || 'Unknown';
+                                    statusEl.innerHTML = '<span class="text-green-600"><i class="fas fa-check-circle"></i> Verified: ' + username + '</span>';
+                                    openFaceWelcomeModal(username);
+                                    setTimeout(function() {
+                                        window.location.href = '{{ path('app_home') }}';
+                                    }, 1500);
+                                } else {
+                                    statusEl.innerHTML = '<span class="text-red-600"><i class="fas fa-times-circle"></i> No match found.</span>';
+                                }
+                            } catch (error) {
+                                statusEl.innerHTML = '<span class="text-red-600"><i class="fas fa-exclamation-triangle"></i> Verification request failed.</span>';
+                            } finally {
+                                buttonEl.disabled = false;
+                                buttonEl.classList.remove('opacity-60', 'cursor-not-allowed');
+                            }
                         }
                     </script>
                     

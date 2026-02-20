@@ -4,10 +4,6 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Form\UserType;
-<<<<<<< HEAD
-=======
-use App\Form\SigninType;
->>>>>>> origin/amine/user
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
@@ -21,30 +17,6 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Component\String\Slugger\SluggerInterface;
 final class UserController extends AbstractController
 {
-<<<<<<< HEAD
-=======
-        #[Route('/users/ajax-sort', name: 'app_users_ajax_sort', methods: ['GET'])]
-        public function ajaxSort(Request $request, UserRepository $userRepository): Response
-        {
-            $sortDir = strtolower((string) $request->query->get('sort', 'asc'));
-            $sortBy = (string) $request->query->get('sort_by', 'id');
-            $users = $userRepository->sortAll($sortDir, $sortBy);
-            $rows = [];
-            foreach ($users as $user) {
-                $rows[] = [
-                    $user->getId(),
-                    $user->getFirstName(),
-                    $user->getLastName(),
-                    $user->getEmail(),
-                    $user->getPhone(),
-                    $user->getRole(),
-                    $user->getStatus(),
-                    // Optionally add actions HTML here if needed
-                ];
-            }
-            return $this->json($rows);
-        }
->>>>>>> origin/amine/user
     #[Route('/user', name: 'app_user_index', methods: ['GET'])]
     public function index(UserRepository $userRepository): Response
     {
@@ -263,7 +235,6 @@ final class UserController extends AbstractController
     //creation card ou tableau
     private function buildUserRows(array $users): array
     {
-<<<<<<< HEAD
         $cardRows = array_map(static function ($user) {
             return [
                 $user->getId(),
@@ -277,8 +248,6 @@ final class UserController extends AbstractController
             ];
         }, $users);
 
-=======
->>>>>>> origin/amine/user
         $tableRows = array_map(static function ($user) {
             return [
                 $user->getId(),
@@ -290,12 +259,8 @@ final class UserController extends AbstractController
                 $user->getStatus(),
             ];
         }, $users);
-<<<<<<< HEAD
 
         return [$cardRows, $tableRows];
-=======
-        return $tableRows;
->>>>>>> origin/amine/user
     }
 
 
@@ -311,77 +276,66 @@ final class UserController extends AbstractController
 
 
     
+       
     #[Route('/signup', name: 'app_signup', methods: ['GET', 'POST'])]
     public function signup(Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher): Response
     {
-        $errors = [];
-        $data = [
-            'prenom' => '',
-            'nom' => '',
-            'email' => '',
-            'telephone' => '',
-        ];
+        $user = new \App\Entity\User();
+        $form = $this->createForm(\App\Form\SignupType::class, $user);
+        $form->handleRequest($request);
 
-        if ($request->isMethod('POST')) {
-            $data['prenom'] = trim((string) $request->request->get('prenom', ''));
-            $data['nom'] = trim((string) $request->request->get('nom', ''));
-            $data['email'] = trim((string) $request->request->get('email', ''));
-            $data['telephone'] = trim((string) $request->request->get('telephone', ''));
-            $password = (string) $request->request->get('password', '');
-            $confirmPassword = (string) $request->request->get('confirm_password', '');
-            $agreeTerms = (bool) $request->request->get('agree_terms', false);
-
-            if ($data['prenom'] === '') {
-                $errors['prenom'] = 'The first name cannot be empty.';
+        if ($form->isSubmitted() && $form->isValid()) {
+            // Set additional fields not mapped by the form
+            $user->setRole('Client');
+            $user->setStatus('Actif');
+            $user->setUserImage('uploads/users/default.png');
+            $faceImage = (string) $request->request->get('user_face_raw', '');
+            if ($faceImage === '') {
+                $faceImage = $this->extractUserFaceFromRequest($request);
             }
-            if ($data['nom'] === '') {
-                $errors['nom'] = 'The last name cannot be empty.';
+            if ($faceImage === '') {
+                $faceImage = (string) ($form->get('user_face')->getData() ?? '');
             }
-            if ($data['email'] === '') {
-                $errors['email'] = 'The email cannot be empty.';
-            } elseif (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
-                $errors['email'] = 'Please enter a valid email address.';
-            }
-            if ($data['telephone'] === '') {
-                $errors['telephone'] = 'The phone number cannot be empty.';
-            }
-            if ($password === '') {
-                $errors['password'] = 'The password cannot be empty.';
-            } elseif (strlen($password) < 6) {
-                $errors['password'] = 'Password must be at least 6 characters.';
-            }
-            if ($confirmPassword === '') {
-                $errors['confirm_password'] = 'Please confirm your password.';
-            } elseif ($password !== $confirmPassword) {
-                $errors['confirm_password'] = 'Passwords do not match.';
-            }
-            if (!$agreeTerms) {
-                $errors['agree_terms'] = 'You must agree to the terms.';
+            $user->setUserFace($faceImage);
+            if ($user->getTelephone() === null) {
+                $user->setTelephone(0);
             }
 
-            if ($errors === []) {
-                $user = new User();
-                $user->setPrenom($data['prenom']);
-                $user->setNom($data['nom']);
-                $user->setEmail($data['email']);
-                $user->setTelephone((int) $data['telephone']);
-                $user->setRole('Client');
-                $user->setStatus('Actif');
-                $user->setUserImage('uploads/users/default.png');
-                $user->setPassword($passwordHasher->hashPassword($user, $password));
+            // Hash password
+            $user->setPassword(
+                $passwordHasher->hashPassword($user, $form->get('password')->getData())
+            );
 
-                $entityManager->persist($user);
-                $entityManager->flush();
+            $entityManager->persist($user);
+            $entityManager->flush();
 
-                return $this->redirectToRoute('app_signin');
-            }
+            return $this->redirectToRoute('app_signin');
         }
 
         return $this->render('sign/signup.html.twig', [
-            'signup_errors' => $errors,
-            'signup_data' => $data,
+            'form' => $form->createView(),
         ]);
     }
+
+    private function extractUserFaceFromRequest(Request $request): string
+    {
+        $directValue = (string) $request->request->get('user_face', '');
+        if ($directValue !== '') {
+            return $directValue;
+        }
+
+        foreach ($request->request->all() as $value) {
+            if (is_array($value) && isset($value['user_face']) && is_string($value['user_face'])) {
+                return $value['user_face'];
+            }
+        }
+
+        return '';
+    }
+    
+   
+
+
     
    
 
@@ -401,10 +355,13 @@ final class UserController extends AbstractController
         $error = null;
         $lastEmail = '';
 
-<<<<<<< HEAD
-        if ($request->isMethod('POST')) {
-            $email = trim((string) $request->request->get('email', ''));
-            $password = (string) $request->request->get('password', '');
+        $form = $this->createForm(\App\Form\SigninType::class, new User());
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted()) {
+            $data = $form->getData();
+            $email = trim((string) ($data?->getEmail() ?? ''));
+            $password = (string) ($data?->getPassword() ?? '');
             $lastEmail = $email;
 
             if ($email === '' || $password === '') {
@@ -412,21 +369,13 @@ final class UserController extends AbstractController
                     'messageKey' => 'Email and password are required.',
                     'messageData' => [],
                 ];
+
                 return $this->render('sign/signin.html.twig', [
+                    'form' => $form->createView(),
                     'error' => $error,
                     'last_email' => $lastEmail,
                 ]);
             }
-=======
-        $form = $this->createForm(SigninType::class);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $data = $form->getData();
-            $email = $data['email'] ?? '';
-            $password = $data['password'] ?? '';
-            $lastEmail = $email;
->>>>>>> origin/amine/user
 
             $user = $userRepository->findOneBy(['email' => $email]);
 
@@ -438,10 +387,6 @@ final class UserController extends AbstractController
                     ];
                 } else {
                     $roles = $user->getRoles();
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/amine/user
                     $session->set('user', [
                         'id' => $user->getId(),
                         'email' => $user->getEmail(),
@@ -450,10 +395,6 @@ final class UserController extends AbstractController
                         'userImage' => $user->getUserImage(),
                         'role' => $roles[0] ?? 'ROLE_USER',
                     ]);
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/amine/user
                     return $this->redirectToRoute('app_home');
                 }
             } else {
@@ -482,33 +423,16 @@ final class UserController extends AbstractController
                     'userImage' => $user->getUserImage(),
                     'role' => $roles[0] ?? 'ROLE_USER',
                 ]);
-<<<<<<< HEAD
-
                 return $this->redirectToRoute('app_home');
             }
-        }
-
-        return $this->render('sign/signin.html.twig', [
-=======
-                return $this->redirectToRoute('app_home');
-            }
-        } elseif ($form->isSubmitted()) {
-            $data = $form->getData();
-            $lastEmail = $data['email'] ?? '';
-            $error = [
-                'messageKey' => 'Email and password are required.',
-                'messageData' => [],
-            ];
         }
 
         return $this->render('sign/signin.html.twig', [
             'form' => $form->createView(),
->>>>>>> origin/amine/user
             'error' => $error,
             'last_email' => $lastEmail,
         ]);
     }
-
    
 
 
@@ -517,7 +441,7 @@ final class UserController extends AbstractController
 
 
     #[Route('/auth/google', name: 'app_google_auth_start', methods: ['GET'])]
-        public function googleAuthStart(Request $request): Response
+    public function googleAuthStart(Request $request): Response
     {
         $clientId = $_ENV['GOOGLE_CLIENT_ID'] ?? 'YOUR_GOOGLE_CLIENT_ID';
         $redirectUri = $_ENV['GOOGLE_REDIRECT_URI']
@@ -693,24 +617,27 @@ final class UserController extends AbstractController
         $users = $searchQuery === ''
             ? $userRepository->sortAll($sortDir, $sortBy)
             : $userRepository->search($searchQuery, $searchField);
-<<<<<<< HEAD
         [$cardRows, $tableRows] = $this->buildUserRows($users);
-=======
-        $tableRows = $this->buildUserRows($users);
->>>>>>> origin/amine/user
 
-        return $this->renderEntity('users/index.html.twig', 'Users', 'users', [
-            'ID', 'First Name', 'Last Name', 'Email', 'Phone', 'Role', 'Status',
-        ], $tableRows, 'Add New User', [
-            ['name' => 'first_name', 'placeholder' => 'First name'],
-            ['name' => 'last_name', 'placeholder' => 'Last name'],
-            ['name' => 'email', 'type' => 'email', 'placeholder' => 'Email address'],
-        ], null, [
+        return $this->render('users/index.html.twig', [
+            'page_title' => 'Users',
+            'active' => 'users',
+            'entity_name' => 'Users',
+            'columns' => ['ID', 'First Name', 'Last Name', 'Email', 'Phone', 'Role', 'Status'],
+            'rows' => $tableRows,
+            'modal_title' => 'Add New User',
+            'modal_fields' => [
+                ['name' => 'first_name', 'placeholder' => 'First name'],
+                ['name' => 'last_name', 'placeholder' => 'Last name'],
+                ['name' => 'email', 'type' => 'email', 'placeholder' => 'Email address'],
+            ],
+            'add_href' => null,
+            'total_records' => count($tableRows),
+            'per_page' => 10,
+            'page' => 1,
+            'total_pages' => 1,
             'form' => $form->createView(),
-<<<<<<< HEAD
             'card_rows' => $cardRows,
-=======
->>>>>>> origin/amine/user
             'search_query' => $searchQuery,
             'search_field' => $searchField,
             'sort_dir' => $sortDir,

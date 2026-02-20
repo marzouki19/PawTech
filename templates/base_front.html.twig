@@ -12,9 +12,6 @@
         
         {# Font Awesome for icons #}
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-        {# Ensure Font Awesome for Assistant Agent #}
-        <script src="https://kit.fontawesome.com/4b8b0b6e8b.js" crossorigin="anonymous"></script>
         
         {# Custom styles for dropdown and animations #}
         <style>
@@ -58,6 +55,32 @@
                     transform: translateY(0);
                 }
             }
+
+            .form-error-list,
+            .form-error-message,
+            .form-errors,
+            .form-error {
+                color: #ef4444;
+                font-size: 0.875rem;
+                margin-top: 0.25rem;
+            }
+
+            .form-error-list {
+                list-style: none;
+                padding-left: 0;
+            }
+
+            .form-error-list li + li {
+                margin-top: 0.25rem;
+            }
+
+            input[aria-invalid="true"]:not([type="checkbox"]):not([type="radio"]),
+            select[aria-invalid="true"],
+            textarea[aria-invalid="true"] {
+                border-color: #ef4444 !important;
+                background-color: #fef2f2 !important;
+                box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.15);
+            }
         </style>
 
         {% block stylesheets %}
@@ -70,6 +93,11 @@
     <body class="min-h-screen flex flex-col bg-[#fdfdfd] text-gray-900">
         {# Main navigation shared by all pages (matches PawTech design) #}
         <header class="bg-[#fff9f4] sticky top-0 z-50 shadow-sm">
+
+
+
+        
+
             {% set sessionUser = app.session.get('user') %}
             {% set activeUser = app.user ? app.user : sessionUser %}
             {% set sessionRole = sessionUser is not null and sessionUser.role is defined ? sessionUser.role : null %}
@@ -78,7 +106,11 @@
             {% set isAgent = is_granted('ROLE_AGENT') or sessionRole == 'ROLE_AGENT' %}
             {% set isClient = is_granted('ROLE_CLIENT') or sessionRole == 'ROLE_CLIENT' %}
             {# Top info bar #}
-            <!--<div class="border-b border-orange-100">
+
+
+
+
+            <div class="border-b border-orange-100">
                 <div class="container mx-auto px-4 lg:px-8 flex items-center justify-between gap-4 py-2 text-[13px] text-gray-600">
                     <div class="flex flex-wrap items-center gap-4">
                         <span class="flex items-center gap-1">
@@ -91,10 +123,17 @@
                         </span>
                     </div>
                     <div class="hidden md:block text-gray-500">
-                        8529 Fairground St. Tallahassee, FL 32303
+                        8529 Ariana tn. ghazela, TN 20303
                     </div>
                 </div>
-            </div>-->
+            </div>
+
+
+
+
+
+
+            
 
             {# Main nav bar #} 
             <div class="container mx-auto px-4 lg:px-8 py-4">
@@ -117,13 +156,45 @@
                             {% endmacro %}
 
                             {{ _self.link('Home', 'app_home', current) }}
-                            {{ _self.link('Dogs', 'app_dogs', current) }}
+                            {{ _self.link('Dogs', 'app_front_dogs', current) }}
                             {{ _self.link('Shop', 'app_shop', current) }}
                             {{ _self.link('Veterinarian', 'app_veterinarian_page', current) }}
                             {{ _self.link('Events', 'app_events', current) }}
                             {{ _self.link('Donation', 'app_donation', current) }}
+                            {{ _self.link('Notifications', 'app_notifications', current) }}
                             {{ _self.link('Contact Us', 'app_contact', current) }}
                             {{ _self.link('About Us', 'app_about', current) }}
+                            
+                            {# Translate Button #}
+                            <span class="relative dropdown">
+                                <button class="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path>
+                                    </svg>
+                                    <span class="hidden sm:inline">Translate</span>
+                                    <i class="fas fa-chevron-down text-xs"></i>
+                                </button>
+                                <div class="dropdown-menu animate-fade-in w-40">
+                                    <a href="#" onclick="translatePage('en'); return false;" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                        <span class="mr-2">🇺🇸</span> English
+                                    </a>
+                                    <a href="#" onclick="translatePage('fr'); return false;" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                        <span class="mr-2">🇫🇷</span> Français
+                                    </a>
+                                    <a href="#" onclick="translatePage('es'); return false;" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                        <span class="mr-2">🇪🇸</span> Español
+                                    </a>
+                                    <a href="#" onclick="translatePage('de'); return false;" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                        <span class="mr-2">🇩🇪</span> Deutsch
+                                    </a>
+                                    <a href="#" onclick="translatePage('ar'); return false;" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                        <span class="mr-2">🇸🇦</span> العربية
+                                    </a>
+                                    <a href="#" onclick="translatePage('zh'); return false;" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                        <span class="mr-2">🇨🇳</span> 中文
+                                    </a>
+                                </div>
+                            </span>
                             
                             {# User Profile Section - MATCHES DASHBOARD STYLE #}
                             <span class="flex items-center gap-2 pl-2 border-l border-gray-200">
@@ -133,8 +204,14 @@
                                     <div class="relative dropdown">
                                         <button class="flex items-center space-x-2 focus:outline-none">
                                                 <div class="w-10 h-10 rounded-full user-avatar flex items-center justify-center text-white font-bold text-sm overflow-hidden">
-                                                    {% if user.userImage is defined and user.userImage %}
-                                                            <img src="{{ user.userImage }}" alt="Avatar" class="w-full h-full object-cover" />
+                                                    {% set avatarImage = null %}
+                                                    {% if user.userImage is defined and user.userImage and user.userImage != 'uploads/users/default.png' and user.userImage != 'uploads/users/default-user.png' %}
+                                                        {% set avatarImage = user.userImage starts with 'data:image' ? user.userImage : asset(user.userImage) %}
+                                                    {% elseif user.user_image is defined and user.user_image and user.user_image != 'uploads/users/default.png' and user.user_image != 'uploads/users/default-user.png' %}
+                                                        {% set avatarImage = user.user_image starts with 'data:image' ? user.user_image : asset(user.user_image) %}
+                                                    {% endif %}
+                                                    {% if avatarImage %}
+                                                        <img src="{{ avatarImage }}" alt="Avatar" class="w-full h-full object-cover" />
                                                     {% elseif user.prenom is defined and user.nom is defined %}
                                                         {{ user.prenom|first|upper }}{{ user.nom|first|upper }}
                                                     {% elseif user.email is defined %}
@@ -269,8 +346,14 @@
                             <div class="relative dropdown">
                                 <button class="flex items-center space-x-1 focus:outline-none">
                                             <div class="w-8 h-8 rounded-full user-avatar flex items-center justify-center text-white font-bold text-sm overflow-hidden">
-                                                {% if user.userImage is defined and user.userImage %}
-                                                        <img src="{{ user.userImage }}" alt="Avatar" class="w-full h-full object-cover" />
+                                                {% set avatarImage = null %}
+                                                {% if user.userImage is defined and user.userImage and user.userImage != 'uploads/users/default.png' and user.userImage != 'uploads/users/default-user.png' %}
+                                                    {% set avatarImage = user.userImage starts with 'data:image' ? user.userImage : asset(user.userImage) %}
+                                                {% elseif user.user_image is defined and user.user_image and user.user_image != 'uploads/users/default.png' and user.user_image != 'uploads/users/default-user.png' %}
+                                                    {% set avatarImage = user.user_image starts with 'data:image' ? user.user_image : asset(user.user_image) %}
+                                                {% endif %}
+                                                {% if avatarImage %}
+                                                    <img src="{{ avatarImage }}" alt="Avatar" class="w-full h-full object-cover" />
                                                 {% elseif user.prenom is defined and user.nom is defined %}
                                                     {{ user.prenom|first|upper }}{{ user.nom|first|upper }}
                                                 {% elseif user.email is defined %}
@@ -382,9 +465,8 @@
         <footer class="bg-white border-t mt-10">
             <div class="container mx-auto px-4 lg:px-8 py-10 grid gap-8 md:grid-cols-4 text-sm">
                 <div>
-                    <div class="flex items-center gap-2 mb-3">
-                        <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-orange-500 text-white font-bold text-lg">P</span>
-                        <span class="font-semibold text-gray-900">PawTech</span>
+                    <div class="flex items-center gap-2">
+                            <span><img src="{{ asset('logo.png') }}" alt="PawTech Logo" class="h-12"></span>
                     </div>
                     <p class="text-gray-500">
                         Caring pet shop offering quality products and services to keep your pets happy, healthy, and comfortable.
@@ -411,8 +493,8 @@
                 <div>
                     <h3 class="font-semibold text-gray-900 mb-3">Store</h3>
                     <p class="text-gray-500">
-                        8529 Fairground St.<br>
-                        Tallahassee, FL 32303
+                        8529 Ariana tn<br>
+                        . ghazela, TN 20303
                     </p>
                     <p class="mt-3 text-gray-500">
                         <span class="block">+216 58 458 152</span>
@@ -449,6 +531,94 @@
                     }, 5000);
                 });
             });
+            
+            // Toggle notification dropdown
+            function toggleNotifications() {
+                const dropdown = document.getElementById('notification-dropdown');
+                dropdown.classList.toggle('hidden');
+            }
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(event) {
+                const dropdown = document.getElementById('notification-dropdown');
+                const button = event.target.closest('button[onclick="toggleNotifications()"]');
+                if (!dropdown.contains(event.target) && !button) {
+                    dropdown.classList.add('hidden');
+                }
+            });
+            
+            // Translate page function
+            async function translatePage(targetLanguage) {
+                console.log('Translating to:', targetLanguage);
+                
+                const elementsToTranslate = [];
+                const walker = document.createTreeWalker(
+                    document.body,
+                    NodeFilter.SHOW_TEXT,
+                    null,
+                    false
+                );
+                
+                let node;
+                while (node = walker.nextNode()) {
+                    const text = node.textContent.trim();
+                    const parent = node.parentElement;
+                    
+                    // Skip script and style elements
+                    if (parent && parent.tagName !== 'SCRIPT' && parent.tagName !== 'STYLE') {
+                        // Skip very short or very long texts
+                        if (text && text.length > 1 && text.length < 5000) {
+                            // Skip texts that are just numbers or symbols
+                            if (!/^[\d\s\p{P}]+$/u.test(text)) {
+                                elementsToTranslate.push({ node: node, originalText: text });
+                            }
+                        }
+                    }
+                }
+                
+                console.log('Elements to translate:', elementsToTranslate.length);
+                
+                if (elementsToTranslate.length === 0) {
+                    console.log('No elements to translate');
+                    return;
+                }
+                
+                const texts = elementsToTranslate.map(el => el.originalText);
+                
+                try {
+                    console.log('Sending request to translation API...');
+                    const response = await fetch('http://127.0.0.1:5000/translate', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            texts: texts,
+                            target_language: targetLanguage
+                        })
+                    });
+                    
+                    console.log('Response status:', response.status);
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        console.log('Translation successful, received:', data.translated_texts.length, 'translations');
+                        
+                        elementsToTranslate.forEach((el, index) => {
+                            if (data.translated_texts[index]) {
+                                el.node.textContent = data.translated_texts[index];
+                            }
+                        });
+                    } else {
+                        const errorText = await response.text();
+                        console.error('Translation failed:', response.status, errorText);
+                        alert('Translation failed. Please make sure the translation server is running.');
+                    }
+                } catch (error) {
+                    console.error('Translation error:', error);
+                    alert('Translation error: ' + error.message + '. Please make sure the Flask translation server is running on port 5000.');
+                }
+            }
         </script>
     </body>
 </html>

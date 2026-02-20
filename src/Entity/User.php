@@ -21,15 +21,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?int $id = null;
 
-<<<<<<< HEAD
+
     /**
      * @var Collection<int, Participation>
      */
 
     #[ORM\OneToMany(targetEntity: Participation::class, mappedBy: 'user', orphanRemoval: true)]
     private Collection $participations;
-=======
->>>>>>> origin/amine/user
+
+
 
 
     #[ORM\Column(length: 30)]
@@ -37,21 +37,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Assert\Length(
         min: 2,
         max: 30,
-<<<<<<< HEAD
-        minMessage: "Le nom doit contenir au moins {{ limit }} caractères",
-        maxMessage: "Le nom ne peut pas dépasser {{ limit }} caractères"
-    )]
-    #[Assert\Regex(
-        pattern: "/^[a-zA-ZÀ-ÿ\s'-]+$/",
-        message: "Le nom ne peut contenir que des lettres, espaces, apostrophes ou tirets."
-=======
+
         minMessage: "The last name must be at least {{ limit }} characters long.",
         maxMessage: "The last name cannot be longer than {{ limit }} characters."
     )]
     #[Assert\Regex(
         pattern: "/^[a-zA-ZÀ-ÿ\s'-]+$/",
         message: "The last name can only contain letters, spaces, apostrophes, or hyphens."
->>>>>>> origin/amine/user
+
     )]
     private ?string $nom = null;
 
@@ -60,48 +53,34 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Assert\Length(
         min: 3,
         max: 100,
-<<<<<<< HEAD
-        minMessage: "Le prénom doit contenir au moins {{ limit }} caractères.",
-        maxMessage: "Le prénom ne peut pas dépasser {{ limit }} caractères."
-    )]
-    #[Assert\Regex(
-        pattern: "/^[a-zA-ZÀ-ÿ\s'-]+$/",
-        message: "Le prénom ne peut contenir que des lettres, espaces, apostrophes ou tirets."
-=======
+
         minMessage: "The first name must be at least {{ limit }} characters long.",
         maxMessage: "The first name cannot be longer than {{ limit }} characters."
     )]
     #[Assert\Regex(
         pattern: "/^[a-zA-ZÀ-ÿ\s'-]+$/",
         message: "The first name can only contain letters, spaces, apostrophes, or hyphens."
->>>>>>> origin/amine/user
+
     )]
     private ?string $prenom = null;
 
     #[ORM\Column(length: 100)]
     #[Assert\NotBlank(message: "The email cannot be empty.")]
-<<<<<<< HEAD
-    #[Assert\Email(message: "L'email '{{ value }}' n'est pas valide.")]
-=======
+
     #[Assert\Email(message: "The email '{{ value }}' is not valid.")]
->>>>>>> origin/amine/user
+
     private ?string $email = null;
 
     #[ORM\Column]
     #[Assert\NotBlank(message: "The phone number cannot be empty.")]
     #[Assert\Regex(
         pattern: "/^\d+$/",
-<<<<<<< HEAD
-        message: "Le numéro de téléphone doit contenir uniquement des chiffres."
-    )]
-    #[Assert\Length(
-        exactMessage: "Le numéro de téléphone doit contenir exactement {{ limit }} caractères.",
-=======
+
         message: "The phone number must contain only digits."
     )]
     #[Assert\Length(
         exactMessage: "The phone number must be exactly {{ limit }} digits.",
->>>>>>> origin/amine/user
+
         exactly :8
     )]
     private ?int $telephone = null;
@@ -114,11 +93,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Assert\NotBlank(message: "The status cannot be empty.")]
     #[Assert\Choice(
         choices: ['Actif', 'Inactif','actif', 'inactif'],
-<<<<<<< HEAD
-        message: "Le statut sélectionné n'est pas valide."
-=======
+
+
         message: "The selected status is not valid."
->>>>>>> origin/amine/user
+
     )]
     private ?string $status = null;
 
@@ -127,34 +105,26 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Assert\Length(
         min: 8,
         max: 255,
-<<<<<<< HEAD
-        minMessage: "Le mot de passe doit contenir au moins {{ limit }} caractères.",
-        maxMessage: "Le mot de passe ne peut pas dépasser {{ limit }} caractères."
-    )]
-    #[Assert\Regex(
-        pattern: "/^(?=.*[a-zA-Z])(?=.*\d).+$/",
-        message: "Le mot de passe doit contenir au moins une lettre et un chiffre."
-=======
+
         minMessage: "The password must be at least {{ limit }} characters long.",
         maxMessage: "The password cannot be longer than {{ limit }} characters."
     )]
     #[Assert\Regex(
         pattern: "/^(?=.*[a-zA-Z])(?=.*\d).+$/",
-        message: "The password must contain at least one letter and one number."
->>>>>>> origin/amine/user
+        message: "Le mot de passe doit contenir au moins une lettre et un chiffre."
+
     )]
     private ?string $password = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(type: 'text', options: ['comment' => 'Stores avatar as file path or Base64 data URI'], columnDefinition: 'LONGTEXT')]
     private ?string $user_image = null;
 
-<<<<<<< HEAD
-=======
-    #[ORM\Column(length: 255)]
+
+    #[ORM\Column(type: 'text', options: ['comment' => 'Stores face/avatar as Base64 data URI'], columnDefinition: 'LONGTEXT')]
     private ?string $user_face = null;
 
 
->>>>>>> origin/amine/user
+
     #[ORM\Column(nullable: true)]
     #[Assert\NotBlank(message: "The order number cannot be empty.")]
     private ?int $order_number = null;
@@ -170,16 +140,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function __construct()
     {
-<<<<<<< HEAD
+
         $this->participations = new ArrayCollection();
-=======
+
        
         $this->status = 'Actif';
         $this->role = 'Client';
         $this->order_number = 0; 
         $this->matricule = 'N/A'; 
         $this->zone_affectee = 'N/A'; 
->>>>>>> origin/amine/user
+
     }
 
     public function getId(): ?int
@@ -346,7 +316,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
 
 
-<<<<<<< HEAD
+
 
  public function getFullName(): string
     {
@@ -356,6 +326,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @return Collection<int, Participation>
      */
+    public const DELETE_ERROR_MESSAGE = 'An error occurred while deleting the user. Please try again.';
+
     public function getParticipations(): Collection
     {
         return $this->participations;
@@ -391,7 +363,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->telephone = $phone ? (int) preg_replace('/[^0-9]/', '', $phone) : null;
         return $this;
     }
-=======
+
     public function getUserFace(): ?string
     {
         return $this->user_face;
@@ -404,7 +376,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
->>>>>>> origin/amine/user
+
 
 
 }

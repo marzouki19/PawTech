@@ -1,27 +1,24 @@
 <?php
 
 namespace App\Controller;
-<<<<<<< HEAD
+
 use App\Form\DonationType;
 use App\Entity\User;
 use App\Entity\Donation;
 use App\Repository\UserRepository;
 use App\Repository\ProduitRepository;
 use App\Repository\CategorieRepository;
-use App\Form\UserType;
+use App\Form\ProfileSettingsType;
 use Symfony\Component\HttpFoundation\RedirectResponse;
-=======
+use Symfony\Component\HttpFoundation\JsonResponse;
 
-use App\Entity\User;
-use App\Repository\UserRepository;
->>>>>>> origin/amine/user
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 final class PageController extends AbstractController
 {
@@ -32,7 +29,7 @@ final class PageController extends AbstractController
         return $this->render('pages/home.html.twig');
     }
 
-<<<<<<< HEAD
+
     #[Route('/signin', name: 'app_signin', methods: ['GET', 'POST'])]
     public function signin(Request $request, UserRepository $userRepository, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher): Response
     {
@@ -119,8 +116,7 @@ final class PageController extends AbstractController
         ]);
     }
 
-=======
->>>>>>> origin/amine/user
+
    
 
     
@@ -147,54 +143,41 @@ final class PageController extends AbstractController
             return $this->redirectToRoute('app_signin');
         }
 
-<<<<<<< HEAD
-        $form = $this->createForm(UserType::class, $user, [
-            'validation_groups' => ['Default'],
-        ]);
+
+        $form = $this->createForm(ProfileSettingsType::class, $user);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // Handle avatar upload
-            $avatarFile = $form['user_image']->getData();
-            if ($avatarFile) {
-                $this->handleUserImageUpload($avatarFile, $user);
+            $submitted = $request->request->all('profile_settings');
+            $submittedFace = is_array($submitted) ? (string) ($submitted['user_face'] ?? '') : '';
+            if ($submittedFace !== '') {
+                $user->setUserFace($submittedFace);
             }
 
             $entityManager->flush();
 
-=======
-        $form = $this->createForm(\App\Form\AccountinfoType::class, $user);
-        $form->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $this->handleUserImageUpload($form->get('user_image')->getData(), $user);
-            $entityManager->flush();
->>>>>>> origin/amine/user
             $roles = $user->getRoles();
             $request->getSession()->set('user', [
                 'id' => $user->getId(),
                 'email' => $user->getEmail(),
                 'prenom' => $user->getPrenom(),
                 'nom' => $user->getNom(),
-                'userImage' => $user->getUserImage(),
+                'userImage' => $user->getUserFace() ?: $user->getUserImage(),
                 'role' => $roles[0] ?? 'ROLE_USER',
             ]);
-<<<<<<< HEAD
 
-=======
->>>>>>> origin/amine/user
+
+
             $this->addFlash('success', 'Profile updated successfully.');
             return $this->redirectToRoute('app_settings');
         }
 
         return $this->render('accountinfo/account.html.twig', [
-<<<<<<< HEAD
+
             'form' => $form->createView(),
             'user' => $user,
-=======
-            'user' => $user,
-            'form' => $form->createView(),
->>>>>>> origin/amine/user
+
         ]);
     }
 
@@ -202,6 +185,70 @@ final class PageController extends AbstractController
     public function profile(): Response
     {
         return $this->redirectToRoute('app_settings');
+    }
+
+    #[Route('/api/verify-face', name: 'app_verify_face_proxy', methods: ['POST'])]
+    public function verifyFaceProxy(Request $request, HttpClientInterface $httpClient, UserRepository $userRepository): JsonResponse
+    {
+        $payload = json_decode($request->getContent(), true);
+        $userFace = is_array($payload) ? (string) ($payload['user_face'] ?? '') : '';
+
+        if ($userFace === '') {
+            return $this->json([
+                'message' => 'no',
+                'username' => null,
+                'error' => 'Missing user_face',
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        try {
+            $apiResponse = $httpClient->request('POST', 'http://localhost:9010/verify-face', [
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                ],
+                'json' => [
+                    'user_face' => $userFace,
+                ],
+            ]);
+
+            $status = $apiResponse->getStatusCode();
+            $data = $apiResponse->toArray(false);
+
+            if (!is_array($data)) {
+                $data = ['message' => 'no', 'username' => null];
+            }
+
+            if (($data['message'] ?? null) === 'yes') {
+                $username = (string) ($data['username'] ?? '');
+                $matchedUser = null;
+
+                if ($username !== '') {
+                    $matchedUser = $userRepository->findOneBy(['email' => $username])
+                        ?? $userRepository->findOneBy(['prenom' => $username])
+                        ?? $userRepository->findOneBy(['nom' => $username]);
+                }
+
+                if ($matchedUser) {
+                    $roles = $matchedUser->getRoles();
+                    $request->getSession()->set('user', [
+                        'id' => $matchedUser->getId(),
+                        'email' => $matchedUser->getEmail(),
+                        'prenom' => $matchedUser->getPrenom(),
+                        'nom' => $matchedUser->getNom(),
+                        'userImage' => $matchedUser->getUserFace() ?: $matchedUser->getUserImage(),
+                        'role' => $roles[0] ?? 'ROLE_USER',
+                    ]);
+                }
+            }
+
+            return $this->json($data, $status);
+        } catch (\Throwable $e) {
+            return $this->json([
+                'message' => 'no',
+                'username' => null,
+                'error' => 'Face verification service unavailable',
+            ], Response::HTTP_BAD_GATEWAY);
+        }
     }
 
     #[Route('/my-pets', name: 'app_my_pets', methods: ['GET'])]
@@ -234,7 +281,6 @@ final class PageController extends AbstractController
         return $this->render('pages/events.html.twig');
     }
 
-<<<<<<< HEAD
     #[Route('/donation', name: 'app_donation')]
     public function index(Request $request, EntityManagerInterface $entityManager): Response
     {
@@ -361,20 +407,7 @@ final class PageController extends AbstractController
     }
 
 
-=======
-    #[Route('/pages/donation', name: 'app_donation', methods: ['GET'])]
-    public function donation(): Response
-    {
-        return $this->render('pages/donation.html.twig');
-    }
 
-    #[Route('/pages/shop', name: 'app_shop', methods: ['GET'])]
-    public function shop(): Response
-    {
-        return $this->render('pages/shop.html.twig');
-    }
-
->>>>>>> origin/amine/user
     #[Route('/pages/veterinarian', name: 'app_veterinarian_page', methods: ['GET'])]
     public function veterinarianPage(UserRepository $userRepository): Response
     {
@@ -447,23 +480,6 @@ final class PageController extends AbstractController
             'page' => 1,
             'total_pages' => 1,
         ], $extra));
-    }
-
-    private function handleUserImageUpload(?UploadedFile $uploadedFile, User $user): void
-    {
-        if ($uploadedFile instanceof UploadedFile) {
-            $originalFilename = pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME);
-            $safeFilename = preg_replace('/[^a-zA-Z0-9_-]/', '', $originalFilename) ?: 'user';
-            $newFilename = $safeFilename.'-'.uniqid().'.'.$uploadedFile->guessExtension();
-            $uploadDir = $this->getParameter('kernel.project_dir').'/public/uploads/users';
-
-            if (!is_dir($uploadDir)) {
-                mkdir($uploadDir, 0775, true);
-            }
-
-            $uploadedFile->move($uploadDir, $newFilename);
-            $user->setUserImage('uploads/users/'.$newFilename);
-        }
     }
 
 }
