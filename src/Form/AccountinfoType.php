@@ -18,39 +18,33 @@ use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\Email;
 use Symfony\Component\Validator\Constraints\Regex;
 
-class SigninType extends AbstractType
+class AccountinfoType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            
-            ->add('email', EmailType::class, [
-                'label' => 'Email Address',
-                'attr' => [
-                    'placeholder' => 'you@example.com',
-                    'class' => 'form-input',
-                ]
+            ->add('nom', TextType::class, [
+                'label' => 'Last Name',
+                'required' => true,
             ])
-           
-<<<<<<< HEAD
-            ->add('password', RepeatedType::class, [
-                'type' => PasswordType::class,
-                'invalid_message' => 'The password fields must match.',
-                'options' => ['attr' => ['class' => 'form-input']],
-                'required' => false
-                
-                
-=======
-            ->add('password', PasswordType::class, [
+            ->add('prenom', TextType::class, [
+                'label' => 'First Name',
+                'required' => true,
+            ])
+            ->add('email', EmailType::class, [
+                'label' => 'Email',
+                'required' => true,
+            ])
+            ->add('telephone', TextType::class, [
+                'label' => 'Phone',
+                'required' => true,
+            ])
+            ->add('user_image', \Symfony\Component\Form\Extension\Core\Type\FileType::class, [
+                'label' => 'Profile Image',
                 'required' => false,
-                'label' => 'Password',
-                'attr' => [
-                    'placeholder' => 'Enter your password',
-                    'class' => 'form-input',
-                ]
->>>>>>> origin/amine/user
+                'mapped' => false,
+                'attr' => ['accept' => 'image/*'],
             ]);
- 
     }
 
     public function configureOptions(OptionsResolver $resolver): void
@@ -59,7 +53,7 @@ class SigninType extends AbstractType
             'data_class' => User::class,
             'csrf_protection' => true,
             'csrf_field_name' => '_token',
-            'csrf_token_id'   => 'signup_item',
+            'csrf_token_id'   => 'accountinfo_item',
         ]);
     }
 }

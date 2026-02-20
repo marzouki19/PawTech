@@ -4,6 +4,10 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Form\UserType;
+<<<<<<< HEAD
+=======
+use App\Form\SigninType;
+>>>>>>> origin/amine/user
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
@@ -17,6 +21,30 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Component\String\Slugger\SluggerInterface;
 final class UserController extends AbstractController
 {
+<<<<<<< HEAD
+=======
+        #[Route('/users/ajax-sort', name: 'app_users_ajax_sort', methods: ['GET'])]
+        public function ajaxSort(Request $request, UserRepository $userRepository): Response
+        {
+            $sortDir = strtolower((string) $request->query->get('sort', 'asc'));
+            $sortBy = (string) $request->query->get('sort_by', 'id');
+            $users = $userRepository->sortAll($sortDir, $sortBy);
+            $rows = [];
+            foreach ($users as $user) {
+                $rows[] = [
+                    $user->getId(),
+                    $user->getFirstName(),
+                    $user->getLastName(),
+                    $user->getEmail(),
+                    $user->getPhone(),
+                    $user->getRole(),
+                    $user->getStatus(),
+                    // Optionally add actions HTML here if needed
+                ];
+            }
+            return $this->json($rows);
+        }
+>>>>>>> origin/amine/user
     #[Route('/user', name: 'app_user_index', methods: ['GET'])]
     public function index(UserRepository $userRepository): Response
     {
@@ -235,6 +263,7 @@ final class UserController extends AbstractController
     //creation card ou tableau
     private function buildUserRows(array $users): array
     {
+<<<<<<< HEAD
         $cardRows = array_map(static function ($user) {
             return [
                 $user->getId(),
@@ -248,6 +277,8 @@ final class UserController extends AbstractController
             ];
         }, $users);
 
+=======
+>>>>>>> origin/amine/user
         $tableRows = array_map(static function ($user) {
             return [
                 $user->getId(),
@@ -259,8 +290,12 @@ final class UserController extends AbstractController
                 $user->getStatus(),
             ];
         }, $users);
+<<<<<<< HEAD
 
         return [$cardRows, $tableRows];
+=======
+        return $tableRows;
+>>>>>>> origin/amine/user
     }
 
 
@@ -366,6 +401,7 @@ final class UserController extends AbstractController
         $error = null;
         $lastEmail = '';
 
+<<<<<<< HEAD
         if ($request->isMethod('POST')) {
             $email = trim((string) $request->request->get('email', ''));
             $password = (string) $request->request->get('password', '');
@@ -381,6 +417,16 @@ final class UserController extends AbstractController
                     'last_email' => $lastEmail,
                 ]);
             }
+=======
+        $form = $this->createForm(SigninType::class);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $data = $form->getData();
+            $email = $data['email'] ?? '';
+            $password = $data['password'] ?? '';
+            $lastEmail = $email;
+>>>>>>> origin/amine/user
 
             $user = $userRepository->findOneBy(['email' => $email]);
 
@@ -392,7 +438,10 @@ final class UserController extends AbstractController
                     ];
                 } else {
                     $roles = $user->getRoles();
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/amine/user
                     $session->set('user', [
                         'id' => $user->getId(),
                         'email' => $user->getEmail(),
@@ -401,7 +450,10 @@ final class UserController extends AbstractController
                         'userImage' => $user->getUserImage(),
                         'role' => $roles[0] ?? 'ROLE_USER',
                     ]);
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/amine/user
                     return $this->redirectToRoute('app_home');
                 }
             } else {
@@ -430,12 +482,28 @@ final class UserController extends AbstractController
                     'userImage' => $user->getUserImage(),
                     'role' => $roles[0] ?? 'ROLE_USER',
                 ]);
+<<<<<<< HEAD
 
                 return $this->redirectToRoute('app_home');
             }
         }
 
         return $this->render('sign/signin.html.twig', [
+=======
+                return $this->redirectToRoute('app_home');
+            }
+        } elseif ($form->isSubmitted()) {
+            $data = $form->getData();
+            $lastEmail = $data['email'] ?? '';
+            $error = [
+                'messageKey' => 'Email and password are required.',
+                'messageData' => [],
+            ];
+        }
+
+        return $this->render('sign/signin.html.twig', [
+            'form' => $form->createView(),
+>>>>>>> origin/amine/user
             'error' => $error,
             'last_email' => $lastEmail,
         ]);
@@ -625,7 +693,11 @@ final class UserController extends AbstractController
         $users = $searchQuery === ''
             ? $userRepository->sortAll($sortDir, $sortBy)
             : $userRepository->search($searchQuery, $searchField);
+<<<<<<< HEAD
         [$cardRows, $tableRows] = $this->buildUserRows($users);
+=======
+        $tableRows = $this->buildUserRows($users);
+>>>>>>> origin/amine/user
 
         return $this->renderEntity('users/index.html.twig', 'Users', 'users', [
             'ID', 'First Name', 'Last Name', 'Email', 'Phone', 'Role', 'Status',
@@ -635,7 +707,10 @@ final class UserController extends AbstractController
             ['name' => 'email', 'type' => 'email', 'placeholder' => 'Email address'],
         ], null, [
             'form' => $form->createView(),
+<<<<<<< HEAD
             'card_rows' => $cardRows,
+=======
+>>>>>>> origin/amine/user
             'search_query' => $searchQuery,
             'search_field' => $searchField,
             'sort_dir' => $sortDir,

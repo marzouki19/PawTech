@@ -23,6 +23,7 @@ class SignupType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
+<<<<<<< HEAD
             ->add('prenom', TextType::class, [
                 'label' => 'First Name',
                 'attr' => [
@@ -53,11 +54,38 @@ class SignupType extends AbstractType
                 ]
                 
             ])
+=======
+            ->add('nom', null, [
+                'required' => false,
+            ])
+
+            ->add('prenom', null, [
+                'required' => false,
+            ])
+
+            ->add('email', null, [
+                'required' => false,
+            ])
+
+            ->add('telephone', null, [
+                'required' => false,
+            ])
+            // Add unmapped face_image field for hidden input
+            ->add('user_face', \Symfony\Component\Form\Extension\Core\Type\HiddenType::class, [
+                'mapped' => false,
+                'required' => false,
+            ])
+            
+>>>>>>> origin/amine/user
             ->add('password', RepeatedType::class, [
                 'type' => PasswordType::class,
                 'invalid_message' => 'The password fields must match.',
                 'options' => ['attr' => ['class' => 'form-input']],
+<<<<<<< HEAD
                 'required' => true,
+=======
+                'required' => false,
+>>>>>>> origin/amine/user
                 'first_options'  => [
                     'label' => 'Password',
                     'attr' => [
@@ -78,7 +106,12 @@ class SignupType extends AbstractType
             ])
             ->add('agreeTerms', CheckboxType::class, [
                 'label' => 'I agree to the Terms of Service and Privacy Policy',
+<<<<<<< HEAD
                 'mapped' => false
+=======
+                'mapped' => false,
+                'required' => false
+>>>>>>> origin/amine/user
             ]);
     }
 

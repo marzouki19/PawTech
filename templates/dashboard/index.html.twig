@@ -81,17 +81,6 @@
     <div class="bg-white rounded-xl border border-gray-200 shadow-lg p-6 mb-8">
         <h2 class="text-lg font-bold text-gray-900 mb-4">Quick Actions</h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <a href="{{ path('app_dogs_index') }}" class="flex items-center gap-4 p-4 bg-orange-50 hover:bg-orange-100 rounded-lg transition">
-                <div class="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
-                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4"/>
-                    </svg>
-                </div>
-                <div>
-                    <p class="font-semibold text-gray-900">Manage Dogs</p>
-                    <p class="text-sm text-gray-600">View, add, and edit dogs</p>
-                </div>
-            </a>
 
             <a href="#" class="flex items-center gap-4 p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition opacity-50 cursor-not-allowed">
                 <div class="w-10 h-10 bg-gray-400 rounded-lg flex items-center justify-center">
@@ -119,16 +108,19 @@
         </div>
     </div>
 
-    <!-- Recent Activity -->
-    <div class="bg-white rounded-xl border border-gray-200 shadow-lg p-6">
-        <h2 class="text-lg font-bold text-gray-900 mb-4">Recent Activity</h2>
-        <div class="text-center py-8">
-            <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-            </svg>
-            <p class="text-gray-500 text-lg font-medium">No recent activity</p>
-            <p class="text-gray-400 text-sm">Activity will appear here once you start using the system</p>
-        </div>
+    <!-- Users Table and Cards Section -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-lg p-6 mt-8">
+        <h2 class="text-lg font-bold text-gray-900 mb-4">Users Overview</h2>
+        {# You can use an include for the users table/cards, or copy the relevant section here. #}
+        {% include 'users/_dashboard_users.html.twig' with {
+            columns: columns|default([]),
+            rows: rows|default([]),
+            card_rows: card_rows|default([]),
+            total_records: total_records|default(0),
+            per_page: per_page|default(10),
+            page: page|default(1),
+            total_pages: total_pages|default(1)
+        } %}
     </div>
 </div>
 {% endblock %}

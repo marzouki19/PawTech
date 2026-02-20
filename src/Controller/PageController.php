@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Controller;
+<<<<<<< HEAD
 use App\Form\DonationType;
 use App\Entity\User;
 use App\Entity\Donation;
@@ -9,6 +10,11 @@ use App\Repository\ProduitRepository;
 use App\Repository\CategorieRepository;
 use App\Form\UserType;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+=======
+
+use App\Entity\User;
+use App\Repository\UserRepository;
+>>>>>>> origin/amine/user
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -26,6 +32,7 @@ final class PageController extends AbstractController
         return $this->render('pages/home.html.twig');
     }
 
+<<<<<<< HEAD
     #[Route('/signin', name: 'app_signin', methods: ['GET', 'POST'])]
     public function signin(Request $request, UserRepository $userRepository, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher): Response
     {
@@ -112,6 +119,8 @@ final class PageController extends AbstractController
         ]);
     }
 
+=======
+>>>>>>> origin/amine/user
    
 
     
@@ -138,6 +147,7 @@ final class PageController extends AbstractController
             return $this->redirectToRoute('app_signin');
         }
 
+<<<<<<< HEAD
         $form = $this->createForm(UserType::class, $user, [
             'validation_groups' => ['Default'],
         ]);
@@ -152,6 +162,14 @@ final class PageController extends AbstractController
 
             $entityManager->flush();
 
+=======
+        $form = $this->createForm(\App\Form\AccountinfoType::class, $user);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $this->handleUserImageUpload($form->get('user_image')->getData(), $user);
+            $entityManager->flush();
+>>>>>>> origin/amine/user
             $roles = $user->getRoles();
             $request->getSession()->set('user', [
                 'id' => $user->getId(),
@@ -161,14 +179,22 @@ final class PageController extends AbstractController
                 'userImage' => $user->getUserImage(),
                 'role' => $roles[0] ?? 'ROLE_USER',
             ]);
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/amine/user
             $this->addFlash('success', 'Profile updated successfully.');
             return $this->redirectToRoute('app_settings');
         }
 
         return $this->render('accountinfo/account.html.twig', [
+<<<<<<< HEAD
             'form' => $form->createView(),
             'user' => $user,
+=======
+            'user' => $user,
+            'form' => $form->createView(),
+>>>>>>> origin/amine/user
         ]);
     }
 
@@ -208,6 +234,7 @@ final class PageController extends AbstractController
         return $this->render('pages/events.html.twig');
     }
 
+<<<<<<< HEAD
     #[Route('/donation', name: 'app_donation')]
     public function index(Request $request, EntityManagerInterface $entityManager): Response
     {
@@ -334,6 +361,20 @@ final class PageController extends AbstractController
     }
 
 
+=======
+    #[Route('/pages/donation', name: 'app_donation', methods: ['GET'])]
+    public function donation(): Response
+    {
+        return $this->render('pages/donation.html.twig');
+    }
+
+    #[Route('/pages/shop', name: 'app_shop', methods: ['GET'])]
+    public function shop(): Response
+    {
+        return $this->render('pages/shop.html.twig');
+    }
+
+>>>>>>> origin/amine/user
     #[Route('/pages/veterinarian', name: 'app_veterinarian_page', methods: ['GET'])]
     public function veterinarianPage(UserRepository $userRepository): Response
     {
