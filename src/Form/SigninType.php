@@ -32,13 +32,13 @@ class SigninType extends AbstractType
                 ]
             ])
            
-            ->add('password', RepeatedType::class, [
-                'type' => PasswordType::class,
-                'invalid_message' => 'The password fields must match.',
-                'options' => ['attr' => ['class' => 'form-input']],
-                'required' => false
-                
-                
+            ->add('password', PasswordType::class, [
+                'required' => false,
+                'label' => 'Password',
+                'attr' => [
+                    'placeholder' => 'Enter your password',
+                    'class' => 'form-input',
+                ]
             ]);
  
     }

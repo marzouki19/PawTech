@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Form\UserType;
+use App\Form\SigninType;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
@@ -17,6 +18,27 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Component\String\Slugger\SluggerInterface;
 final class UserController extends AbstractController
 {
+        #[Route('/users/ajax-sort', name: 'app_users_ajax_sort', methods: ['GET'])]
+        public function ajaxSort(Request $request, UserRepository $userRepository): Response
+        {
+            $sortDir = strtolower((string) $request->query->get('sort', 'asc'));
+            $sortBy = (string) $request->query->get('sort_by', 'id');
+            $users = $userRepository->sortAll($sortDir, $sortBy);
+            $rows = [];
+            foreach ($users as $user) {
+                $rows[] = [
+                    $user->getId(),
+                    $user->getFirstName(),
+                    $user->getLastName(),
+                    $user->getEmail(),
+                    $user->getPhone(),
+                    $user->getRole(),
+                    $user->getStatus(),
+                    // Optionally add actions HTML here if needed
+                ];
+            }
+            return $this->json($rows);
+        }
     #[Route('/user', name: 'app_user_index', methods: ['GET'])]
     public function index(UserRepository $userRepository): Response
     {
@@ -235,19 +257,6 @@ final class UserController extends AbstractController
     //creation card ou tableau
     private function buildUserRows(array $users): array
     {
-        $cardRows = array_map(static function ($user) {
-            return [
-                $user->getId(),
-                $user->getPrenom(),
-                $user->getNom(),
-                $user->getEmail(),
-                $user->getTelephone(),
-                $user->getRole(),
-                $user->getStatus(),
-                $user->getUserImage(),
-            ];
-        }, $users);
-
         $tableRows = array_map(static function ($user) {
             return [
                 $user->getId(),
@@ -259,8 +268,7 @@ final class UserController extends AbstractController
                 $user->getStatus(),
             ];
         }, $users);
-
-        return [$cardRows, $tableRows];
+        return $tableRows;
     }
 
 
@@ -279,63 +287,74 @@ final class UserController extends AbstractController
     #[Route('/signup', name: 'app_signup', methods: ['GET', 'POST'])]
     public function signup(Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher): Response
     {
-        $user = new \App\Entity\User();
-        $form = $this->createForm(\App\Form\SignupType::class, $user);
-        $form->handleRequest($request);
+        $errors = [];
+        $data = [
+            'prenom' => '',
+            'nom' => '',
+            'email' => '',
+            'telephone' => '',
+        ];
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            // Set default values for new user
-            $user->setRole('Client');
-            $user->setStatus('Actif');
-            
-            // Handle face image - store temporarily first
-            $faceImageData = null;
-            if ($form->has('user_face') && $form->get('user_face')->getData()) {
-                $faceImageData = $form->get('user_face')->getData();
+        if ($request->isMethod('POST')) {
+            $data['prenom'] = trim((string) $request->request->get('prenom', ''));
+            $data['nom'] = trim((string) $request->request->get('nom', ''));
+            $data['email'] = trim((string) $request->request->get('email', ''));
+            $data['telephone'] = trim((string) $request->request->get('telephone', ''));
+            $password = (string) $request->request->get('password', '');
+            $confirmPassword = (string) $request->request->get('confirm_password', '');
+            $agreeTerms = (bool) $request->request->get('agree_terms', false);
+
+            if ($data['prenom'] === '') {
+                $errors['prenom'] = 'The first name cannot be empty.';
             }
-            
-            // Hash password if present
-            if ($form->has('password') && $form->get('password')->getData()) {
-                $user->setPassword($passwordHasher->hashPassword($user, $form->get('password')->getData()));
+            if ($data['nom'] === '') {
+                $errors['nom'] = 'The last name cannot be empty.';
             }
-            
-            $entityManager->persist($user);
-            $entityManager->flush();
-            
-            // After user is created, save face image to user_face folder and database
-            if ($faceImageData && $user->getId()) {
-                $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/user_face';
-                if (!file_exists($uploadDir)) {
-                    mkdir($uploadDir, 0777, true);
-                }
-                $userId = $user->getId();
-                $faceImageFileName = $userId . '.png';
-                $faceImagePath = $uploadDir . '/' . $faceImageFileName;
-                $faceImageDataClean = str_replace('data:image/png;base64,', '', $faceImageData);
-                $faceImageDataClean = str_replace('data:image/jpeg;base64,', '', $faceImageDataClean);
-                $faceImageDataClean = str_replace(' ', '+', $faceImageDataClean);
-                $decodedImage = base64_decode($faceImageDataClean, true);
-                if ($decodedImage === false) {
-                    $this->addFlash('error', 'Invalid face image data');
-                    return $this->redirectToRoute('app_signup');
-                }
-                if (file_put_contents($faceImagePath, $decodedImage)) {
-                    $facePath = 'uploads/user_face/' . $faceImageFileName;
-                    $user->setUserFace($facePath);
-                    $entityManager->flush();
-                } else {
-                    $this->addFlash('error', 'Failed to save face image');
-                }
+            if ($data['email'] === '') {
+                $errors['email'] = 'The email cannot be empty.';
+            } elseif (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+                $errors['email'] = 'Please enter a valid email address.';
             }
-            
-            return $this->redirectToRoute('app_signin');
+            if ($data['telephone'] === '') {
+                $errors['telephone'] = 'The phone number cannot be empty.';
+            }
+            if ($password === '') {
+                $errors['password'] = 'The password cannot be empty.';
+            } elseif (strlen($password) < 6) {
+                $errors['password'] = 'Password must be at least 6 characters.';
+            }
+            if ($confirmPassword === '') {
+                $errors['confirm_password'] = 'Please confirm your password.';
+            } elseif ($password !== $confirmPassword) {
+                $errors['confirm_password'] = 'Passwords do not match.';
+            }
+            if (!$agreeTerms) {
+                $errors['agree_terms'] = 'You must agree to the terms.';
+            }
+
+            if ($errors === []) {
+                $user = new User();
+                $user->setPrenom($data['prenom']);
+                $user->setNom($data['nom']);
+                $user->setEmail($data['email']);
+                $user->setTelephone((int) $data['telephone']);
+                $user->setRole('Client');
+                $user->setStatus('Actif');
+                $user->setUserImage('uploads/users/default.png');
+                $user->setPassword($passwordHasher->hashPassword($user, $password));
+
+                $entityManager->persist($user);
+                $entityManager->flush();
+
+                return $this->redirectToRoute('app_signin');
+            }
         }
 
         return $this->render('sign/signup.html.twig', [
-            'form' => $form->createView(),
+            'signup_errors' => $errors,
+            'signup_data' => $data,
         ]);
     }
-    
     
    
 
@@ -355,159 +374,17 @@ final class UserController extends AbstractController
         $error = null;
         $lastEmail = '';
 
-        if ($request->isMethod('POST')) {
-            $email = trim((string) $request->request->get('email', ''));
-            $password = (string) $request->request->get('password', '');
+        $form = $this->createForm(SigninType::class);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $data = $form->getData();
+            $email = $data['email'] ?? '';
+            $password = $data['password'] ?? '';
             $lastEmail = $email;
 
-            // Handle face image upload
-            $faceImageData = $request->request->get('user_face', null);
-
-            if ($email === '' && !$faceImageData) {
-                $error = [
-                    'messageKey' => 'Email or face image required.',
-                    'messageData' => [],
-                ];
-                return $this->render('sign/signin.html.twig', [
-                    'error' => $error,
-                    'last_email' => $lastEmail,
-                ]);
-            }
-
-            // If face image is provided, use Python script for face login
-            if ($faceImageData) {
-                $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/temp_faces';
-                if (!file_exists($uploadDir)) {
-                    mkdir($uploadDir, 0777, true);
-                }
-                $faceImageFileName = 'face_signin_' . uniqid() . '.png';
-                $faceImagePath = $uploadDir . '/' . $faceImageFileName;
-                $faceImageData = str_replace('data:image/png;base64,', '', $faceImageData);
-                $faceImageData = str_replace('data:image/jpeg;base64,', '', $faceImageData);
-                $faceImageData = str_replace(' ', '+', $faceImageData);
-                $decodedImage = base64_decode($faceImageData);
-                file_put_contents($faceImagePath, $decodedImage);
-
-                // Call Python script with timeout
-                $pythonScript = $this->getParameter('kernel.project_dir') . '/face_login.py';
-                $command = 'python ' . escapeshellarg($pythonScript) . ' ' . escapeshellarg($faceImagePath);
-                
-                // Use proc_open with timeout for better control
-                $descriptors = [
-                    0 => ['pipe', 'r'],  // stdin
-                    1 => ['pipe', 'w'],  // stdout
-                    2 => ['pipe', 'w'],  // stderr
-                ];
-                
-                $process = proc_open($command, $descriptors, $pipes);
-                
-                if (is_resource($process)) {
-                    // Close stdin immediately
-                    fclose($pipes[0]);
-                    
-                    // Set timeout for 30 seconds
-                    $timeout = 30;
-                    $startTime = time();
-                    $output = '';
-                    
-                    while (true) {
-                        $read = [$pipes[1]];
-                        $write = null;
-                        $except = null;
-                        
-                        if (stream_select($read, $write, $except, 0, 200000) === false || empty($read)) {
-                            break;
-                        }
-                        
-                        $data = fread($pipes[1], 8192);
-                        if ($data === '' || $data === false) {
-                            break;
-                        }
-                        $output .= $data;
-                        
-                        // Check timeout
-                        if (time() - $startTime > $timeout) {
-                            proc_terminate($process, 9);
-                            fclose($pipes[1]);
-                            fclose($pipes[2]);
-                            proc_close($process);
-                            $error = ['messageKey' => 'Face recognition timed out.', 'messageData' => []];
-                            if (file_exists($faceImagePath)) unlink($faceImagePath);
-                            return $this->render('sign/signin.html.twig', ['error' => $error, 'last_email' => $lastEmail]);
-                        }
-                    }
-                    
-                    fclose($pipes[1]);
-                    fclose($pipes[2]);
-                    $result = proc_close($process);
-                    $output = array_filter(array_map('trim', explode("\n", $output)));
-                } else {
-                    $result = -1;
-                    $output = [];
-                }
-
-                if ($result === 0 && !empty($output)) {
-                    $outputText = trim(implode(' ', $output));
-                    
-                    // Check if output is a valid user ID (numeric)
-                    if (is_numeric($outputText)) {
-                        $userId = $outputText;
-                        $user = $userRepository->find($userId);
-                        if ($user) {
-                            // Save the face image path to user_face
-                            $publicPath = 'uploads/user_face/' . $faceImageFileName;
-                            $user->setUserFace($publicPath);
-                            $entityManager->flush();
-                            $roles = $user->getRoles();
-                            $session->set('user', [
-                                'id' => $user->getId(),
-                                'email' => $user->getEmail(),
-                                'prenom' => $user->getPrenom(),
-                                'nom' => $user->getNom(),
-                                'userImage' => $user->getUserImage(),
-                                'role' => $roles[0] ?? 'ROLE_USER',
-                            ]);
-                            return $this->redirectToRoute('app_home');
-                        } else {
-                            $error = [
-                                'messageKey' => 'Face not recognized. User account not found.',
-                                'messageData' => [],
-                            ];
-                        }
-                    } elseif ($outputText === 'No face detected in input image') {
-                        $error = [
-                            'messageKey' => 'No face detected. Please position your face in front of the camera.',
-                            'messageData' => [],
-                        ];
-                    } elseif ($outputText === 'Multiple faces detected - please use single face image') {
-                        $error = [
-                            'messageKey' => 'Multiple faces detected. Please use only one face.',
-                            'messageData' => [],
-                        ];
-                    } else {
-                        $error = [
-                            'messageKey' => 'Face does not match any registered face. Please try again or use email/password.',
-                            'messageData' => [],
-                        ];
-                    }
-                } else {
-                    $error = [
-                        'messageKey' => 'Face recognition failed. Please try again or use email/password.',
-                        'messageData' => [],
-                    ];
-                }
-                // Clean up temp image
-                if (file_exists($faceImagePath)) {
-                    unlink($faceImagePath);
-                }
-                return $this->render('sign/signin.html.twig', [
-                    'error' => $error,
-                    'last_email' => $lastEmail,
-                ]);
-            }
-
-            // Fallback to email/password login
             $user = $userRepository->findOneBy(['email' => $email]);
+
             if ($user) {
                 if (!$passwordHasher->isPasswordValid($user, $password)) {
                     $error = [
@@ -529,6 +406,7 @@ final class UserController extends AbstractController
             } else {
                 $username = strtok($email, '@') ?: 'User';
                 $firstName = ucfirst($username);
+
                 $user = new User();
                 $user->setPrenom($firstName);
                 $user->setNom('User');
@@ -538,8 +416,10 @@ final class UserController extends AbstractController
                 $user->setStatus('Actif');
                 $user->setUserImage('uploads/users/default.png');
                 $user->setPassword($passwordHasher->hashPassword($user, $password));
+
                 $entityManager->persist($user);
                 $entityManager->flush();
+
                 $roles = $user->getRoles();
                 $session->set('user', [
                     'id' => $user->getId(),
@@ -551,9 +431,17 @@ final class UserController extends AbstractController
                 ]);
                 return $this->redirectToRoute('app_home');
             }
+        } elseif ($form->isSubmitted()) {
+            $data = $form->getData();
+            $lastEmail = $data['email'] ?? '';
+            $error = [
+                'messageKey' => 'Email and password are required.',
+                'messageData' => [],
+            ];
         }
 
         return $this->render('sign/signin.html.twig', [
+            'form' => $form->createView(),
             'error' => $error,
             'last_email' => $lastEmail,
         ]);
@@ -743,27 +631,16 @@ final class UserController extends AbstractController
         $users = $searchQuery === ''
             ? $userRepository->sortAll($sortDir, $sortBy)
             : $userRepository->search($searchQuery, $searchField);
-        [$cardRows, $tableRows] = $this->buildUserRows($users);
+        $tableRows = $this->buildUserRows($users);
 
-        return $this->render('users/index.html.twig', [
-            'page_title' => 'Users',
-            'active' => 'users',
-            'entity_name' => 'Users',
-            'columns' => ['ID', 'First Name', 'Last Name', 'Email', 'Phone', 'Role', 'Status'],
-            'rows' => $tableRows,
-            'modal_title' => 'Add New User',
-            'modal_fields' => [
-                ['name' => 'first_name', 'placeholder' => 'First name'],
-                ['name' => 'last_name', 'placeholder' => 'Last name'],
-                ['name' => 'email', 'type' => 'email', 'placeholder' => 'Email address'],
-            ],
-            'add_href' => null,
-            'total_records' => count($tableRows),
-            'per_page' => 10,
-            'page' => 1,
-            'total_pages' => 1,
+        return $this->renderEntity('users/index.html.twig', 'Users', 'users', [
+            'ID', 'First Name', 'Last Name', 'Email', 'Phone', 'Role', 'Status',
+        ], $tableRows, 'Add New User', [
+            ['name' => 'first_name', 'placeholder' => 'First name'],
+            ['name' => 'last_name', 'placeholder' => 'Last name'],
+            ['name' => 'email', 'type' => 'email', 'placeholder' => 'Email address'],
+        ], null, [
             'form' => $form->createView(),
-            'card_rows' => $cardRows,
             'search_query' => $searchQuery,
             'search_field' => $searchField,
             'sort_dir' => $sortDir,
