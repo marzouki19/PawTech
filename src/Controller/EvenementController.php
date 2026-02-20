@@ -121,6 +121,7 @@ final class EvenementController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             // Handle image upload
+            
             $imageFile = $form->get('imageFile')->getData();
             if ($imageFile) {
                 // Delete old image if exists
