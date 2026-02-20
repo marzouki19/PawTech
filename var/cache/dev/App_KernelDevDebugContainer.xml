@@ -9,8 +9,8 @@
     <parameter key="kernel.runtime_mode.cli">%env(not:default:kernel.runtime_mode.web:)%</parameter>
     <parameter key="kernel.runtime_mode.worker">%env(bool:default::key:worker:default:kernel.runtime_mode:)%</parameter>
     <parameter key="kernel.debug">true</parameter>
-    <parameter key="kernel.build_dir">C:/PRJ/03/02/20026 - Copie (2)/var/cache/dev</parameter>
-    <parameter key="kernel.cache_dir">C:/PRJ/03/02/20026 - Copie (2)/var/cache/dev</parameter>
+    <parameter key="kernel.build_dir">C:\PRJ\03\02\20026 - Copie (2)\var\cache\dev</parameter>
+    <parameter key="kernel.cache_dir">C:\PRJ\03\02\20026 - Copie (2)\var\cache\dev</parameter>
     <parameter key="kernel.logs_dir">C:\PRJ\03\02\20026 - Copie (2)\var\log</parameter>
     <parameter key="kernel.bundles" type="collection">
       <parameter key="FrameworkBundle">Symfony\Bundle\FrameworkBundle\FrameworkBundle</parameter>
@@ -121,15 +121,15 @@
     <parameter key="translator.logging">false</parameter>
     <parameter key="translator.default_path">C:\PRJ\03\02\20026 - Copie (2)/translations</parameter>
     <parameter key="debug.error_handler.throw_at">-1</parameter>
-    <parameter key="debug.container.dump">C:/PRJ/03/02/20026 - Copie (2)/var/cache/dev/App_KernelDevDebugContainer.xml</parameter>
+    <parameter key="debug.container.dump">C:\PRJ\03\02\20026 - Copie (2)\var\cache\dev/App_KernelDevDebugContainer.xml</parameter>
     <parameter key="router.request_context.host">localhost</parameter>
     <parameter key="router.request_context.scheme">http</parameter>
     <parameter key="router.request_context.base_url"></parameter>
     <parameter key="router.resource">kernel::loadRoutes</parameter>
-    <parameter key="router.cache_dir">C:/PRJ/03/02/20026 - Copie (2)/var/cache/dev</parameter>
+    <parameter key="router.cache_dir">C:\PRJ\03\02\20026 - Copie (2)\var\cache\dev</parameter>
     <parameter key="request_listener.http_port">80</parameter>
     <parameter key="request_listener.https_port">443</parameter>
-    <parameter key="serializer.mapping.cache.file">C:/PRJ/03/02/20026 - Copie (2)/var/cache/dev/serialization.php</parameter>
+    <parameter key="serializer.mapping.cache.file">C:\PRJ\03\02\20026 - Copie (2)\var\cache\dev/serialization.php</parameter>
     <parameter key="cache.prefix.seed">_C:\PRJ\03\02\20026 - Copie (2).App_KernelDevDebugContainer</parameter>
     <parameter key="session.metadata.storage_key">_sf2_meta</parameter>
     <parameter key="session.storage.options" type="collection">
@@ -143,11 +143,11 @@
     <parameter key="session.metadata.update_threshold">0</parameter>
     <parameter key="form.type_extension.csrf.enabled">true</parameter>
     <parameter key="form.type_extension.csrf.field_name">_token</parameter>
-    <parameter key="validator.mapping.cache.file">C:/PRJ/03/02/20026 - Copie (2)/var/cache/dev/validation.php</parameter>
+    <parameter key="validator.mapping.cache.file">C:\PRJ\03\02\20026 - Copie (2)\var\cache\dev/validation.php</parameter>
     <parameter key="validator.translation_domain">validators</parameter>
     <parameter key="profiler_listener.only_exceptions">false</parameter>
     <parameter key="profiler_listener.only_main_requests">false</parameter>
-    <parameter key="profiler.storage.dsn">file:C:/PRJ/03/02/20026 - Copie (2)/var/cache/dev/profiler</parameter>
+    <parameter key="profiler.storage.dsn">file:C:\PRJ\03\02\20026 - Copie (2)\var\cache\dev/profiler</parameter>
     <parameter key="doctrine.dbal.configuration.class">Doctrine\DBAL\Configuration</parameter>
     <parameter key="doctrine.data_collector.class">Doctrine\Bundle\DoctrineBundle\DataCollector\DoctrineDataCollector</parameter>
     <parameter key="doctrine.dbal.connection.event_manager.class">Symfony\Bridge\Doctrine\ContainerAwareEventManager</parameter>
@@ -214,7 +214,7 @@
     <parameter key="doctrine.orm.auto_generate_proxy_classes">true</parameter>
     <parameter key="doctrine.orm.enable_lazy_ghost_objects">true</parameter>
     <parameter key="doctrine.orm.enable_native_lazy_objects">false</parameter>
-    <parameter key="doctrine.orm.proxy_dir">C:/PRJ/03/02/20026 - Copie (2)/var/cache/dev/doctrine/orm/Proxies</parameter>
+    <parameter key="doctrine.orm.proxy_dir">C:\PRJ\03\02\20026 - Copie (2)\var\cache\dev/doctrine/orm/Proxies</parameter>
     <parameter key="doctrine.orm.proxy_namespace">Proxies</parameter>
     <parameter key="doctrine.migrations.preferred_em">null</parameter>
     <parameter key="doctrine.migrations.preferred_connection">null</parameter>
@@ -434,6 +434,8 @@
     <service id="App\Controller\DonationController" class="App\Controller\DonationController" public="true" autowire="true" autoconfigure="true">
       <tag name="controller.service_arguments"/>
       <tag name="container.service_subscriber"/>
+      <argument type="service" id="App\Repository\DonationRepository"/>
+      <argument type="service" id="doctrine.orm.default_entity_manager"/>
       <call method="setContainer">
         <argument type="service" id=".service_locator.O2p6Lk7.App\Controller\DonationController"/>
       </call>
@@ -508,11 +510,27 @@
         <argument type="service" id=".service_locator.O2p6Lk7.App\Controller\PublicNotificationController"/>
       </call>
     </service>
+    <service id="App\Controller\RecommendationController" class="App\Controller\RecommendationController" public="true" autowire="true" autoconfigure="true">
+      <tag name="controller.service_arguments"/>
+      <tag name="container.service_subscriber"/>
+      <argument type="service" id="App\Service\RecommendationService"/>
+      <call method="setContainer">
+        <argument type="service" id=".service_locator.O2p6Lk7.App\Controller\RecommendationController"/>
+      </call>
+    </service>
     <service id="App\Controller\ResetPasswordController" class="App\Controller\ResetPasswordController" public="true" autowire="true" autoconfigure="true">
       <tag name="controller.service_arguments"/>
       <tag name="container.service_subscriber"/>
       <call method="setContainer">
         <argument type="service" id=".service_locator.O2p6Lk7.App\Controller\ResetPasswordController"/>
+      </call>
+    </service>
+    <service id="App\Controller\ShippingController" class="App\Controller\ShippingController" public="true" autowire="true" autoconfigure="true">
+      <tag name="controller.service_arguments"/>
+      <tag name="container.service_subscriber"/>
+      <argument type="service" id="App\Service\ShippingService"/>
+      <call method="setContainer">
+        <argument type="service" id=".service_locator.O2p6Lk7.App\Controller\ShippingController"/>
       </call>
     </service>
     <service id="App\Controller\StripeController" class="App\Controller\StripeController" public="true" autowire="true" autoconfigure="true">
@@ -713,6 +731,15 @@
       <argument type="service" id="App\Repository\AlertRepository"/>
       <argument type="service" id="doctrine.orm.default_entity_manager"/>
     </service>
+    <service id="App\Service\RecommendationService" class="App\Service\RecommendationService" autowire="true" autoconfigure="true">
+      <argument type="service" id="doctrine.orm.default_entity_manager"/>
+    </service>
+    <service id="App\Service\ShippingService" class="App\Service\ShippingService" autowire="true" autoconfigure="true">
+      <argument type="service" id="parameter_bag"/>
+    </service>
+    <service id="App\Service\StripePaymentService" class="App\Service\StripePaymentService" autowire="true" autoconfigure="true">
+      <argument type="service" id="parameter_bag"/>
+    </service>
     <service id="App\Service\TwilioNotificationService" class="App\Service\TwilioNotificationService" autowire="true" autoconfigure="true">
       <argument>%env(default::TWILIO_ACCOUNT_SID)%</argument>
       <argument>%env(default::TWILIO_AUTH_TOKEN)%</argument>
@@ -747,7 +774,7 @@
     </service>
     <service id="argument_resolver.service" class="Symfony\Component\HttpKernel\Controller\ArgumentResolver\ServiceValueResolver">
       <tag priority="-50" name="Symfony\Component\HttpKernel\Controller\ArgumentResolver\ServiceValueResolver">controller.argument_value_resolver</tag>
-      <argument type="service" id=".service_locator.7Yfldqi"/>
+      <argument type="service" id=".service_locator.AE6ifAI"/>
     </service>
     <service id="argument_resolver.default" class="Symfony\Component\HttpKernel\Controller\ArgumentResolver\DefaultValueResolver">
       <tag priority="-100" name="Symfony\Component\HttpKernel\Controller\ArgumentResolver\DefaultValueResolver">controller.argument_value_resolver</tag>
@@ -830,7 +857,7 @@
       </argument>
     </service>
     <service id="http_cache.store" class="Symfony\Component\HttpKernel\HttpCache\Store">
-      <argument>C:/PRJ/03/02/20026 - Copie (2)/var/cache/dev/http_cache</argument>
+      <argument>C:\PRJ\03\02\20026 - Copie (2)\var\cache\dev/http_cache</argument>
     </service>
     <service id="url_helper" class="Symfony\Component\HttpFoundation\UrlHelper">
       <argument type="service" id="request_stack"/>
@@ -840,7 +867,7 @@
       <tag name="container.no_preload"/>
       <argument type="tagged_iterator" tag="kernel.cache_warmer"/>
       <argument>true</argument>
-      <argument>C:/PRJ/03/02/20026 - Copie (2)/var/cache/dev/App_KernelDevDebugContainerDeprecations.log</argument>
+      <argument>C:\PRJ\03\02\20026 - Copie (2)\var\cache\dev/App_KernelDevDebugContainerDeprecations.log</argument>
     </service>
     <service id="cache_clearer" class="Symfony\Component\HttpKernel\CacheClearer\ChainCacheClearer">
       <argument type="tagged_iterator" tag="kernel.cache_clearer"/>
@@ -1853,7 +1880,7 @@
       <argument></argument>
       <argument>0</argument>
       <argument>%container.build_id%</argument>
-      <argument>C:/PRJ/03/02/20026 - Copie (2)/var/cache/dev/pools/system</argument>
+      <argument>C:\PRJ\03\02\20026 - Copie (2)\var\cache\dev/pools/system</argument>
       <argument type="service" id="monolog.logger.cache" on-invalid="ignore"/>
       <factory class="Symfony\Component\Cache\Adapter\AbstractAdapter" method="createSystemCache"/>
     </service>
@@ -1872,7 +1899,7 @@
       <tag name="monolog.logger" channel="cache"/>
       <argument></argument>
       <argument>0</argument>
-      <argument>C:/PRJ/03/02/20026 - Copie (2)/var/cache/dev/pools/app</argument>
+      <argument>C:\PRJ\03\02\20026 - Copie (2)\var\cache\dev/pools/app</argument>
       <argument type="service" id="cache.default_marshaller" on-invalid="ignore"/>
       <call method="setLogger">
         <argument type="service" id="monolog.logger.cache" on-invalid="ignore"/>
@@ -2041,7 +2068,7 @@
     <service id="asset_mapper.cached_mapped_asset_factory" class="Symfony\Component\AssetMapper\Factory\CachedMappedAssetFactory">
       <tag name="container.decorator" id="asset_mapper.mapped_asset_factory" inner="asset_mapper.cached_mapped_asset_factory.inner"/>
       <argument type="service" id="asset_mapper.cached_mapped_asset_factory.inner"/>
-      <argument>C:/PRJ/03/02/20026 - Copie (2)/var/cache/dev/asset_mapper</argument>
+      <argument>C:\PRJ\03\02\20026 - Copie (2)\var\cache\dev/asset_mapper</argument>
       <argument>true</argument>
     </service>
     <service id="asset_mapper.repository" class="Symfony\Component\AssetMapper\AssetMapperRepository">
@@ -2405,7 +2432,7 @@
         </argument>
       </argument>
       <argument type="collection">
-        <argument key="cache_dir">C:/PRJ/03/02/20026 - Copie (2)/var/cache/dev/translations</argument>
+        <argument key="cache_dir">C:\PRJ\03\02\20026 - Copie (2)\var\cache\dev/translations</argument>
         <argument key="debug">true</argument>
         <argument key="resource_files" type="collection">
           <argument key="af" type="collection">
@@ -3661,7 +3688,7 @@
     </service>
     <service id="argument_resolver.not_tagged_controller" class="Symfony\Component\HttpKernel\Controller\ArgumentResolver\NotTaggedControllerValueResolver">
       <tag name="controller.argument_value_resolver" priority="-200"/>
-      <argument type="service" id=".service_locator.7Yfldqi"/>
+      <argument type="service" id=".service_locator.AE6ifAI"/>
     </service>
     <service id="debug.log_processor" class="Symfony\Bridge\Monolog\Processor\DebugProcessor">
       <tag name="kernel.reset" method="reset"/>
@@ -3764,7 +3791,7 @@
       <argument type="service" id=".service_locator.bN.V_Nq.router.default"/>
       <argument>kernel::loadRoutes</argument>
       <argument type="collection">
-        <argument key="cache_dir">C:/PRJ/03/02/20026 - Copie (2)/var/cache/dev</argument>
+        <argument key="cache_dir">C:\PRJ\03\02\20026 - Copie (2)\var\cache\dev</argument>
         <argument key="debug">true</argument>
         <argument key="generator_class">Symfony\Component\Routing\Generator\CompiledUrlGenerator</argument>
         <argument key="generator_dumper_class">Symfony\Component\Routing\Generator\Dumper\CompiledUrlGeneratorDumper</argument>
@@ -3943,10 +3970,10 @@
           </service>
         </argument>
       </argument>
-      <argument>C:/PRJ/03/02/20026 - Copie (2)/var/cache/dev/serialization.php</argument>
+      <argument>C:\PRJ\03\02\20026 - Copie (2)\var\cache\dev/serialization.php</argument>
     </service>
     <service id="serializer.mapping.cache.symfony" class="Psr\Cache\CacheItemPoolInterface">
-      <argument>C:/PRJ/03/02/20026 - Copie (2)/var/cache/dev/serialization.php</argument>
+      <argument>C:\PRJ\03\02\20026 - Copie (2)\var\cache\dev/serialization.php</argument>
       <argument type="service" id="cache.serializer"/>
       <factory class="Symfony\Component\Cache\Adapter\PhpArrayAdapter" method="create"/>
     </service>
@@ -4082,7 +4109,7 @@
       <argument>true</argument>
     </service>
     <service id="session.storage.factory.mock_file" class="Symfony\Component\HttpFoundation\Session\Storage\MockFileSessionStorageFactory">
-      <argument>C:/PRJ/03/02/20026 - Copie (2)/var/cache/dev/sessions</argument>
+      <argument>C:\PRJ\03\02\20026 - Copie (2)\var\cache\dev/sessions</argument>
       <argument>MOCKSESSID</argument>
       <argument type="service">
         <service class="Symfony\Component\HttpFoundation\Session\Storage\MetadataBag">
@@ -4287,10 +4314,10 @@
     <service id="validator.mapping.cache_warmer" class="Symfony\Bundle\FrameworkBundle\CacheWarmer\ValidatorCacheWarmer">
       <tag name="kernel.cache_warmer"/>
       <argument type="service" id="validator.builder"/>
-      <argument>C:/PRJ/03/02/20026 - Copie (2)/var/cache/dev/validation.php</argument>
+      <argument>C:\PRJ\03\02\20026 - Copie (2)\var\cache\dev/validation.php</argument>
     </service>
     <service id="validator.mapping.cache.adapter" class="Symfony\Component\Cache\Adapter\PhpArrayAdapter" constructor="create">
-      <argument>C:/PRJ/03/02/20026 - Copie (2)/var/cache/dev/validation.php</argument>
+      <argument>C:\PRJ\03\02\20026 - Copie (2)\var\cache\dev/validation.php</argument>
       <argument type="service" id="cache.validator"/>
     </service>
     <service id="validator.validator_factory" class="Symfony\Component\Validator\ContainerConstraintValidatorFactory">
@@ -4969,7 +4996,7 @@
       </call>
     </service>
     <service id="profiler.storage" class="Symfony\Component\HttpKernel\Profiler\FileProfilerStorage">
-      <argument>file:C:/PRJ/03/02/20026 - Copie (2)/var/cache/dev/profiler</argument>
+      <argument>file:C:\PRJ\03\02\20026 - Copie (2)\var\cache\dev/profiler</argument>
     </service>
     <service id="profiler_listener" class="Symfony\Component\HttpKernel\EventListener\ProfilerListener">
       <tag name="kernel.event_subscriber"/>
@@ -5034,7 +5061,7 @@
       <tag name="monolog.logger" channel="profiler"/>
       <tag name="data_collector" template="@WebProfiler/Collector/logger.html.twig" id="logger" priority="300"/>
       <argument type="service" id="monolog.logger.profiler" on-invalid="ignore"/>
-      <argument>C:/PRJ/03/02/20026 - Copie (2)/var/cache/dev/App_KernelDevDebugContainer</argument>
+      <argument>C:\PRJ\03\02\20026 - Copie (2)\var\cache\dev/App_KernelDevDebugContainer</argument>
       <argument type="service" id=".virtual_request_stack" on-invalid="ignore"/>
     </service>
     <service id="data_collector.time" class="Symfony\Component\HttpKernel\DataCollector\TimeDataCollector">
@@ -5621,7 +5648,7 @@
         <argument type="service" id=".doctrine.orm.default_metadata_driver"/>
       </call>
       <call method="setProxyDir">
-        <argument>C:/PRJ/03/02/20026 - Copie (2)/var/cache/dev/doctrine/orm/Proxies</argument>
+        <argument>C:\PRJ\03\02\20026 - Copie (2)\var\cache\dev/doctrine/orm/Proxies</argument>
       </call>
       <call method="setProxyNamespace">
         <argument>Proxies</argument>
@@ -6041,7 +6068,7 @@
       <argument type="service" id="twig.loader.native_filesystem"/>
       <argument type="collection">
         <argument key="autoescape">name</argument>
-        <argument key="cache">C:/PRJ/03/02/20026 - Copie (2)/var/cache/dev/twig</argument>
+        <argument key="cache">C:\PRJ\03\02\20026 - Copie (2)\var\cache\dev/twig</argument>
         <argument key="charset">UTF-8</argument>
         <argument key="debug">true</argument>
         <argument key="strict_variables">true</argument>
@@ -7562,9 +7589,15 @@
     <service id=".instanceof.Symfony\Contracts\Service\ServiceSubscriberInterface.0.App\Controller\PublicNotificationController" class="App\Controller\PublicNotificationController" autowire="true" abstract="true"/>
     <service id=".instanceof.Symfony\Bundle\FrameworkBundle\Controller\AbstractController.0.App\Controller\PublicNotificationController" class="App\Controller\PublicNotificationController" autowire="true" abstract="true"/>
     <service id=".abstract.instanceof.App\Controller\PublicNotificationController" class="App\Controller\PublicNotificationController" autowire="true" autoconfigure="true" abstract="true"/>
+    <service id=".instanceof.Symfony\Contracts\Service\ServiceSubscriberInterface.0.App\Controller\RecommendationController" class="App\Controller\RecommendationController" autowire="true" abstract="true"/>
+    <service id=".instanceof.Symfony\Bundle\FrameworkBundle\Controller\AbstractController.0.App\Controller\RecommendationController" class="App\Controller\RecommendationController" autowire="true" abstract="true"/>
+    <service id=".abstract.instanceof.App\Controller\RecommendationController" class="App\Controller\RecommendationController" autowire="true" autoconfigure="true" abstract="true"/>
     <service id=".instanceof.Symfony\Contracts\Service\ServiceSubscriberInterface.0.App\Controller\ResetPasswordController" class="App\Controller\ResetPasswordController" autowire="true" abstract="true"/>
     <service id=".instanceof.Symfony\Bundle\FrameworkBundle\Controller\AbstractController.0.App\Controller\ResetPasswordController" class="App\Controller\ResetPasswordController" autowire="true" abstract="true"/>
     <service id=".abstract.instanceof.App\Controller\ResetPasswordController" class="App\Controller\ResetPasswordController" autowire="true" autoconfigure="true" abstract="true"/>
+    <service id=".instanceof.Symfony\Contracts\Service\ServiceSubscriberInterface.0.App\Controller\ShippingController" class="App\Controller\ShippingController" autowire="true" abstract="true"/>
+    <service id=".instanceof.Symfony\Bundle\FrameworkBundle\Controller\AbstractController.0.App\Controller\ShippingController" class="App\Controller\ShippingController" autowire="true" abstract="true"/>
+    <service id=".abstract.instanceof.App\Controller\ShippingController" class="App\Controller\ShippingController" autowire="true" autoconfigure="true" abstract="true"/>
     <service id=".instanceof.Symfony\Contracts\Service\ServiceSubscriberInterface.0.App\Controller\StripeController" class="App\Controller\StripeController" autowire="true" abstract="true"/>
     <service id=".instanceof.Symfony\Bundle\FrameworkBundle\Controller\AbstractController.0.App\Controller\StripeController" class="App\Controller\StripeController" autowire="true" abstract="true"/>
     <service id=".abstract.instanceof.App\Controller\StripeController" class="App\Controller\StripeController" autowire="true" autoconfigure="true" abstract="true"/>
@@ -8311,23 +8344,10 @@
         <argument key="entityManager" type="service_closure" id="doctrine.orm.default_entity_manager"/>
       </argument>
     </service>
-    <service id=".service_locator.SzmGGxZ" class="Symfony\Component\DependencyInjection\ServiceLocator">
-      <tag name="container.service_locator"/>
-      <argument type="collection">
-        <argument key="donationRepository" type="service_closure" id="App\Repository\DonationRepository"/>
-      </argument>
-    </service>
     <service id=".service_locator.86FluUf" class="Symfony\Component\DependencyInjection\ServiceLocator">
       <tag name="container.service_locator"/>
       <argument type="collection">
         <argument key="donation" type="service_closure" id=".errored..service_locator.86FluUf.App\Entity\Donation"/>
-      </argument>
-    </service>
-    <service id=".service_locator.weanNsV" class="Symfony\Component\DependencyInjection\ServiceLocator">
-      <tag name="container.service_locator"/>
-      <argument type="collection">
-        <argument key="donation" type="service_closure" id=".errored..service_locator.weanNsV.App\Entity\Donation"/>
-        <argument key="entityManager" type="service_closure" id="doctrine.orm.default_entity_manager"/>
       </argument>
     </service>
     <service id=".service_locator.td4zu.o" class="Symfony\Component\DependencyInjection\ServiceLocator">
@@ -8504,6 +8524,13 @@
         <argument key="participation" type="service_closure" id=".errored..service_locator._7hG3Ba.App\Entity\Participation"/>
       </argument>
     </service>
+    <service id=".service_locator.ISt.TFP" class="Symfony\Component\DependencyInjection\ServiceLocator">
+      <tag name="container.service_locator"/>
+      <argument type="collection">
+        <argument key="categorieRepository" type="service_closure" id="App\Repository\CategorieRepository"/>
+        <argument key="em" type="service_closure" id="doctrine.orm.default_entity_manager"/>
+      </argument>
+    </service>
     <service id=".service_locator.ViXcClx" class="Symfony\Component\DependencyInjection\ServiceLocator">
       <tag name="container.service_locator"/>
       <argument type="collection">
@@ -8515,6 +8542,13 @@
       <argument type="collection">
         <argument key="em" type="service_closure" id="doctrine.orm.default_entity_manager"/>
         <argument key="produit" type="service_closure" id=".errored..service_locator.6DpIc9s.App\Entity\Produit"/>
+      </argument>
+    </service>
+    <service id=".service_locator.LdgfP3r" class="Symfony\Component\DependencyInjection\ServiceLocator">
+      <tag name="container.service_locator"/>
+      <argument type="collection">
+        <argument key="em" type="service_closure" id="doctrine.orm.default_entity_manager"/>
+        <argument key="urlGenerator" type="service_closure" id="router.default"/>
       </argument>
     </service>
     <service id=".service_locator.W_ea3JR" class="Symfony\Component\DependencyInjection\ServiceLocator">
@@ -8554,6 +8588,21 @@
         <argument key="entityManager" type="service_closure" id="doctrine.orm.default_entity_manager"/>
         <argument key="passwordHasher" type="service_closure" id="security.user_password_hasher"/>
         <argument key="userRepository" type="service_closure" id="App\Repository\UserRepository"/>
+      </argument>
+    </service>
+    <service id=".service_locator.7AhiJRs" class="Symfony\Component\DependencyInjection\ServiceLocator">
+      <tag name="container.service_locator"/>
+      <argument type="collection">
+        <argument key="stripeService" type="service_closure" id="App\Service\StripePaymentService"/>
+      </argument>
+    </service>
+    <service id=".service_locator.P4581bP" class="Symfony\Component\DependencyInjection\ServiceLocator">
+      <tag name="container.service_locator"/>
+      <argument type="collection">
+        <argument key="commandeRepository" type="service_closure" id="App\Repository\CommandeRepository"/>
+        <argument key="em" type="service_closure" id="doctrine.orm.default_entity_manager"/>
+        <argument key="produitRepository" type="service_closure" id="App\Repository\ProduitRepository"/>
+        <argument key="recommendationService" type="service_closure" id="App\Service\RecommendationService"/>
       </argument>
     </service>
     <service id=".service_locator.uuML20f" class="Symfony\Component\DependencyInjection\ServiceLocator">
@@ -8664,7 +8713,7 @@
         <argument key="ziptag" type="service_closure" id=".errored..service_locator.UfqnTit.App\Entity\Ziptag"/>
       </argument>
     </service>
-    <service id=".service_locator.7Yfldqi" class="Symfony\Component\DependencyInjection\ServiceLocator">
+    <service id=".service_locator.AE6ifAI" class="Symfony\Component\DependencyInjection\ServiceLocator">
       <tag name="container.service_locator"/>
       <argument type="collection">
         <argument key="App\Controller\AdminEventsController::cancel" type="service_closure" id=".service_locator.N.hTxDV"/>
@@ -8712,10 +8761,8 @@
         <argument key="App\Controller\DogsController::searchJson" type="service_closure" id=".service_locator._lTXIpM"/>
         <argument key="App\Controller\DogsController::show" type="service_closure" id=".service_locator.CqzndDC"/>
         <argument key="App\Controller\DogsDashController::index" type="service_closure" id=".service_locator.qs1pVnJ"/>
-        <argument key="App\Controller\DonationController::delete" type="service_closure" id=".service_locator.weanNsV"/>
-        <argument key="App\Controller\DonationController::edit" type="service_closure" id=".service_locator.weanNsV"/>
-        <argument key="App\Controller\DonationController::index" type="service_closure" id=".service_locator.SzmGGxZ"/>
-        <argument key="App\Controller\DonationController::new" type="service_closure" id=".service_locator.CsMkqUa"/>
+        <argument key="App\Controller\DonationController::delete" type="service_closure" id=".service_locator.86FluUf"/>
+        <argument key="App\Controller\DonationController::edit" type="service_closure" id=".service_locator.86FluUf"/>
         <argument key="App\Controller\DonationController::show" type="service_closure" id=".service_locator.86FluUf"/>
         <argument key="App\Controller\EvenementController::delete" type="service_closure" id=".service_locator.JFCU_Ej"/>
         <argument key="App\Controller\EvenementController::edit" type="service_closure" id=".service_locator.JFCU_Ej"/>
@@ -8758,8 +8805,10 @@
         <argument key="App\Controller\ParticipationController::new" type="service_closure" id=".service_locator.CsMkqUa"/>
         <argument key="App\Controller\ParticipationController::show" type="service_closure" id=".service_locator.7Fv2XHF"/>
         <argument key="App\Controller\ProduitController::buy" type="service_closure" id=".service_locator.6DpIc9s"/>
+        <argument key="App\Controller\ProduitController::cartCheckout" type="service_closure" id=".service_locator.LdgfP3r"/>
         <argument key="App\Controller\ProduitController::delete" type="service_closure" id=".service_locator.6DpIc9s"/>
         <argument key="App\Controller\ProduitController::edit" type="service_closure" id=".service_locator.6DpIc9s"/>
+        <argument key="App\Controller\ProduitController::generateSampleProducts" type="service_closure" id=".service_locator.ISt.TFP"/>
         <argument key="App\Controller\ProduitController::index" type="service_closure" id=".service_locator.epy_BmF"/>
         <argument key="App\Controller\ProduitController::new" type="service_closure" id=".service_locator.9kKwU2t"/>
         <argument key="App\Controller\ProduitController::show" type="service_closure" id=".service_locator.ViXcClx"/>
@@ -8770,6 +8819,12 @@
         <argument key="App\Controller\ResetPasswordController::forgotPassword" type="service_closure" id=".service_locator.uqDDRsG"/>
         <argument key="App\Controller\ResetPasswordController::resetPassword" type="service_closure" id=".service_locator.pAIIy8q"/>
         <argument key="App\Controller\ResetPasswordController::verifyCode" type="service_closure" id=".service_locator.WwmO_vG"/>
+        <argument key="App\Controller\StripeController::checkout" type="service_closure" id=".service_locator.7AhiJRs"/>
+        <argument key="App\Controller\StripeController::createCharge" type="service_closure" id=".service_locator.P4581bP"/>
+        <argument key="App\Controller\StripeController::createPaymentIntent" type="service_closure" id=".service_locator.7AhiJRs"/>
+        <argument key="App\Controller\StripeController::donationCharge" type="service_closure" id=".service_locator.9kKwU2t"/>
+        <argument key="App\Controller\StripeController::donationCheckout" type="service_closure" id=".service_locator.7AhiJRs"/>
+        <argument key="App\Controller\StripeController::verifyPayment" type="service_closure" id=".service_locator.7AhiJRs"/>
         <argument key="App\Controller\SuiviController::aiAnalyze" type="service_closure" id=".service_locator.uuML20f"/>
         <argument key="App\Controller\SuiviController::consultationDetail" type="service_closure" id=".service_locator.uuML20f"/>
         <argument key="App\Controller\SuiviController::delete" type="service_closure" id=".service_locator.Fg93DDd"/>
@@ -8845,10 +8900,8 @@
         <argument key="App\Controller\DogsController:searchJson" type="service_closure" id=".service_locator._lTXIpM"/>
         <argument key="App\Controller\DogsController:show" type="service_closure" id=".service_locator.CqzndDC"/>
         <argument key="App\Controller\DogsDashController:index" type="service_closure" id=".service_locator.qs1pVnJ"/>
-        <argument key="App\Controller\DonationController:delete" type="service_closure" id=".service_locator.weanNsV"/>
-        <argument key="App\Controller\DonationController:edit" type="service_closure" id=".service_locator.weanNsV"/>
-        <argument key="App\Controller\DonationController:index" type="service_closure" id=".service_locator.SzmGGxZ"/>
-        <argument key="App\Controller\DonationController:new" type="service_closure" id=".service_locator.CsMkqUa"/>
+        <argument key="App\Controller\DonationController:delete" type="service_closure" id=".service_locator.86FluUf"/>
+        <argument key="App\Controller\DonationController:edit" type="service_closure" id=".service_locator.86FluUf"/>
         <argument key="App\Controller\DonationController:show" type="service_closure" id=".service_locator.86FluUf"/>
         <argument key="App\Controller\EvenementController:delete" type="service_closure" id=".service_locator.JFCU_Ej"/>
         <argument key="App\Controller\EvenementController:edit" type="service_closure" id=".service_locator.JFCU_Ej"/>
@@ -8891,8 +8944,10 @@
         <argument key="App\Controller\ParticipationController:new" type="service_closure" id=".service_locator.CsMkqUa"/>
         <argument key="App\Controller\ParticipationController:show" type="service_closure" id=".service_locator.7Fv2XHF"/>
         <argument key="App\Controller\ProduitController:buy" type="service_closure" id=".service_locator.6DpIc9s"/>
+        <argument key="App\Controller\ProduitController:cartCheckout" type="service_closure" id=".service_locator.LdgfP3r"/>
         <argument key="App\Controller\ProduitController:delete" type="service_closure" id=".service_locator.6DpIc9s"/>
         <argument key="App\Controller\ProduitController:edit" type="service_closure" id=".service_locator.6DpIc9s"/>
+        <argument key="App\Controller\ProduitController:generateSampleProducts" type="service_closure" id=".service_locator.ISt.TFP"/>
         <argument key="App\Controller\ProduitController:index" type="service_closure" id=".service_locator.epy_BmF"/>
         <argument key="App\Controller\ProduitController:new" type="service_closure" id=".service_locator.9kKwU2t"/>
         <argument key="App\Controller\ProduitController:show" type="service_closure" id=".service_locator.ViXcClx"/>
@@ -8903,6 +8958,12 @@
         <argument key="App\Controller\ResetPasswordController:forgotPassword" type="service_closure" id=".service_locator.uqDDRsG"/>
         <argument key="App\Controller\ResetPasswordController:resetPassword" type="service_closure" id=".service_locator.pAIIy8q"/>
         <argument key="App\Controller\ResetPasswordController:verifyCode" type="service_closure" id=".service_locator.WwmO_vG"/>
+        <argument key="App\Controller\StripeController:checkout" type="service_closure" id=".service_locator.7AhiJRs"/>
+        <argument key="App\Controller\StripeController:createCharge" type="service_closure" id=".service_locator.P4581bP"/>
+        <argument key="App\Controller\StripeController:createPaymentIntent" type="service_closure" id=".service_locator.7AhiJRs"/>
+        <argument key="App\Controller\StripeController:donationCharge" type="service_closure" id=".service_locator.9kKwU2t"/>
+        <argument key="App\Controller\StripeController:donationCheckout" type="service_closure" id=".service_locator.7AhiJRs"/>
+        <argument key="App\Controller\StripeController:verifyPayment" type="service_closure" id=".service_locator.7AhiJRs"/>
         <argument key="App\Controller\SuiviController:aiAnalyze" type="service_closure" id=".service_locator.uuML20f"/>
         <argument key="App\Controller\SuiviController:consultationDetail" type="service_closure" id=".service_locator.uuML20f"/>
         <argument key="App\Controller\SuiviController:delete" type="service_closure" id=".service_locator.Fg93DDd"/>
@@ -9718,9 +9779,21 @@
       <argument type="service" id="service_container"/>
       <factory service=".service_locator.O2p6Lk7" method="withContext"/>
     </service>
+    <service id=".service_locator.O2p6Lk7.App\Controller\RecommendationController" class="Symfony\Component\DependencyInjection\ServiceLocator">
+      <tag name="container.service_locator_context" id="App\Controller\RecommendationController"/>
+      <argument>App\Controller\RecommendationController</argument>
+      <argument type="service" id="service_container"/>
+      <factory service=".service_locator.O2p6Lk7" method="withContext"/>
+    </service>
     <service id=".service_locator.O2p6Lk7.App\Controller\ResetPasswordController" class="Symfony\Component\DependencyInjection\ServiceLocator">
       <tag name="container.service_locator_context" id="App\Controller\ResetPasswordController"/>
       <argument>App\Controller\ResetPasswordController</argument>
+      <argument type="service" id="service_container"/>
+      <factory service=".service_locator.O2p6Lk7" method="withContext"/>
+    </service>
+    <service id=".service_locator.O2p6Lk7.App\Controller\ShippingController" class="Symfony\Component\DependencyInjection\ServiceLocator">
+      <tag name="container.service_locator_context" id="App\Controller\ShippingController"/>
+      <argument>App\Controller\ShippingController</argument>
       <argument type="service" id="service_container"/>
       <factory service=".service_locator.O2p6Lk7" method="withContext"/>
     </service>
@@ -9943,7 +10016,9 @@
           <argument>App\Controller\ProduitController</argument>
           <argument>App\Controller\PublicEventController</argument>
           <argument>App\Controller\PublicNotificationController</argument>
+          <argument>App\Controller\RecommendationController</argument>
           <argument>App\Controller\ResetPasswordController</argument>
+          <argument>App\Controller\ShippingController</argument>
           <argument>App\Controller\StripeController</argument>
           <argument>App\Controller\SuiviController</argument>
           <argument>App\Controller\UserController</argument>
@@ -10202,9 +10277,6 @@
     </service>
     <service id=".errored..service_locator.86FluUf.App\Entity\Donation" class="App\Entity\Donation">
       <tag name="container.error" message="Cannot autowire service &quot;.service_locator.86FluUf&quot;: it needs an instance of &quot;App\Entity\Donation&quot; but this type has been excluded in &quot;config/services.yaml&quot;."/>
-    </service>
-    <service id=".errored..service_locator.weanNsV.App\Entity\Donation" class="App\Entity\Donation">
-      <tag name="container.error" message="Cannot autowire service &quot;.service_locator.weanNsV&quot;: it needs an instance of &quot;App\Entity\Donation&quot; but this type has been excluded in &quot;config/services.yaml&quot;."/>
     </service>
     <service id=".errored..service_locator.td4zu.o.App\Entity\Evenement" class="App\Entity\Evenement">
       <tag name="container.error" message="Cannot autowire service &quot;.service_locator.td4zu.o&quot;: it needs an instance of &quot;App\Entity\Evenement&quot; but this type has been excluded in &quot;config/services.yaml&quot;."/>
@@ -11194,7 +11266,7 @@
     <service id="cache.app.recorder_inner" class="Symfony\Component\Cache\Adapter\FilesystemAdapter">
       <argument>W3vxGMPLCu</argument>
       <argument>0</argument>
-      <argument>C:/PRJ/03/02/20026 - Copie (2)/var/cache/dev/pools/app</argument>
+      <argument>C:\PRJ\03\02\20026 - Copie (2)\var\cache\dev/pools/app</argument>
       <argument type="service" id="cache.default_marshaller" on-invalid="ignore"/>
       <call method="setLogger">
         <argument type="service" id="monolog.logger.cache" on-invalid="ignore"/>
@@ -11204,7 +11276,7 @@
       <argument>GUxbdhveV6</argument>
       <argument>0</argument>
       <argument>%container.build_id%</argument>
-      <argument>C:/PRJ/03/02/20026 - Copie (2)/var/cache/dev/pools/system</argument>
+      <argument>C:\PRJ\03\02\20026 - Copie (2)\var\cache\dev/pools/system</argument>
       <argument type="service" id="monolog.logger.cache" on-invalid="ignore"/>
       <factory class="Symfony\Component\Cache\Adapter\AbstractAdapter" method="createSystemCache"/>
     </service>
@@ -11212,7 +11284,7 @@
       <argument>gUYSwufPHX</argument>
       <argument>0</argument>
       <argument>%container.build_id%</argument>
-      <argument>C:/PRJ/03/02/20026 - Copie (2)/var/cache/dev/pools/system</argument>
+      <argument>C:\PRJ\03\02\20026 - Copie (2)\var\cache\dev/pools/system</argument>
       <argument type="service" id="monolog.logger.cache" on-invalid="ignore"/>
       <factory class="Symfony\Component\Cache\Adapter\AbstractAdapter" method="createSystemCache"/>
     </service>
@@ -11220,7 +11292,7 @@
       <argument>ppWWg+2Fy6</argument>
       <argument>0</argument>
       <argument>%container.build_id%</argument>
-      <argument>C:/PRJ/03/02/20026 - Copie (2)/var/cache/dev/pools/system</argument>
+      <argument>C:\PRJ\03\02\20026 - Copie (2)\var\cache\dev/pools/system</argument>
       <argument type="service" id="monolog.logger.cache" on-invalid="ignore"/>
       <factory class="Symfony\Component\Cache\Adapter\AbstractAdapter" method="createSystemCache"/>
     </service>
@@ -11228,7 +11300,7 @@
       <argument>G0t2UshXE-</argument>
       <argument>0</argument>
       <argument>%container.build_id%</argument>
-      <argument>C:/PRJ/03/02/20026 - Copie (2)/var/cache/dev/pools/system</argument>
+      <argument>C:\PRJ\03\02\20026 - Copie (2)\var\cache\dev/pools/system</argument>
       <argument type="service" id="monolog.logger.cache" on-invalid="ignore"/>
       <factory class="Symfony\Component\Cache\Adapter\AbstractAdapter" method="createSystemCache"/>
     </service>
@@ -11236,7 +11308,7 @@
       <argument>TazAesS8DN</argument>
       <argument>0</argument>
       <argument>%container.build_id%</argument>
-      <argument>C:/PRJ/03/02/20026 - Copie (2)/var/cache/dev/pools/system</argument>
+      <argument>C:\PRJ\03\02\20026 - Copie (2)\var\cache\dev/pools/system</argument>
       <argument type="service" id="monolog.logger.cache" on-invalid="ignore"/>
       <factory class="Symfony\Component\Cache\Adapter\AbstractAdapter" method="createSystemCache"/>
     </service>
@@ -11244,14 +11316,14 @@
       <argument>oWnonMWPfc</argument>
       <argument>0</argument>
       <argument>%container.build_id%</argument>
-      <argument>C:/PRJ/03/02/20026 - Copie (2)/var/cache/dev/pools/system</argument>
+      <argument>C:\PRJ\03\02\20026 - Copie (2)\var\cache\dev/pools/system</argument>
       <argument type="service" id="monolog.logger.cache" on-invalid="ignore"/>
       <factory class="Symfony\Component\Cache\Adapter\AbstractAdapter" method="createSystemCache"/>
     </service>
     <service id="cache.messenger.restart_workers_signal.recorder_inner" class="Symfony\Component\Cache\Adapter\FilesystemAdapter">
       <argument>Xr7aTrTCdW</argument>
       <argument>0</argument>
-      <argument>C:/PRJ/03/02/20026 - Copie (2)/var/cache/dev/pools/app</argument>
+      <argument>C:\PRJ\03\02\20026 - Copie (2)\var\cache\dev/pools/app</argument>
       <argument type="service" id="cache.default_marshaller" on-invalid="ignore"/>
       <call method="setLogger">
         <argument type="service" id="monolog.logger.cache" on-invalid="ignore"/>
@@ -11261,7 +11333,7 @@
       <argument>ZtRKF5wT5J</argument>
       <argument>0</argument>
       <argument>%container.build_id%</argument>
-      <argument>C:/PRJ/03/02/20026 - Copie (2)/var/cache/dev/pools/system</argument>
+      <argument>C:\PRJ\03\02\20026 - Copie (2)\var\cache\dev/pools/system</argument>
       <argument type="service" id="monolog.logger.cache" on-invalid="ignore"/>
       <factory class="Symfony\Component\Cache\Adapter\AbstractAdapter" method="createSystemCache"/>
     </service>
@@ -11271,7 +11343,7 @@
       <argument>ooM5soeI3E</argument>
       <argument>0</argument>
       <argument>%container.build_id%</argument>
-      <argument>C:/PRJ/03/02/20026 - Copie (2)/var/cache/dev/pools/system</argument>
+      <argument>C:\PRJ\03\02\20026 - Copie (2)\var\cache\dev/pools/system</argument>
       <argument type="service" id="monolog.logger.cache" on-invalid="ignore"/>
       <factory class="Symfony\Component\Cache\Adapter\AbstractAdapter" method="createSystemCache"/>
     </service>
@@ -11279,7 +11351,7 @@
       <argument>8h9uDhF3Im</argument>
       <argument>0</argument>
       <argument>%container.build_id%</argument>
-      <argument>C:/PRJ/03/02/20026 - Copie (2)/var/cache/dev/pools/system</argument>
+      <argument>C:\PRJ\03\02\20026 - Copie (2)\var\cache\dev/pools/system</argument>
       <argument type="service" id="monolog.logger.cache" on-invalid="ignore"/>
       <factory class="Symfony\Component\Cache\Adapter\AbstractAdapter" method="createSystemCache"/>
     </service>
@@ -11465,7 +11537,7 @@
     <service id="doctrine.fixtures.provider" alias="doctrine.fixtures.loader"/>
     <service id="container.env_var_processors_locator" alias=".service_locator.w7.f4fT" public="true"/>
     <service id="twig.loader.filesystem" alias="twig.loader.native_filesystem"/>
-    <service id="argument_resolver.controller_locator" alias=".service_locator.7Yfldqi"/>
+    <service id="argument_resolver.controller_locator" alias=".service_locator.AE6ifAI"/>
     <service id="doctrine.id_generator_locator" alias=".service_locator.KLVvNIq"/>
     <service id="twig.loader" alias="twig.loader.native_filesystem"/>
     <service id=".Psr\Log\LoggerInterface $request.logger" alias="monolog.logger.request"/>
@@ -11520,10 +11592,12 @@
     <service id=".service_locator.8IbU9zc" alias=".service_locator.NjUBG3v"/>
     <service id=".service_locator.BLfLtS3" alias=".service_locator.epy_BmF"/>
     <service id=".service_locator.5d0yotz" alias=".service_locator._7hG3Ba"/>
+    <service id=".service_locator.YmJZixU" alias=".service_locator.ISt.TFP"/>
     <service id=".service_locator.bWImZDr" alias=".service_locator.6DpIc9s"/>
     <service id=".service_locator.fsUpn7N" alias=".service_locator.W_ea3JR"/>
     <service id=".service_locator.CaHyta." alias=".service_locator.uqDDRsG"/>
     <service id=".service_locator.Yt2DenP" alias=".service_locator.pAIIy8q"/>
+    <service id=".service_locator.xfG5lWU" alias=".service_locator.P4581bP"/>
     <service id=".service_locator.H7hrCl." alias=".service_locator.8_0lB_e"/>
     <service id=".service_locator.UApOxla" alias=".service_locator.VWyhjC_"/>
     <service id=".service_locator.R0Sb2kd" alias=".service_locator.rvMNZGh"/>
@@ -11532,7 +11606,7 @@
     <service id=".service_locator..Pskktm" alias=".service_locator.rg4sZ_i"/>
     <service id=".service_locator.Pr8d1E5" alias=".service_locator.Rw6aBCm"/>
     <service id=".service_locator.tNoY4wE" alias=".service_locator.UfqnTit"/>
-    <service id=".service_locator.8K4wMqT" alias=".service_locator.7Yfldqi"/>
+    <service id=".service_locator.zB9vCBT" alias=".service_locator.AE6ifAI"/>
     <service id=".service_locator.BFrsqsn" alias=".service_locator.F9PKc.7"/>
     <service id=".service_locator.mEWDGg." alias=".service_locator.tbyVH2k"/>
     <service id=".service_locator.XtmiKbi" alias=".service_locator.MfxSDRP"/>
@@ -11590,9 +11664,7 @@
     <service id=".service_locator.lrjoOK." alias=".service_locator.CqzndDC"/>
     <service id=".service_locator.CmZDM4o" alias=".service_locator.WX1szdI"/>
     <service id=".service_locator.B0s.23." alias=".service_locator.usqzJ0J"/>
-    <service id=".service_locator..TVIrKL" alias=".service_locator.SzmGGxZ"/>
     <service id=".service_locator..94Wzmv" alias=".service_locator.86FluUf"/>
-    <service id=".service_locator.w2Exxds" alias=".service_locator.weanNsV"/>
     <service id=".service_locator.cHidRdS" alias=".service_locator.td4zu.o"/>
     <service id=".service_locator.AUCwrUD" alias=".service_locator.JFCU_Ej"/>
     <service id=".service_locator.dVahVfE" alias=".service_locator.TUazu9d"/>
@@ -11619,13 +11691,17 @@
     <service id=".service_locator.x40bMRg" alias=".service_locator.jWlaXqk"/>
     <service id=".service_locator.VToZbUW" alias=".service_locator.7Fv2XHF"/>
     <service id=".service_locator.fK398jt" alias=".service_locator._7hG3Ba"/>
+    <service id=".service_locator.ygGAYWF" alias=".service_locator.ISt.TFP"/>
     <service id=".service_locator.dMZ2O9f" alias=".service_locator.ViXcClx"/>
     <service id=".service_locator.xaOiXcO" alias=".service_locator.6DpIc9s"/>
+    <service id=".service_locator._cIIBY3" alias=".service_locator.LdgfP3r"/>
     <service id=".service_locator.8JE.kbf" alias=".service_locator.W_ea3JR"/>
     <service id=".service_locator.S4.r.Z3" alias=".service_locator.ZrI3Ano"/>
     <service id=".service_locator.jYKq5TW" alias=".service_locator.uqDDRsG"/>
     <service id=".service_locator.e5CU7v9" alias=".service_locator.WwmO_vG"/>
     <service id=".service_locator.eoKZPVR" alias=".service_locator.pAIIy8q"/>
+    <service id=".service_locator.Yx81Xmf" alias=".service_locator.7AhiJRs"/>
+    <service id=".service_locator.GIQGKq5" alias=".service_locator.P4581bP"/>
     <service id=".service_locator.btTk5jW" alias=".service_locator.uuML20f"/>
     <service id=".service_locator.kh6nkfR" alias=".service_locator.Fg93DDd"/>
     <service id=".service_locator.HAp6Qyp" alias=".service_locator.8_0lB_e"/>

@@ -11,19 +11,7 @@
 {% set in_progress_records = commandes|filter(c => c.statut != true)|length %}
 
 {% block main %}
-<div x-data="{
-    searchQuery: '',
-    deleteModalOpen: false,
-    deleteAction: '',
-    deleteToken: '',
-    deleteLabel: '',
-    openDelete(action, token, label) {
-        this.deleteAction = action;
-        this.deleteToken = token;
-        this.deleteLabel = label;
-        this.deleteModalOpen = true;
-    }
-}">
+<div>
     <div class="px-4 sm:px-6 lg:px-8 py-8 max-w-7xl mx-auto">
         <!-- Page Header -->
         <div class="bg-white rounded-2xl border border-gray-200 p-6 mb-8 shadow-sm">
@@ -189,7 +177,7 @@
                                         {% if not commande.statut %}
                                         <button type="button"
                                                 class="ml-4 text-red-600 hover:text-red-700 font-semibold"
-                                                @click="openDelete('{{ path('app_eshop_commande_delete', {'id': commande.id}) }}', '{{ csrf_token('delete' ~ commande.id) }}', '#' ~ commande.id)">
+                                                onclick="openDeleteModal('{{ path('app_eshop_commande_delete', {'id': commande.id}) }}', '{{ csrf_token('delete' ~ commande.id) }}', '#{{ commande.id }}')">
                                             Delete
                                         </button>
                                         {% endif %}
@@ -206,25 +194,15 @@
     </div>
 
     <!-- Delete Modal -->
-    <div x-show="deleteModalOpen"
-         class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
-         @click.self="deleteModalOpen = false"
-         @keydown.escape.window="deleteModalOpen = false"
-         style="display: none;"
-         x-transition:enter="transition ease-out duration-300"
-         x-transition:enter-start="opacity-0 scale-95"
-         x-transition:enter-end="opacity-100 scale-100"
-         x-transition:leave="transition ease-in duration-200"
-         x-transition:leave-start="opacity-100 scale-100"
-         x-transition:leave-end="opacity-0 scale-95">
-        <div @click.stop class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4">
+    <div id="delete-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm" style="display: none;">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4">
             <div class="sticky top-0 bg-white border-b border-gray-200 px-8 py-6 rounded-t-2xl">
                 <div class="flex items-center justify-between">
                     <div>
                         <h2 class="text-2xl font-bold text-gray-900">Delete Order</h2>
-                        <p class="mt-1 text-sm text-gray-600">Are you sure you want to delete order <span class="font-semibold" x-text="deleteLabel"></span>?</p>
+                        <p class="mt-1 text-sm text-gray-600">Are you sure you want to delete order <span id="delete-label" class="font-semibold"></span>?</p>
                     </div>
-                    <button @click="deleteModalOpen = false" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <button onclick="closeDeleteModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
                         <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                         </svg>
@@ -232,10 +210,10 @@
                 </div>
             </div>
             <div class="px-8 py-6">
-                <form method="post" :action="deleteAction">
-                    <input type="hidden" name="_token" :value="deleteToken">
+                <form id="delete-form" method="post">
+                    <input type="hidden" name="_token" id="delete-token">
                     <div class="flex justify-end gap-3">
-                        <button type="button" @click="deleteModalOpen = false"
+                        <button type="button" onclick="closeDeleteModal()"
                                 class="px-6 py-2.5 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50">
                             Cancel
                         </button>
@@ -248,6 +226,31 @@
             </div>
         </div>
     </div>
+
+    <script>
+    function openDeleteModal(action, token, label) {
+        document.getElementById('delete-form').action = action;
+        document.getElementById('delete-token').value = token;
+        document.getElementById('delete-label').textContent = label;
+        document.getElementById('delete-modal').style.display = 'flex';
+    }
+    
+    function closeDeleteModal() {
+        document.getElementById('delete-modal').style.display = 'none';
+    }
+    
+    document.getElementById('delete-modal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeDeleteModal();
+        }
+    });
+    
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeDeleteModal();
+        }
+    });
+    </script>
 </div>
 
 {% endblock %}

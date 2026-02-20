@@ -3,6 +3,8 @@
 namespace App\Controller;
 
 use App\Entity\Produit;
+use App\Entity\Commande;
+use App\Entity\LigneCommande;
 use App\Form\ProduitType;
 use App\Repository\ProduitRepository;
 use App\Repository\CategorieRepository;
@@ -11,11 +13,39 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 #[Route('/dashboard/eshop/produits')]
 class ProduitController extends AbstractController
 {
+    private const SAMPLE_PREFIXES = [
+        'Deluxe',
+        'Comfort',
+        'Active',
+        'Cozy',
+        'Urban',
+        'Premium',
+        'Fresh',
+        'Classic',
+        'Smart',
+        'Pure'
+    ];
+
+    private const SAMPLE_SUFFIXES = [
+        'Collar',
+        'Bites',
+        'Harness',
+        'Bowl',
+        'Toy Set',
+        'Carrier',
+        'Treat Pack',
+        'Bed',
+        'Grooming Kit',
+        'Snack Mix'
+    ];
+
     private function uploadImage($imageFile, $oldImage = null)
     {
         if ($imageFile) {
@@ -47,6 +77,56 @@ class ProduitController extends AbstractController
                 unlink($imagePath);
             }
         }
+    }
+
+    private function buildSampleName(): string
+    {
+        $prefix = self::SAMPLE_PREFIXES[array_rand(self::SAMPLE_PREFIXES)];
+        $suffix = self::SAMPLE_SUFFIXES[array_rand(self::SAMPLE_SUFFIXES)];
+
+        return sprintf('%s %s', $prefix, $suffix);
+    }
+
+    #[Route('/samples/generate', name: 'app_eshop_produit_generate_samples', methods: ['POST'])]
+    public function generateSampleProducts(Request $request, EntityManagerInterface $em, CategorieRepository $categorieRepository): JsonResponse
+    {
+        $data = json_decode($request->getContent() ?? '', true);
+        $count = max(1, min(30, (int) ($data['count'] ?? 5)));
+        $categories = $categorieRepository->findAll();
+
+        if (empty($categories)) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Please create at least one category before generating sample products.'
+            ], 422);
+        }
+
+        $createdProducts = [];
+
+        for ($i = 0; $i < $count; $i++) {
+            $produit = new Produit();
+            $produit->setNom($this->buildSampleName() . ' #' . ($i + 1));
+            $produit->setPrix(mt_rand(2500, 25000) / 100);
+            $produit->setQuantite(mt_rand(5, 50));
+            $produit->setSeuilAlert(max(1, (int) floor($produit->getQuantite() / 5)));
+            $produit->setImage(null);
+            $produit->setCategorie($categories[array_rand($categories)]);
+
+            $em->persist($produit);
+            $createdProducts[] = [
+                'name' => $produit->getNom(),
+                'price' => $produit->getPrix(),
+                'stock' => $produit->getQuantite()
+            ];
+        }
+
+        $em->flush();
+
+        return $this->json([
+            'success' => true,
+            'message' => sprintf('%d sample product(s) created.', $count),
+            'created' => $createdProducts
+        ]);
     }
 
     #[Route('', name: 'app_eshop_produit_index', methods: ['GET'])]
@@ -205,6 +285,11 @@ class ProduitController extends AbstractController
                     if ($imageFile) {
                         $newFilename = $this->uploadImage($imageFile);
                         $produit->setImage($newFilename);
+                    } else {
+                        $generatedImage = $form->get('generatedImage')->getData();
+                        if ($generatedImage) {
+                            $produit->setImage($generatedImage);
+                        }
                     }
                     
                     $em->persist($produit);
@@ -299,9 +384,13 @@ class ProduitController extends AbstractController
             if ($form->isValid()) {
                 try {
                     $imageFile = $form->get('image')->getData();
+                    $generatedImage = $form->get('generatedImage')->getData();
                     if ($imageFile) {
                         $newFilename = $this->uploadImage($imageFile, $oldImage);
                         $produit->setImage($newFilename);
+                    } elseif ($generatedImage && $generatedImage !== $oldImage) {
+                        $this->deleteImage($oldImage);
+                        $produit->setImage($generatedImage);
                     }
                     
                     $em->flush();
@@ -397,6 +486,101 @@ class ProduitController extends AbstractController
         }
 
         return $this->redirectToRoute('app_shop');
+    }
+
+    #[Route('/cart/checkout', name: 'app_eshop_produit_cart_checkout', methods: ['POST'])]
+    public function cartCheckout(
+        Request $request,
+        EntityManagerInterface $em,
+        UrlGeneratorInterface $urlGenerator
+    ): Response {
+        $data = json_decode($request->getContent(), true);
+        if (!isset($data['items']) || empty($data['items'])) {
+            return $this->json(['success' => false, 'message' => 'Cart is empty'], 400);
+        }
+
+        $paymentMethod = $data['payment_method'] ?? 'local';
+        $customer = [
+            'first_name' => $data['first_name'] ?? 'Client',
+            'last_name' => $data['last_name'] ?? '',
+            'email' => $data['email'] ?? '',
+            'phone' => $data['phone'] ?? '',
+        ];
+
+        try {
+            $commande = new Commande();
+            $commande->setDate(new \DateTime());
+            $commande->setStatut($paymentMethod !== 'clictopay');
+
+            $total = 0;
+            foreach ($data['items'] as $item) {
+                $produitId = $item['id'];
+                $quantite = $item['quantity'];
+
+                $produit = $em->getRepository(Produit::class)->find($produitId);
+                if (!$produit) {
+                    continue;
+                }
+
+                $stockActuel = $produit->getQuantite();
+                if ($stockActuel < $quantite) {
+                    return $this->json([
+                        'success' => false,
+                        'message' => 'Insufficient stock for product: ' . $produit->getNom()
+                    ], 400);
+                }
+
+                $ligneCommande = new LigneCommande();
+                $ligneCommande->setQuantite($quantite);
+                $ligneCommande->setPrixUnitaire($produit->getPrix());
+                $ligneCommande->setCommande($commande);
+                $ligneCommande->setProduit($produit);
+
+                $em->persist($ligneCommande);
+
+                $produit->setQuantite($stockActuel - $quantite);
+                $em->persist($produit);
+
+                $total += $produit->getPrix() * $quantite;
+            }
+
+            $commande->setTotal($total);
+            $em->persist($commande);
+            $em->flush();
+
+            $responseExtras = [];
+            if ($paymentMethod === 'stripe') {
+                try {
+                    // For Stripe, we'll return the order info and let the frontend handle the payment
+                    // The Stripe checkout session will be created client-side or via separate endpoint
+                    $responseExtras['payment_type'] = 'stripe';
+                    $responseExtras['order_id'] = $commande->getId();
+                    $responseExtras['amount'] = $total;
+                    $responseExtras['currency'] = 'usd';
+                    
+                    // You can integrate Stripe Checkout here or use client-side Stripe
+                } catch (\RuntimeException $e) {
+                    return $this->json([
+                        'success' => false,
+                        'message' => 'Stripe payment failed: ' . $e->getMessage(),
+                    ], 502);
+                }
+            }
+
+            $baseMessage = $paymentMethod === 'stripe'
+                ? 'Order created. Complete payment via Stripe.'
+                : 'Order created successfully!';
+
+            return $this->json(array_merge([
+                'success' => true,
+                'message' => $baseMessage,
+                'orderId' => $commande->getId(),
+                'total' => $total,
+                'flashMessage' => 'Order #' . $commande->getId() . ' created successfully for ' . $total . ' TND!'
+            ], array_filter($responseExtras, static fn ($value) => $value !== null)));
+        } catch (\Exception $e) {
+            return $this->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
     }
 
     #[Route('/uploads/images/{filename}', name: 'app_uploads_images')]

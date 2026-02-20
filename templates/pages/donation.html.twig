@@ -21,10 +21,6 @@
 {% endblock %}
 
 {% block body %}
-    <section class="relative overflow-hidden">
-        <!-- ... votre contenu existant ... -->
-    </section>
-
     <section class="container mx-auto px-4 lg:px-8 pb-14">
         <div class="grid lg:grid-cols-2 gap-8 items-start">
             <div class="rounded-3xl bg-white border border-gray-100 shadow-sm p-7">
@@ -37,7 +33,6 @@
                     </div>
                 {% endfor %}
 
-                <!-- Formulaire de donation avec novalidate -->
                 {{ form_start(form, { 
                     'attr': { 
                         'class': 'mt-6 space-y-4',
@@ -211,14 +206,31 @@
                 </div>
 
                 <!-- Bouton de soumission -->
-                <button type="submit" class="submit-btn w-full rounded-2xl bg-orange-500 px-6 py-3 text-white font-extrabold hover:bg-orange-600 transition mt-4">
-                    Submit Donation
-                </button>
+                <div class="mt-4 space-y-3">
+                    <button type="submit" class="submit-btn w-full rounded-2xl bg-orange-500 px-6 py-3 text-white font-extrabold hover:bg-orange-600 transition">
+                        <i class="fas fa-paper-plane mr-2"></i>Submit Donation (Manual)
+                    </button>
+                    
+                    <div class="relative">
+                        <div class="absolute inset-0 flex items-center">
+                            <div class="w-full border-t border-gray-300"></div>
+                        </div>
+                        <div class="relative flex justify-center text-sm">
+                            <span class="px-2 bg-white text-gray-500">OR</span>
+                        </div>
+                    </div>
+                    
+                    <button type="button" id="stripe-donate-btn" class="w-full rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-3 text-white font-extrabold hover:from-purple-700 hover:to-indigo-700 transition flex items-center justify-center gap-2">
+                        <i class="fab fa-stripe-s"></i>
+                        Donate with Stripe
+                    </button>
+                </div>
+                
+                {# Hide the statut (validated) field from public view #}
+                {% do form.statut.setRendered() %}
                 
                 {{ form_end(form) }}
             </div>
-
-            <!-- ... le reste de votre code ... -->
         </div>
     </section>
 {% endblock %}
@@ -405,6 +417,52 @@
             form.addEventListener('invalid', function(event) {
                 event.preventDefault();
             }, true);
+            
+            // Stripe Donation Button Handler
+            const stripeDonateBtn = document.getElementById('stripe-donate-btn');
+            if (stripeDonateBtn) {
+                stripeDonateBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Get form values
+                    const donateurField = document.getElementById('{{ form.donateur.vars.id }}');
+                    const emailField = document.getElementById('{{ form.email.vars.id }}');
+                    const montantField = document.getElementById('{{ form.montant.vars.id }}');
+                    
+                    const donateur = donateurField ? donateurField.value.trim() : '';
+                    const email = emailField ? emailField.value.trim() : '';
+                    const montant = montantField ? montantField.value : '';
+                    
+                    // Validate required fields
+                    if (!donateur) {
+                        alert('Please enter your name');
+                        if (donateurField) donateurField.focus();
+                        return;
+                    }
+                    
+                    if (!email) {
+                        alert('Please enter your email');
+                        if (emailField) emailField.focus();
+                        return;
+                    }
+                    
+                    if (!montant || parseFloat(montant) <= 0) {
+                        alert('Please enter a valid donation amount');
+                        if (montantField) montantField.focus();
+                        return;
+                    }
+                    
+                    // Build Stripe checkout URL
+                    const params = new URLSearchParams({
+                        donateur: donateur,
+                        email: email,
+                        amount: montant
+                    });
+                    
+                    // Redirect to Stripe checkout
+                    window.location.href = '{{ path("app_stripe_donation_checkout") }}?' + params.toString();
+                });
+            }
         });
     </script>
 {% endblock %}

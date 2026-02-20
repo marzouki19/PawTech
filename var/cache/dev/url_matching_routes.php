@@ -72,13 +72,26 @@ return [
         '/logout' => [[['_route' => 'app_logout', '_controller' => 'App\\Controller\\PageController::logout'], null, ['GET' => 0], null, false, false, null]],
         '/admin/participation' => [[['_route' => 'app_participation_index', '_controller' => 'App\\Controller\\ParticipationController::index'], null, ['GET' => 0], null, false, false, null]],
         '/admin/participation/new' => [[['_route' => 'app_participation_new', '_controller' => 'App\\Controller\\ParticipationController::new'], null, ['GET' => 0, 'POST' => 1], null, false, false, null]],
+        '/dashboard/eshop/produits/samples/generate' => [[['_route' => 'app_eshop_produit_generate_samples', '_controller' => 'App\\Controller\\ProduitController::generateSampleProducts'], null, ['POST' => 0], null, false, false, null]],
         '/dashboard/eshop/produits' => [[['_route' => 'app_eshop_produit_index', '_controller' => 'App\\Controller\\ProduitController::index'], null, ['GET' => 0], null, false, false, null]],
         '/dashboard/eshop/produits/new' => [[['_route' => 'app_eshop_produit_new', '_controller' => 'App\\Controller\\ProduitController::new'], null, ['GET' => 0, 'POST' => 1], null, false, false, null]],
+        '/dashboard/eshop/produits/cart/checkout' => [[['_route' => 'app_eshop_produit_cart_checkout', '_controller' => 'App\\Controller\\ProduitController::cartCheckout'], null, ['POST' => 0], null, false, false, null]],
         '/events' => [[['_route' => 'app_events', '_controller' => 'App\\Controller\\PublicEventController::index'], null, null, null, false, false, null]],
         '/notifications' => [[['_route' => 'app_notifications', '_controller' => 'App\\Controller\\PublicNotificationController::index'], null, null, null, false, false, null]],
+        '/api/recommendations/top-rated' => [[['_route' => 'app_api_top_rated', '_controller' => 'App\\Controller\\RecommendationController::getTopRatedProducts'], null, ['GET' => 0], null, false, false, null]],
+        '/api/recommendations/popular' => [[['_route' => 'app_api_popular_recommendations', '_controller' => 'App\\Controller\\RecommendationController::getPopularRecommendations'], null, ['GET' => 0], null, false, false, null]],
         '/forgot-password' => [[['_route' => 'app_forgot_password', '_controller' => 'App\\Controller\\ResetPasswordController::forgotPassword'], null, ['GET' => 0, 'POST' => 1], null, false, false, null]],
-        '/stripe' => [[['_route' => 'app_stripe', '_controller' => 'App\\Controller\\StripeController::index'], null, null, null, false, false, null]],
+        '/api/shipping/calculate' => [[['_route' => 'app_shipping_calculate', '_controller' => 'App\\Controller\\ShippingController::calculateShipping'], null, ['POST' => 0], null, false, false, null]],
+        '/api/shipping/zones' => [[['_route' => 'app_shipping_zones', '_controller' => 'App\\Controller\\ShippingController::getZones'], null, ['GET' => 0], null, false, false, null]],
+        '/api/shipping/express' => [[['_route' => 'app_shipping_express', '_controller' => 'App\\Controller\\ShippingController::calculateExpressShipping'], null, ['POST' => 0], null, false, false, null]],
+        '/stripe/checkout' => [[['_route' => 'app_stripe_checkout', '_controller' => 'App\\Controller\\StripeController::checkout'], null, ['GET' => 0, 'POST' => 1], null, false, false, null]],
         '/stripe/create-charge' => [[['_route' => 'app_stripe_charge', '_controller' => 'App\\Controller\\StripeController::createCharge'], null, ['POST' => 0], null, false, false, null]],
+        '/stripe/payment-intent' => [[['_route' => 'app_stripe_payment_intent', '_controller' => 'App\\Controller\\StripeController::createPaymentIntent'], null, ['POST' => 0], null, false, false, null]],
+        '/stripe/success' => [[['_route' => 'app_stripe_success', '_controller' => 'App\\Controller\\StripeController::success'], null, ['GET' => 0], null, false, false, null]],
+        '/stripe/cancel' => [[['_route' => 'app_stripe_cancel', '_controller' => 'App\\Controller\\StripeController::cancel'], null, ['GET' => 0], null, false, false, null]],
+        '/stripe/webhook' => [[['_route' => 'app_stripe_webhook', '_controller' => 'App\\Controller\\StripeController::webhook'], null, ['POST' => 0], null, false, false, null]],
+        '/stripe/donation' => [[['_route' => 'app_stripe_donation_checkout', '_controller' => 'App\\Controller\\StripeController::donationCheckout'], null, ['GET' => 0, 'POST' => 1], null, false, false, null]],
+        '/stripe/donation/charge' => [[['_route' => 'app_stripe_donation_charge', '_controller' => 'App\\Controller\\StripeController::donationCharge'], null, ['POST' => 0], null, false, false, null]],
         '/suivi' => [[['_route' => 'app_suivi_index', '_controller' => 'App\\Controller\\SuiviController::index'], null, ['GET' => 0], null, true, false, null]],
         '/suivi/ai-analyze' => [[['_route' => 'app_suivi_ai_analyze', '_controller' => 'App\\Controller\\SuiviController::aiAnalyze'], null, ['POST' => 0], null, false, false, null]],
         '/suivi/random-body-part' => [[['_route' => 'app_suivi_random_body_part', '_controller' => 'App\\Controller\\SuiviController::getRandomBodyPart'], null, ['GET' => 0], null, false, false, null]],
@@ -123,59 +136,69 @@ return [
                         .')'
                     .')'
                 .')'
-                .'|/ad(?'
-                    .'|min/(?'
-                        .'|even(?'
-                            .'|ts/([^/]++)/(?'
-                                .'|edit(*:241)'
-                                .'|cancel(*:255)'
-                                .'|delete(*:269)'
-                            .')'
-                            .'|ement/([^/]++)(?'
-                                .'|(*:295)'
-                                .'|/edit(*:308)'
-                                .'|(*:316)'
-                            .')'
-                        .')'
-                        .'|alerts/(?'
-                            .'|(\\d+)(*:341)'
-                            .'|(\\d+)/edit(*:359)'
-                            .'|(\\d+)(*:372)'
-                        .')'
-                        .'|guest/([^/]++)(?'
-                            .'|(*:398)'
-                            .'|/edit(*:411)'
-                            .'|(*:419)'
-                        .')'
-                        .'|stations/(?'
-                            .'|(\\d+)(*:445)'
-                            .'|(\\d+)/edit(*:463)'
-                            .'|(\\d+)(*:476)'
-                        .')'
-                        .'|participation/([^/]++)(?'
-                            .'|(*:510)'
-                            .'|/(?'
-                                .'|edit(*:526)'
-                                .'|c(?'
-                                    .'|onfirm(*:544)'
-                                    .'|ancel(*:557)'
+                .'|/a(?'
+                    .'|d(?'
+                        .'|min/(?'
+                            .'|even(?'
+                                .'|ts/([^/]++)/(?'
+                                    .'|edit(*:244)'
+                                    .'|cancel(*:258)'
+                                    .'|delete(*:272)'
+                                .')'
+                                .'|ement/([^/]++)(?'
+                                    .'|(*:298)'
+                                    .'|/edit(*:311)'
+                                    .'|(*:319)'
                                 .')'
                             .')'
-                            .'|(*:567)'
+                            .'|alerts/(?'
+                                .'|(\\d+)(*:344)'
+                                .'|(\\d+)/edit(*:362)'
+                                .'|(\\d+)(*:375)'
+                            .')'
+                            .'|guest/([^/]++)(?'
+                                .'|(*:401)'
+                                .'|/edit(*:414)'
+                                .'|(*:422)'
+                            .')'
+                            .'|stations/(?'
+                                .'|(\\d+)(*:448)'
+                                .'|(\\d+)/edit(*:466)'
+                                .'|(\\d+)(*:479)'
+                            .')'
+                            .'|participation/([^/]++)(?'
+                                .'|(*:513)'
+                                .'|/(?'
+                                    .'|edit(*:529)'
+                                    .'|c(?'
+                                        .'|onfirm(*:547)'
+                                        .'|ancel(*:560)'
+                                    .')'
+                                .')'
+                                .'|(*:570)'
+                            .')'
+                        .')'
+                        .'|option/(?'
+                            .'|dog/(?'
+                                .'|(\\d+)/requests(*:611)'
+                                .'|(\\d+)/auto\\-adopt\\-match(*:643)'
+                                .'|(\\d+)/adopt\\-result/(\\d+)(*:676)'
+                                .'|(\\d+)/user\\-show(*:700)'
+                                .'|(\\d+)/adopt\\-result/(\\d+)/attestation(*:745)'
+                                .'|(\\d+)/adopt\\-result/(\\d+)/attestation\\-email(*:797)'
+                            .')'
+                            .'|(\\d+)(*:811)'
+                            .'|(\\d+)/edit(*:829)'
+                            .'|(\\d+)(*:842)'
                         .')'
                     .')'
-                    .'|option/(?'
-                        .'|dog/(?'
-                            .'|(\\d+)/requests(*:608)'
-                            .'|(\\d+)/auto\\-adopt\\-match(*:640)'
-                            .'|(\\d+)/adopt\\-result/(\\d+)(*:673)'
-                            .'|(\\d+)/user\\-show(*:697)'
-                            .'|(\\d+)/adopt\\-result/(\\d+)/attestation(*:742)'
-                            .'|(\\d+)/adopt\\-result/(\\d+)/attestation\\-email(*:794)'
+                    .'|pi/(?'
+                        .'|recommendations/(?'
+                            .'|product/([^/]++)(*:893)'
+                            .'|user/([^/]++)(*:914)'
+                            .'|similar/([^/]++)(*:938)'
                         .')'
-                        .'|(\\d+)(*:808)'
-                        .'|(\\d+)/edit(*:826)'
-                        .'|(\\d+)(*:839)'
+                        .'|shipping/track/([^/]++)(*:970)'
                     .')'
                 .')'
                 .'|/d(?'
@@ -183,74 +206,77 @@ return [
                         .'|eshop/(?'
                             .'|c(?'
                                 .'|ategories/(?'
-                                    .'|(\\d+)(*:897)'
-                                    .'|(\\d+)/edit(*:915)'
-                                    .'|(\\d+)/delete(*:935)'
+                                    .'|(\\d+)(*:1028)'
+                                    .'|(\\d+)/edit(*:1047)'
+                                    .'|(\\d+)/delete(*:1068)'
                                 .')'
                                 .'|ommandes/(?'
-                                    .'|(\\d+)(*:961)'
-                                    .'|([^/]++)/edit(*:982)'
-                                    .'|(\\d+)/delete(*:1002)'
+                                    .'|(\\d+)(*:1095)'
+                                    .'|([^/]++)/edit(*:1117)'
+                                    .'|(\\d+)/delete(*:1138)'
                                 .')'
                             .')'
                             .'|lignes\\-commande/(?'
-                                .'|(\\d+)(*:1038)'
-                                .'|([^/]++)/edit(*:1060)'
-                                .'|(\\d+)/delete(*:1081)'
+                                .'|(\\d+)(*:1174)'
+                                .'|([^/]++)/edit(*:1196)'
+                                .'|(\\d+)/delete(*:1217)'
                             .')'
                             .'|produits/(?'
-                                .'|(\\d+)(*:1108)'
-                                .'|(\\d+)/edit(*:1127)'
-                                .'|(\\d+)/delete(*:1148)'
-                                .'|(\\d+)/buy(*:1166)'
-                                .'|uploads/images/([^/]++)(*:1198)'
+                                .'|(\\d+)(*:1244)'
+                                .'|(\\d+)/edit(*:1263)'
+                                .'|(\\d+)/delete(*:1284)'
+                                .'|(\\d+)/buy(*:1302)'
+                                .'|uploads/images/([^/]++)(*:1334)'
                             .')'
                         .')'
                         .'|donations/(?'
-                            .'|(\\d+)(*:1227)'
-                            .'|(\\d+)/edit(*:1246)'
-                            .'|(\\d+)(*:1260)'
+                            .'|(\\d+)(*:1363)'
+                            .'|([^/]++)/edit(*:1385)'
+                            .'|(\\d+)/delete(*:1406)'
                         .')'
                     .')'
                     .'|ogs/([^/]++)(?'
-                        .'|(*:1286)'
-                        .'|/edit(*:1300)'
-                        .'|(*:1309)'
+                        .'|(*:1432)'
+                        .'|/edit(*:1446)'
+                        .'|(*:1455)'
                     .')'
                 .')'
                 .'|/consultation/(?'
-                    .'|([^/]++)/edit(*:1350)'
-                    .'|delete/([^/]++)(*:1374)'
+                    .'|([^/]++)/edit(*:1496)'
+                    .'|delete/([^/]++)(*:1520)'
                 .')'
                 .'|/front_dogs/(?'
                     .'|dogs/([^/]++)(?'
-                        .'|(*:1415)'
-                        .'|/generate\\-description(*:1446)'
+                        .'|(*:1561)'
+                        .'|/generate\\-description(*:1592)'
                     .')'
-                    .'|apply_adoption/([^/]++)(*:1479)'
+                    .'|apply_adoption/([^/]++)(*:1625)'
                 .')'
-                .'|/events/(\\d+)(*:1502)'
-                .'|/notifications/([^/]++)/read(*:1539)'
+                .'|/events/(\\d+)(*:1648)'
+                .'|/notifications/([^/]++)/read(*:1685)'
                 .'|/reset\\-password/(?'
-                    .'|verify/([^/]++)(*:1583)'
-                    .'|([^/]++)(*:1600)'
+                    .'|verify/([^/]++)(*:1729)'
+                    .'|([^/]++)(*:1746)'
                 .')'
-                .'|/suivi/(?'
-                    .'|consultation/([^/]++)(*:1641)'
-                    .'|export\\-pdf/([^/]++)(*:1670)'
-                    .'|ai\\-symptoms/([^/]++)(*:1700)'
-                    .'|([^/]++)/edit(*:1722)'
-                    .'|delete/([^/]++)(*:1746)'
+                .'|/s(?'
+                    .'|tripe/verify/([^/]++)(*:1782)'
+                    .'|uivi/(?'
+                        .'|consultation/([^/]++)(*:1820)'
+                        .'|export\\-pdf/([^/]++)(*:1849)'
+                        .'|ai\\-symptoms/([^/]++)(*:1879)'
+                        .'|([^/]++)/edit(*:1901)'
+                        .'|delete/([^/]++)(*:1925)'
+                    .')'
                 .')'
                 .'|/user/(?'
-                    .'|([^/]++)(*:1773)'
-                    .'|edit/([^/]++)(*:1795)'
-                    .'|([^/]++)(*:1812)'
+                    .'|([^/]++)(*:1953)'
+                    .'|edit/([^/]++)(*:1975)'
+                    .'|([^/]++)(*:1992)'
                 .')'
                 .'|/ziptag/(?'
-                    .'|(\\d+)(*:1838)'
-                    .'|(\\d+)/edit(*:1857)'
-                    .'|(\\d+)(*:1871)'
+                    .'|(\\d+)(*:2018)'
+                    .'|(\\d+)/edit(*:2037)'
+                    .'|(\\d+)(*:2051)'
                 .')'
             .')/?$}sDu',
     ],
@@ -263,75 +289,80 @@ return [
         168 => [[['_route' => '_profiler_exception', '_controller' => 'web_profiler.controller.exception_panel::body'], ['token'], null, null, false, false, null]],
         181 => [[['_route' => '_profiler_exception_css', '_controller' => 'web_profiler.controller.exception_panel::stylesheet'], ['token'], null, null, false, false, null]],
         191 => [[['_route' => '_profiler', '_controller' => 'web_profiler.controller.profiler::panelAction'], ['token'], null, null, false, true, null]],
-        241 => [[['_route' => 'app_admin_events_edit', '_controller' => 'App\\Controller\\AdminEventsController::edit'], ['id'], ['GET' => 0, 'POST' => 1], null, false, false, null]],
-        255 => [[['_route' => 'app_admin_events_cancel', '_controller' => 'App\\Controller\\AdminEventsController::cancel'], ['id'], ['POST' => 0], null, false, false, null]],
-        269 => [[['_route' => 'app_admin_events_delete', '_controller' => 'App\\Controller\\AdminEventsController::delete'], ['id'], ['POST' => 0], null, false, false, null]],
-        295 => [[['_route' => 'app_evenement_show', '_controller' => 'App\\Controller\\EvenementController::show'], ['id'], ['GET' => 0], null, false, true, null]],
-        308 => [[['_route' => 'app_evenement_edit', '_controller' => 'App\\Controller\\EvenementController::edit'], ['id'], ['GET' => 0, 'POST' => 1], null, false, false, null]],
-        316 => [[['_route' => 'app_evenement_delete', '_controller' => 'App\\Controller\\EvenementController::delete'], ['id'], ['POST' => 0], null, false, true, null]],
-        341 => [[['_route' => 'app_admin_alerts_show', '_controller' => 'App\\Controller\\AlertController::show'], ['id'], ['GET' => 0], null, false, true, null]],
-        359 => [[['_route' => 'app_admin_alerts_edit', '_controller' => 'App\\Controller\\AlertController::edit'], ['id'], ['GET' => 0, 'POST' => 1], null, false, false, null]],
-        372 => [[['_route' => 'app_admin_alerts_delete', '_controller' => 'App\\Controller\\AlertController::delete'], ['id'], ['POST' => 0], null, false, true, null]],
-        398 => [[['_route' => 'app_guest_show', '_controller' => 'App\\Controller\\GuestController::show'], ['id'], ['GET' => 0], null, false, true, null]],
-        411 => [[['_route' => 'app_guest_edit', '_controller' => 'App\\Controller\\GuestController::edit'], ['id'], ['GET' => 0, 'POST' => 1], null, false, false, null]],
-        419 => [[['_route' => 'app_guest_delete', '_controller' => 'App\\Controller\\GuestController::delete'], ['id'], ['POST' => 0], null, false, true, null]],
-        445 => [[['_route' => 'app_admin_stations_show', '_controller' => 'App\\Controller\\ObservationStationController::show'], ['id'], ['GET' => 0], null, false, true, null]],
-        463 => [[['_route' => 'app_admin_stations_edit', '_controller' => 'App\\Controller\\ObservationStationController::edit'], ['id'], ['GET' => 0, 'POST' => 1], null, false, false, null]],
-        476 => [[['_route' => 'app_admin_stations_delete', '_controller' => 'App\\Controller\\ObservationStationController::delete'], ['id'], ['POST' => 0], null, false, true, null]],
-        510 => [[['_route' => 'app_participation_show', '_controller' => 'App\\Controller\\ParticipationController::show'], ['id'], ['GET' => 0], null, false, true, null]],
-        526 => [[['_route' => 'app_participation_edit', '_controller' => 'App\\Controller\\ParticipationController::edit'], ['id'], ['GET' => 0, 'POST' => 1], null, false, false, null]],
-        544 => [[['_route' => 'app_participation_confirm', '_controller' => 'App\\Controller\\ParticipationController::confirm'], ['id'], ['POST' => 0], null, false, false, null]],
-        557 => [[['_route' => 'app_participation_cancel', '_controller' => 'App\\Controller\\ParticipationController::cancel'], ['id'], ['POST' => 0], null, false, false, null]],
-        567 => [[['_route' => 'app_participation_delete', '_controller' => 'App\\Controller\\ParticipationController::delete'], ['id'], ['POST' => 0], null, false, true, null]],
-        608 => [[['_route' => 'app_adoption_dog_adpot_list', '_controller' => 'App\\Controller\\AdoptionController::dogAdpotList'], ['id'], ['GET' => 0], null, false, false, null]],
-        640 => [[['_route' => 'app_adoption_auto_adopt_match', '_controller' => 'App\\Controller\\AdoptionController::autoAdoptMatch'], ['id'], ['POST' => 0], null, false, false, null]],
-        673 => [[['_route' => 'app_adoption_result', '_controller' => 'App\\Controller\\AdoptionController::adoptResult'], ['dogId', 'userId'], ['GET' => 0], null, false, true, null]],
-        697 => [[['_route' => 'app_doguser_show', '_controller' => 'App\\Controller\\AdoptionController::dogUserShow'], ['id'], ['GET' => 0], null, false, false, null]],
-        742 => [[['_route' => 'app_adoption_attestation_ai', '_controller' => 'App\\Controller\\AdoptionController::generateAttestation'], ['dogId', 'userId'], ['POST' => 0], null, false, false, null]],
-        794 => [[['_route' => 'app_adoption_attestation_email', '_controller' => 'App\\Controller\\AdoptionController::sendAttestationEmail'], ['dogId', 'userId'], ['POST' => 0], null, false, false, null]],
-        808 => [[['_route' => 'app_adoption_show', '_controller' => 'App\\Controller\\AdoptionController::show'], ['id'], ['GET' => 0], null, false, true, null]],
-        826 => [[['_route' => 'app_adoption_edit', '_controller' => 'App\\Controller\\AdoptionController::edit'], ['id'], ['GET' => 0, 'POST' => 1], null, false, false, null]],
-        839 => [[['_route' => 'app_adoption_delete', '_controller' => 'App\\Controller\\AdoptionController::delete'], ['id'], ['POST' => 0], null, false, true, null]],
-        897 => [[['_route' => 'app_eshop_categorie_show', '_controller' => 'App\\Controller\\CategorieController::show'], ['id'], ['GET' => 0], null, false, true, null]],
-        915 => [[['_route' => 'app_eshop_categorie_edit', '_controller' => 'App\\Controller\\CategorieController::edit'], ['id'], ['GET' => 0, 'POST' => 1], null, false, false, null]],
-        935 => [[['_route' => 'app_eshop_categorie_delete', '_controller' => 'App\\Controller\\CategorieController::delete'], ['id'], ['POST' => 0], null, false, false, null]],
-        961 => [[['_route' => 'app_eshop_commande_show', '_controller' => 'App\\Controller\\CommandeController::show'], ['id'], ['GET' => 0], null, false, true, null]],
-        982 => [[['_route' => 'app_eshop_commande_edit', '_controller' => 'App\\Controller\\CommandeController::edit'], ['id'], ['GET' => 0, 'POST' => 1], null, false, false, null]],
-        1002 => [[['_route' => 'app_eshop_commande_delete', '_controller' => 'App\\Controller\\CommandeController::delete'], ['id'], ['POST' => 0], null, false, false, null]],
-        1038 => [[['_route' => 'app_eshop_ligne_commande_show', '_controller' => 'App\\Controller\\LigneCommandeController::show'], ['id'], ['GET' => 0], null, false, true, null]],
-        1060 => [[['_route' => 'app_eshop_ligne_commande_edit', '_controller' => 'App\\Controller\\LigneCommandeController::edit'], ['id'], ['GET' => 0, 'POST' => 1], null, false, false, null]],
-        1081 => [[['_route' => 'app_eshop_ligne_commande_delete', '_controller' => 'App\\Controller\\LigneCommandeController::delete'], ['id'], ['POST' => 0], null, false, false, null]],
-        1108 => [[['_route' => 'app_eshop_produit_show', '_controller' => 'App\\Controller\\ProduitController::show'], ['id'], ['GET' => 0], null, false, true, null]],
-        1127 => [[['_route' => 'app_eshop_produit_edit', '_controller' => 'App\\Controller\\ProduitController::edit'], ['id'], ['GET' => 0, 'POST' => 1], null, false, false, null]],
-        1148 => [[['_route' => 'app_eshop_produit_delete', '_controller' => 'App\\Controller\\ProduitController::delete'], ['id'], ['POST' => 0], null, false, false, null]],
-        1166 => [[['_route' => 'app_eshop_produit_buy', '_controller' => 'App\\Controller\\ProduitController::buy'], ['id'], ['POST' => 0], null, false, false, null]],
-        1198 => [[['_route' => 'app_uploads_images', '_controller' => 'App\\Controller\\ProduitController::serveImage'], ['filename'], null, null, false, true, null]],
-        1227 => [[['_route' => 'app_donation_show', '_controller' => 'App\\Controller\\DonationController::show'], ['id'], ['GET' => 0], null, false, true, null]],
-        1246 => [[['_route' => 'app_donation_edit', '_controller' => 'App\\Controller\\DonationController::edit'], ['id'], ['GET' => 0, 'POST' => 1], null, false, false, null]],
-        1260 => [[['_route' => 'app_donation_delete', '_controller' => 'App\\Controller\\DonationController::delete'], ['id'], ['POST' => 0], null, false, true, null]],
-        1286 => [[['_route' => 'app_dogs_show', '_controller' => 'App\\Controller\\DogsController::show'], ['id'], ['GET' => 0], null, false, true, null]],
-        1300 => [[['_route' => 'app_dogs_edit', '_controller' => 'App\\Controller\\DogsController::edit'], ['id'], ['GET' => 0, 'POST' => 1], null, false, false, null]],
-        1309 => [[['_route' => 'app_dogs_delete', '_controller' => 'App\\Controller\\DogsController::delete'], ['id'], ['POST' => 0], null, false, true, null]],
-        1350 => [[['_route' => 'app_consultation_edit', '_controller' => 'App\\Controller\\ConsultationController::edit'], ['id'], ['GET' => 0, 'POST' => 1], null, false, false, null]],
-        1374 => [[['_route' => 'app_consultation_delete', '_controller' => 'App\\Controller\\ConsultationController::delete'], ['id'], ['DELETE' => 0], null, false, true, null]],
-        1415 => [[['_route' => 'app_front_dogs_show', '_controller' => 'App\\Controller\\FrontDogsController::show'], ['id'], ['GET' => 0], null, false, true, null]],
-        1446 => [[['_route' => 'app_front_dogs_generate_description', '_controller' => 'App\\Controller\\FrontDogsController::generateDescription'], ['id'], ['POST' => 0], null, false, false, null]],
-        1479 => [[['_route' => 'app_apply_adoption', '_controller' => 'App\\Controller\\FrontDogsController::applyAdoption'], ['id'], ['GET' => 0, 'POST' => 1], null, false, true, null]],
-        1502 => [[['_route' => 'app_event_detail', '_controller' => 'App\\Controller\\PublicEventController::detail'], ['id'], ['GET' => 0, 'POST' => 1], null, false, true, null]],
-        1539 => [[['_route' => 'app_notifications_read', '_controller' => 'App\\Controller\\PublicNotificationController::markAsRead'], ['id'], ['POST' => 0], null, false, false, null]],
-        1583 => [[['_route' => 'app_verify_reset', '_controller' => 'App\\Controller\\ResetPasswordController::verifyCode'], ['token'], ['GET' => 0, 'POST' => 1], null, false, true, null]],
-        1600 => [[['_route' => 'app_reset_password', '_controller' => 'App\\Controller\\ResetPasswordController::resetPassword'], ['token'], ['GET' => 0, 'POST' => 1], null, false, true, null]],
-        1641 => [[['_route' => 'app_suivi_consultation_detail', '_controller' => 'App\\Controller\\SuiviController::consultationDetail'], ['id'], ['GET' => 0], null, false, true, null]],
-        1670 => [[['_route' => 'app_suivi_export_pdf', '_controller' => 'App\\Controller\\SuiviController::exportPdf'], ['id'], ['GET' => 0], null, false, true, null]],
-        1700 => [[['_route' => 'app_suivi_ai_symptoms', '_controller' => 'App\\Controller\\SuiviController::getOrganSymptoms'], ['organNumber'], ['GET' => 0], null, false, true, null]],
-        1722 => [[['_route' => 'app_suivi_edit', '_controller' => 'App\\Controller\\SuiviController::edit'], ['id'], ['GET' => 0, 'POST' => 1], null, false, false, null]],
-        1746 => [[['_route' => 'app_suivi_delete', '_controller' => 'App\\Controller\\SuiviController::delete'], ['id'], ['DELETE' => 0], null, false, true, null]],
-        1773 => [[['_route' => 'app_user_show', '_controller' => 'App\\Controller\\UserController::show'], ['id'], ['GET' => 0], null, false, true, null]],
-        1795 => [[['_route' => 'app_user_edit', '_controller' => 'App\\Controller\\UserController::edit'], ['id'], ['GET' => 0, 'POST' => 1], null, false, true, null]],
-        1812 => [[['_route' => 'app_user_delete', '_controller' => 'App\\Controller\\UserController::delete'], ['id'], ['POST' => 0], null, false, true, null]],
-        1838 => [[['_route' => 'app_ziptag_show', '_controller' => 'App\\Controller\\ZiptagController::show'], ['id'], ['GET' => 0], null, false, true, null]],
-        1857 => [[['_route' => 'app_ziptag_edit', '_controller' => 'App\\Controller\\ZiptagController::edit'], ['id'], ['GET' => 0, 'POST' => 1], null, false, false, null]],
-        1871 => [
+        244 => [[['_route' => 'app_admin_events_edit', '_controller' => 'App\\Controller\\AdminEventsController::edit'], ['id'], ['GET' => 0, 'POST' => 1], null, false, false, null]],
+        258 => [[['_route' => 'app_admin_events_cancel', '_controller' => 'App\\Controller\\AdminEventsController::cancel'], ['id'], ['POST' => 0], null, false, false, null]],
+        272 => [[['_route' => 'app_admin_events_delete', '_controller' => 'App\\Controller\\AdminEventsController::delete'], ['id'], ['POST' => 0], null, false, false, null]],
+        298 => [[['_route' => 'app_evenement_show', '_controller' => 'App\\Controller\\EvenementController::show'], ['id'], ['GET' => 0], null, false, true, null]],
+        311 => [[['_route' => 'app_evenement_edit', '_controller' => 'App\\Controller\\EvenementController::edit'], ['id'], ['GET' => 0, 'POST' => 1], null, false, false, null]],
+        319 => [[['_route' => 'app_evenement_delete', '_controller' => 'App\\Controller\\EvenementController::delete'], ['id'], ['POST' => 0], null, false, true, null]],
+        344 => [[['_route' => 'app_admin_alerts_show', '_controller' => 'App\\Controller\\AlertController::show'], ['id'], ['GET' => 0], null, false, true, null]],
+        362 => [[['_route' => 'app_admin_alerts_edit', '_controller' => 'App\\Controller\\AlertController::edit'], ['id'], ['GET' => 0, 'POST' => 1], null, false, false, null]],
+        375 => [[['_route' => 'app_admin_alerts_delete', '_controller' => 'App\\Controller\\AlertController::delete'], ['id'], ['POST' => 0], null, false, true, null]],
+        401 => [[['_route' => 'app_guest_show', '_controller' => 'App\\Controller\\GuestController::show'], ['id'], ['GET' => 0], null, false, true, null]],
+        414 => [[['_route' => 'app_guest_edit', '_controller' => 'App\\Controller\\GuestController::edit'], ['id'], ['GET' => 0, 'POST' => 1], null, false, false, null]],
+        422 => [[['_route' => 'app_guest_delete', '_controller' => 'App\\Controller\\GuestController::delete'], ['id'], ['POST' => 0], null, false, true, null]],
+        448 => [[['_route' => 'app_admin_stations_show', '_controller' => 'App\\Controller\\ObservationStationController::show'], ['id'], ['GET' => 0], null, false, true, null]],
+        466 => [[['_route' => 'app_admin_stations_edit', '_controller' => 'App\\Controller\\ObservationStationController::edit'], ['id'], ['GET' => 0, 'POST' => 1], null, false, false, null]],
+        479 => [[['_route' => 'app_admin_stations_delete', '_controller' => 'App\\Controller\\ObservationStationController::delete'], ['id'], ['POST' => 0], null, false, true, null]],
+        513 => [[['_route' => 'app_participation_show', '_controller' => 'App\\Controller\\ParticipationController::show'], ['id'], ['GET' => 0], null, false, true, null]],
+        529 => [[['_route' => 'app_participation_edit', '_controller' => 'App\\Controller\\ParticipationController::edit'], ['id'], ['GET' => 0, 'POST' => 1], null, false, false, null]],
+        547 => [[['_route' => 'app_participation_confirm', '_controller' => 'App\\Controller\\ParticipationController::confirm'], ['id'], ['POST' => 0], null, false, false, null]],
+        560 => [[['_route' => 'app_participation_cancel', '_controller' => 'App\\Controller\\ParticipationController::cancel'], ['id'], ['POST' => 0], null, false, false, null]],
+        570 => [[['_route' => 'app_participation_delete', '_controller' => 'App\\Controller\\ParticipationController::delete'], ['id'], ['POST' => 0], null, false, true, null]],
+        611 => [[['_route' => 'app_adoption_dog_adpot_list', '_controller' => 'App\\Controller\\AdoptionController::dogAdpotList'], ['id'], ['GET' => 0], null, false, false, null]],
+        643 => [[['_route' => 'app_adoption_auto_adopt_match', '_controller' => 'App\\Controller\\AdoptionController::autoAdoptMatch'], ['id'], ['POST' => 0], null, false, false, null]],
+        676 => [[['_route' => 'app_adoption_result', '_controller' => 'App\\Controller\\AdoptionController::adoptResult'], ['dogId', 'userId'], ['GET' => 0], null, false, true, null]],
+        700 => [[['_route' => 'app_doguser_show', '_controller' => 'App\\Controller\\AdoptionController::dogUserShow'], ['id'], ['GET' => 0], null, false, false, null]],
+        745 => [[['_route' => 'app_adoption_attestation_ai', '_controller' => 'App\\Controller\\AdoptionController::generateAttestation'], ['dogId', 'userId'], ['POST' => 0], null, false, false, null]],
+        797 => [[['_route' => 'app_adoption_attestation_email', '_controller' => 'App\\Controller\\AdoptionController::sendAttestationEmail'], ['dogId', 'userId'], ['POST' => 0], null, false, false, null]],
+        811 => [[['_route' => 'app_adoption_show', '_controller' => 'App\\Controller\\AdoptionController::show'], ['id'], ['GET' => 0], null, false, true, null]],
+        829 => [[['_route' => 'app_adoption_edit', '_controller' => 'App\\Controller\\AdoptionController::edit'], ['id'], ['GET' => 0, 'POST' => 1], null, false, false, null]],
+        842 => [[['_route' => 'app_adoption_delete', '_controller' => 'App\\Controller\\AdoptionController::delete'], ['id'], ['POST' => 0], null, false, true, null]],
+        893 => [[['_route' => 'app_api_product_recommendations', '_controller' => 'App\\Controller\\RecommendationController::getProductRecommendations'], ['id'], ['GET' => 0], null, false, true, null]],
+        914 => [[['_route' => 'app_api_user_recommendations', '_controller' => 'App\\Controller\\RecommendationController::getUserRecommendations'], ['userId'], ['GET' => 0], null, false, true, null]],
+        938 => [[['_route' => 'app_api_similar_products', '_controller' => 'App\\Controller\\RecommendationController::getSimilarProducts'], ['productId'], ['GET' => 0], null, false, true, null]],
+        970 => [[['_route' => 'app_shipping_track', '_controller' => 'App\\Controller\\ShippingController::trackPackage'], ['trackingNumber'], ['GET' => 0], null, false, true, null]],
+        1028 => [[['_route' => 'app_eshop_categorie_show', '_controller' => 'App\\Controller\\CategorieController::show'], ['id'], ['GET' => 0], null, false, true, null]],
+        1047 => [[['_route' => 'app_eshop_categorie_edit', '_controller' => 'App\\Controller\\CategorieController::edit'], ['id'], ['GET' => 0, 'POST' => 1], null, false, false, null]],
+        1068 => [[['_route' => 'app_eshop_categorie_delete', '_controller' => 'App\\Controller\\CategorieController::delete'], ['id'], ['POST' => 0], null, false, false, null]],
+        1095 => [[['_route' => 'app_eshop_commande_show', '_controller' => 'App\\Controller\\CommandeController::show'], ['id'], ['GET' => 0], null, false, true, null]],
+        1117 => [[['_route' => 'app_eshop_commande_edit', '_controller' => 'App\\Controller\\CommandeController::edit'], ['id'], ['GET' => 0, 'POST' => 1], null, false, false, null]],
+        1138 => [[['_route' => 'app_eshop_commande_delete', '_controller' => 'App\\Controller\\CommandeController::delete'], ['id'], ['POST' => 0], null, false, false, null]],
+        1174 => [[['_route' => 'app_eshop_ligne_commande_show', '_controller' => 'App\\Controller\\LigneCommandeController::show'], ['id'], ['GET' => 0], null, false, true, null]],
+        1196 => [[['_route' => 'app_eshop_ligne_commande_edit', '_controller' => 'App\\Controller\\LigneCommandeController::edit'], ['id'], ['GET' => 0, 'POST' => 1], null, false, false, null]],
+        1217 => [[['_route' => 'app_eshop_ligne_commande_delete', '_controller' => 'App\\Controller\\LigneCommandeController::delete'], ['id'], ['POST' => 0], null, false, false, null]],
+        1244 => [[['_route' => 'app_eshop_produit_show', '_controller' => 'App\\Controller\\ProduitController::show'], ['id'], ['GET' => 0], null, false, true, null]],
+        1263 => [[['_route' => 'app_eshop_produit_edit', '_controller' => 'App\\Controller\\ProduitController::edit'], ['id'], ['GET' => 0, 'POST' => 1], null, false, false, null]],
+        1284 => [[['_route' => 'app_eshop_produit_delete', '_controller' => 'App\\Controller\\ProduitController::delete'], ['id'], ['POST' => 0], null, false, false, null]],
+        1302 => [[['_route' => 'app_eshop_produit_buy', '_controller' => 'App\\Controller\\ProduitController::buy'], ['id'], ['POST' => 0], null, false, false, null]],
+        1334 => [[['_route' => 'app_uploads_images', '_controller' => 'App\\Controller\\ProduitController::serveImage'], ['filename'], null, null, false, true, null]],
+        1363 => [[['_route' => 'app_donation_show', '_controller' => 'App\\Controller\\DonationController::show'], ['id'], ['GET' => 0], null, false, true, null]],
+        1385 => [[['_route' => 'app_donation_edit', '_controller' => 'App\\Controller\\DonationController::edit'], ['id'], ['GET' => 0, 'POST' => 1], null, false, false, null]],
+        1406 => [[['_route' => 'app_donation_delete', '_controller' => 'App\\Controller\\DonationController::delete'], ['id'], ['POST' => 0], null, false, false, null]],
+        1432 => [[['_route' => 'app_dogs_show', '_controller' => 'App\\Controller\\DogsController::show'], ['id'], ['GET' => 0], null, false, true, null]],
+        1446 => [[['_route' => 'app_dogs_edit', '_controller' => 'App\\Controller\\DogsController::edit'], ['id'], ['GET' => 0, 'POST' => 1], null, false, false, null]],
+        1455 => [[['_route' => 'app_dogs_delete', '_controller' => 'App\\Controller\\DogsController::delete'], ['id'], ['POST' => 0], null, false, true, null]],
+        1496 => [[['_route' => 'app_consultation_edit', '_controller' => 'App\\Controller\\ConsultationController::edit'], ['id'], ['GET' => 0, 'POST' => 1], null, false, false, null]],
+        1520 => [[['_route' => 'app_consultation_delete', '_controller' => 'App\\Controller\\ConsultationController::delete'], ['id'], ['DELETE' => 0], null, false, true, null]],
+        1561 => [[['_route' => 'app_front_dogs_show', '_controller' => 'App\\Controller\\FrontDogsController::show'], ['id'], ['GET' => 0], null, false, true, null]],
+        1592 => [[['_route' => 'app_front_dogs_generate_description', '_controller' => 'App\\Controller\\FrontDogsController::generateDescription'], ['id'], ['POST' => 0], null, false, false, null]],
+        1625 => [[['_route' => 'app_apply_adoption', '_controller' => 'App\\Controller\\FrontDogsController::applyAdoption'], ['id'], ['GET' => 0, 'POST' => 1], null, false, true, null]],
+        1648 => [[['_route' => 'app_event_detail', '_controller' => 'App\\Controller\\PublicEventController::detail'], ['id'], ['GET' => 0, 'POST' => 1], null, false, true, null]],
+        1685 => [[['_route' => 'app_notifications_read', '_controller' => 'App\\Controller\\PublicNotificationController::markAsRead'], ['id'], ['POST' => 0], null, false, false, null]],
+        1729 => [[['_route' => 'app_verify_reset', '_controller' => 'App\\Controller\\ResetPasswordController::verifyCode'], ['token'], ['GET' => 0, 'POST' => 1], null, false, true, null]],
+        1746 => [[['_route' => 'app_reset_password', '_controller' => 'App\\Controller\\ResetPasswordController::resetPassword'], ['token'], ['GET' => 0, 'POST' => 1], null, false, true, null]],
+        1782 => [[['_route' => 'app_stripe_verify', '_controller' => 'App\\Controller\\StripeController::verifyPayment'], ['paymentIntentId'], null, null, false, true, null]],
+        1820 => [[['_route' => 'app_suivi_consultation_detail', '_controller' => 'App\\Controller\\SuiviController::consultationDetail'], ['id'], ['GET' => 0], null, false, true, null]],
+        1849 => [[['_route' => 'app_suivi_export_pdf', '_controller' => 'App\\Controller\\SuiviController::exportPdf'], ['id'], ['GET' => 0], null, false, true, null]],
+        1879 => [[['_route' => 'app_suivi_ai_symptoms', '_controller' => 'App\\Controller\\SuiviController::getOrganSymptoms'], ['organNumber'], ['GET' => 0], null, false, true, null]],
+        1901 => [[['_route' => 'app_suivi_edit', '_controller' => 'App\\Controller\\SuiviController::edit'], ['id'], ['GET' => 0, 'POST' => 1], null, false, false, null]],
+        1925 => [[['_route' => 'app_suivi_delete', '_controller' => 'App\\Controller\\SuiviController::delete'], ['id'], ['DELETE' => 0], null, false, true, null]],
+        1953 => [[['_route' => 'app_user_show', '_controller' => 'App\\Controller\\UserController::show'], ['id'], ['GET' => 0], null, false, true, null]],
+        1975 => [[['_route' => 'app_user_edit', '_controller' => 'App\\Controller\\UserController::edit'], ['id'], ['GET' => 0, 'POST' => 1], null, false, true, null]],
+        1992 => [[['_route' => 'app_user_delete', '_controller' => 'App\\Controller\\UserController::delete'], ['id'], ['POST' => 0], null, false, true, null]],
+        2018 => [[['_route' => 'app_ziptag_show', '_controller' => 'App\\Controller\\ZiptagController::show'], ['id'], ['GET' => 0], null, false, true, null]],
+        2037 => [[['_route' => 'app_ziptag_edit', '_controller' => 'App\\Controller\\ZiptagController::edit'], ['id'], ['GET' => 0, 'POST' => 1], null, false, false, null]],
+        2051 => [
             [['_route' => 'app_ziptag_delete', '_controller' => 'App\\Controller\\ZiptagController::delete'], ['id'], ['POST' => 0], null, false, true, null],
             [null, null, null, null, false, false, 0],
         ],

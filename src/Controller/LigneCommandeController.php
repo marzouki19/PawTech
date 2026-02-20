@@ -38,6 +38,7 @@ class LigneCommandeController extends AbstractController
             'entity_name' => 'Order line',
             'columns' => $columns,
             'rows' => $rows,
+            'lignes_commande' => $lignes,
             'total_records' => count($lignes),
             'per_page' => 50,
             'page' => 1,
