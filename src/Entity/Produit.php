@@ -59,6 +59,12 @@ class Produit
     #[Assert\PositiveOrZero(message: 'Alert threshold must be positive or zero')]
     private ?int $seuilAlert = null;
 
+    #[ORM\Column(name: 'rating_total', type: 'float', options: ['default' => 0])]
+    private float $ratingTotal = 0;
+
+    #[ORM\Column(name: 'rating_count', type: 'integer', options: ['default' => 0])]
+    private int $ratingCount = 0;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -130,6 +136,42 @@ class Produit
         return $this;
     }
 
+    public function getRatingTotal(): float
+    {
+        return $this->ratingTotal;
+    }
+
+    public function setRatingTotal(float $ratingTotal): static
+    {
+        $this->ratingTotal = $ratingTotal;
+        return $this;
+    }
+
+    public function getRatingCount(): int
+    {
+        return $this->ratingCount;
+    }
+
+    public function setRatingCount(int $ratingCount): static
+    {
+        $this->ratingCount = $ratingCount;
+        return $this;
+    }
+
+    public function getAverageRating(): float
+    {
+        if ($this->ratingCount === 0) {
+            return 0;
+        }
+        return round($this->ratingTotal / $this->ratingCount, 1);
+    }
+
+    public function addRating(float $rating): void
+    {
+        $this->ratingTotal += $rating;
+        $this->ratingCount += 1;
+    }
+
     public function verifierDisponibilite(): bool
     {
         return ($this->quantite ?? 0) > 0;
@@ -140,6 +182,4 @@ class Produit
         return $this->nom ?? '';
     }
 
-
-    
 }

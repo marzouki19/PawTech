@@ -29,6 +29,27 @@
         </div>
     </section>
 
+    {# Recommendation Zone - Loaded via API #}
+    <section class="container mx-auto px-4 lg:px-8 pb-8">
+        <div class="rounded-2xl bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-100 p-6">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
+                    <i class="fas fa-fire text-white"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold text-gray-900">Recommended for You</h2>
+                    <p class="text-sm text-gray-600">Popular products based on purchases</p>
+                </div>
+            </div>
+            <div id="recommendation-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <div class="col-span-full text-center py-8">
+                    <i class="fas fa-spinner fa-spin text-orange-500 text-2xl"></i>
+                    <p class="mt-2 text-gray-500">Loading recommendations...</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <section class="container mx-auto px-4 lg:px-8 pb-14">
         <div class="grid lg:grid-cols-12 gap-8">
             <aside class="lg:col-span-3">
@@ -157,16 +178,18 @@
                         {% endif %}
                     </p>
                     <div class="flex items-center gap-3">
-                        <form method="get" action="{{ path('app_shop') }}" class="flex items-center gap-3">
+                        <form method="get" action="{{ path('app_shop') }}" class="flex items-center gap-3 flex-1">
                             <input type="hidden" name="categorie" value="{{ selectedCategorie }}">
                             <input type="hidden" name="min_price" value="{{ minPrice|default('') }}">
                             <input type="hidden" name="max_price" value="{{ maxPrice|default('') }}">
                             
-                            <input type="text" 
-                                   name="search" 
-                                   value="{{ search }}" 
-                                   class="w-full sm:w-72 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" 
-                                   placeholder="Search products...">
+                            <div class="relative flex-1 max-w-md">
+                                <input type="text" 
+                                       name="search" 
+                                       value="{{ search }}" 
+                                       class="w-full rounded-full border border-gray-200 bg-white px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" 
+                                       placeholder="Search products...">
+                            </div>
                             
                             <select name="sort" 
                                     class="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300"
@@ -178,6 +201,14 @@
                                 <option value="name_desc" {% if sort == 'name_desc' %}selected{% endif %}>Sort by name: Z-A</option>
                             </select>
                         </form>
+                        
+                        <!-- Cart Button -->
+                        <button onclick="openCartSidebar()" class="relative flex items-center justify-center w-12 h-12 bg-orange-500 text-white rounded-full shadow-lg hover:bg-orange-600 transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+                            </svg>
+                            <span id="cartBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">0</span>
+                        </button>
                     </div>
                 </div>
 
@@ -198,12 +229,7 @@
                                 {% else %}
                                     <span class="text-5xl font-bold text-orange-200">{{ p.nom|slice(0, 1) }}</span>
                                 {% endif %}
-                                
-                                <div class="absolute top-3 right-3 flex items-center gap-2">
-                                    <button class="h-9 w-9 rounded-full bg-white/90 border border-gray-200 hover:border-orange-400 transition hover:bg-orange-50" 
-                                            title="Wishlist">♡</button>
-                                </div>
-                                
+
                                 {% if p.categorie %}
                                     <span class="absolute top-3 left-3 inline-flex items-center rounded-full bg-white/90 border border-gray-200 px-2 py-1 text-xs font-medium text-gray-600">
                                         {{ p.categorie.nom }}
@@ -212,7 +238,22 @@
                             </div>
                             <div class="p-4">
                                 <p class="font-extrabold text-gray-900">{{ p.nom }}</p>
-                                <p class="mt-1 text-lg font-semibold text-orange-600">{{ p.prix|number_format(2, ',', ' ') }} TND</p>
+                                <div class="flex items-center gap-1 mt-1">
+                                    {% set rating = p.averageRating|default(0) %}
+                                    {% set ratingCount = p.ratingCount|default(0) %}
+                                    {% set fullStars = (rating)|round(0, 'floor') %}
+                                    {% for i in 1..5 %}
+                                        {% if i <= fullStars %}
+                                            <i class="fas fa-star text-yellow-400 text-xs"></i>
+                                        {% elseif i - 0.5 <= rating %}
+                                            <i class="fas fa-star-half-alt text-yellow-400 text-xs"></i>
+                                        {% else %}
+                                            <i class="far fa-star text-gray-300 text-xs"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                    <span class="text-xs text-gray-500">({{ ratingCount }})</span>
+                                </div>
+                                <p class="mt-1 text-lg font-semibold text-orange-600">{{ p.prix|number_format(2, ',', ' ') }} EUR</p>
                                 
                                 {% if p.quantite is not null %}
                                     {% set alerte = (p.seuilAlert is not null and p.seuilAlert > 0 and p.quantite <= p.seuilAlert) %}
@@ -312,9 +353,9 @@
         </div>
     </div>
 
-    <div id="cartSidebar" class="fixed inset-y-0 right-0 w-96 bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300">
-        <div class="flex flex-col h-full">
-            <div class="flex items-center justify-between p-4 border-b border-gray-200">
+    <div id="cartSidebar" class="fixed inset-x-0 top-0 h-auto max-h-[80vh] bg-white shadow-2xl z-50 transform -translate-y-full transition-transform duration-300 overflow-hidden">
+        <div class="flex flex-col max-h-[80vh]">
+            <div class="flex items-center justify-between p-4 border-b border-gray-200 bg-orange-50">
                 <h3 class="text-xl font-bold text-gray-900">Shopping Cart</h3>
                 <button onclick="closeCartSidebar()" class="text-gray-400 hover:text-gray-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -323,11 +364,54 @@
                 </button>
             </div>
             
-            <div id="cartItems" class="flex-1 overflow-y-auto p-4">
+            <div id="cartItems" class="flex-1 overflow-y-auto p-4" style="max-height: 50vh;">
                 <p class="text-gray-500 text-center py-8">Your cart is empty</p>
             </div>
             
-            <div class="border-t border-gray-200 p-4">
+            <!-- Shipping Zone Selector -->
+            <div class="border-t border-gray-200 p-4 bg-orange-50">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    <i class="fas fa-truck text-orange-500 mr-1"></i> Delivery Zone
+                </label>
+                <select id="shippingZone" onchange="calculateShipping()" class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300">
+                    <option value="tunis">Tunis & Suburbs (1-2 days)</option>
+                    <option value="north">North Tunisia (2-3 days)</option>
+                    <option value="south">South Tunisia (3-5 days)</option>
+                    <option value="international">International (7-14 days)</option>
+                </select>
+                
+                <!-- Free Shipping Progress -->
+                <div id="freeShippingProgress" class="mt-3 p-2 bg-white rounded-lg hidden">
+                    <div class="flex justify-between text-xs text-gray-600 mb-1">
+                        <span>Free shipping progress:</span>
+                        <span id="freeShippingAmount">0 TND</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div id="freeShippingBar" class="bg-orange-500 h-2 rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+                
+                <!-- Shipping Cost Display -->
+                <div class="flex justify-between items-center mt-3">
+                    <span class="text-sm text-gray-600">Shipping Cost:</span>
+                    <span id="shippingCost" class="text-lg font-bold text-orange-600">8.00 TND</span>
+                </div>
+                <div class="mt-4">
+                    <label for="paymentMethod" class="block text-sm font-semibold text-gray-700 mb-1">
+                        Méthode de paiement
+                    </label>
+                    <select id="paymentMethod"
+                            class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300">
+                        <option value="local">Paiement interne (pas de redirection)</option>
+                        <option value="stripe">Stripe (carte bancaire sécurisée)</option>
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">
+                        ClicToPay ouvrira la page de paiement sécurisée dans un nouvel onglet.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-200 p-4 bg-gray-50">
                 <div class="flex justify-between items-center mb-4">
                     <span class="text-lg font-semibold text-gray-900">Total:</span>
                     <span id="cartTotal" class="text-2xl font-bold text-orange-600">0.00 TND</span>
@@ -341,12 +425,17 @@
 
     <div id="cartOverlay" onclick="closeCartSidebar()" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden"></div>
 
-    <button onclick="openCartSidebar()" class="fixed bottom-6 right-6 bg-orange-500 text-white p-4 rounded-full shadow-lg hover:bg-orange-600 transition z-30">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
-        </svg>
-        <span id="cartBadge" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">0</span>
-    </button>
+    <section class="py-12 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl font-bold text-gray-900 text-center mb-8">Recommended for You</h2>
+            <p class="text-gray-600 text-center mb-8">Products picked just for you based on KNN algorithm</p>
+            <div id="recommendationsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="col-span-full text-center py-8 text-gray-500">
+                    Loading recommendations...
+                </div>
+            </div>
+        </div>
+    </section>
 
     {% if app.session.flashbag.peek('success')|length > 0 %}
         <div id="successMessage" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50">
@@ -392,6 +481,7 @@
     function initCart() {
         updateCartBadge();
         renderCartItems();
+        loadRecommendations();
         
         document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
             btn.addEventListener('click', function(e) {
@@ -457,15 +547,82 @@
         document.getElementById('cartBadge').textContent = totalItems;
     }
 
+    // Shipping calculation
+    const SHIPPING_RATES = {
+        'tunis': { cost: 8, days: '1-2', multiplier: 1 },
+        'north': { cost: 12, days: '2-3', multiplier: 1.5 },
+        'south': { cost: 16, days: '3-5', multiplier: 2 },
+        'international': { cost: 28, days: '7-14', multiplier: 3.5 }
+    };
+    const FREE_SHIPPING_THRESHOLD = 200;
+    const PER_PRODUCT_SURCHARGE = 2; // TND per product added to the cart
+
+    function getShippingCost(subtotal, zone, itemCount) {
+        const zoneData = SHIPPING_RATES[zone] ?? SHIPPING_RATES['tunis'];
+        if (subtotal >= FREE_SHIPPING_THRESHOLD) {
+            return 0;
+        }
+        return zoneData.cost + (itemCount * PER_PRODUCT_SURCHARGE);
+    }
+
+    function calculateShipping() {
+        const zone = document.getElementById('shippingZone')?.value || 'tunis';
+        const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const itemCount = cart.reduce((count, item) => count + item.quantity, 0);
+        const shippingCostEl = document.getElementById('shippingCost');
+        const freeShippingProgress = document.getElementById('freeShippingProgress');
+        const freeShippingAmount = document.getElementById('freeShippingAmount');
+        const freeShippingBar = document.getElementById('freeShippingBar');
+        
+        const shippingCost = getShippingCost(subtotal, zone, itemCount);
+        
+        // Check for free shipping
+        if (subtotal >= FREE_SHIPPING_THRESHOLD) {
+            freeShippingProgress.classList.add('hidden');
+        } else {
+            freeShippingProgress.classList.remove('hidden');
+            const amountNeeded = FREE_SHIPPING_THRESHOLD - subtotal;
+            const progress = (subtotal / FREE_SHIPPING_THRESHOLD) * 100;
+            freeShippingAmount.textContent = amountNeeded.toFixed(2) + ' TND more for FREE shipping!';
+            freeShippingBar.style.width = progress + '%';
+        }
+        
+        shippingCostEl.textContent = shippingCost.toFixed(2) + ' TND';
+        
+        // Update total with shipping
+        updateCartTotal(subtotal, shippingCost);
+    }
+
+    function updateCartTotal(passedSubtotal = null, passedShippingCost = null) {
+        const subtotal = passedSubtotal !== null
+            ? passedSubtotal
+            : cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const zone = document.getElementById('shippingZone')?.value || 'tunis';
+        const itemCount = cart.reduce((count, item) => count + item.quantity, 0);
+        const shippingCost = passedShippingCost !== null
+            ? passedShippingCost
+            : getShippingCost(subtotal, zone, itemCount);
+        const totalEl = document.getElementById('cartTotal');
+        
+        if (cart.length === 0) {
+            totalEl.textContent = '0.00 TND';
+        } else {
+            const total = subtotal + shippingCost;
+            totalEl.textContent = total.toFixed(2) + ' TND';
+        }
+        document.getElementById('checkoutBtn').disabled = cart.length === 0;
+    }
+
     function renderCartItems() {
         const cartItemsEl = document.getElementById('cartItems');
         const cartTotalEl = document.getElementById('cartTotal');
         const checkoutBtn = document.getElementById('checkoutBtn');
-        
+
         if (cart.length === 0) {
             cartItemsEl.innerHTML = '<p class="text-gray-500 text-center py-8">Your cart is empty</p>';
             cartTotalEl.textContent = '0.00 TND';
             checkoutBtn.disabled = true;
+            calculateShipping();
             return;
         }
         
@@ -495,43 +652,103 @@
         
         cartTotalEl.textContent = total.toFixed(2) + ' TND';
         checkoutBtn.disabled = false;
+        
+        // Calculate shipping and update total
+        calculateShipping();
     }
 
     function openCartSidebar() {
-        document.getElementById('cartSidebar').classList.remove('translate-x-full');
+        document.getElementById('cartSidebar').classList.remove('-translate-y-full');
         document.getElementById('cartOverlay').classList.remove('hidden');
     }
 
     function closeCartSidebar() {
-        document.getElementById('cartSidebar').classList.add('translate-x-full');
+        document.getElementById('cartSidebar').classList.add('-translate-y-full');
         document.getElementById('cartOverlay').classList.add('hidden');
+    }
+
+    function getSelectedPaymentMethod() {
+        return document.getElementById('paymentMethod')?.value || 'local';
     }
 
     async function checkoutCart() {
         if (cart.length === 0) return;
-        
+
         const checkoutBtn = document.getElementById('checkoutBtn');
         checkoutBtn.disabled = true;
         checkoutBtn.textContent = 'Processing...';
-        
+
         try {
+            const paymentMethod = getSelectedPaymentMethod();
             const response = await fetch('{{ path("app_eshop_produit_cart_checkout") }}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ items: cart })
+                body: JSON.stringify({
+                    items: cart,
+                    payment_method: paymentMethod
+                })
             });
-            
+
             const data = await response.json();
-            
+
             if (data.success) {
+                // Handle payment redirects
+                if (data.checkout_url) {
+                    showNotification(data.message || 'Redirection vers le paiement...', 'success');
+                    window.open(data.checkout_url, '_blank');
+                } else if (data.payment_type === 'stripe') {
+                    // For Stripe, don't create order yet - pass cart data and create after payment
+                    const amount = data.amount || 5;
+                    
+                    // Create a form to submit cart data to Stripe
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '{{ path("app_stripe_checkout") }}';
+                    form.style.display = 'none';
+                    
+                    // Add cart data
+                    const cartDataInput = document.createElement('input');
+                    cartDataInput.type = 'hidden';
+                    cartDataInput.name = 'cart_data';
+                    cartDataInput.value = JSON.stringify(cart);
+                    form.appendChild(cartDataInput);
+                    
+                    // Add amount
+                    const amountInput = document.createElement('input');
+                    amountInput.type = 'hidden';
+                    amountInput.name = 'amount';
+                    amountInput.value = amount;
+                    form.appendChild(amountInput);
+                    
+                    // Add currency
+                    const currencyInput = document.createElement('input');
+                    currencyInput.type = 'hidden';
+                    currencyInput.name = 'currency';
+                    currencyInput.value = 'tnd';
+                    form.appendChild(currencyInput);
+                    
+                    document.body.appendChild(form);
+                    form.submit();
+                    return;
+
                 cart = [];
                 saveCart();
                 updateCartBadge();
                 renderCartItems();
                 closeCartSidebar();
-                window.location.href = '{{ path("app_eshop_commande_index") }}';
+                const message = data.flashMessage || 'Order created successfully!';
+                const successDiv = document.createElement('div');
+                successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+                successDiv.innerHTML = '<div class=\'flex items-center gap-2\'><svg class=\'w-5 h-5\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M5 13l4 4L19 7\'></path></svg><span>' + message + '</span></div>';
+                document.body.appendChild(successDiv);
+                setTimeout(function() {
+                    successDiv.style.opacity = '0';
+                    setTimeout(function() { successDiv.remove(); }, 500);
+                }, 3000);
+                checkoutBtn.disabled = false;
+                checkoutBtn.textContent = 'Buy Now';
             } else {
                 alert(data.message || 'Error processing order');
                 checkoutBtn.disabled = false;
@@ -543,6 +760,91 @@
             checkoutBtn.disabled = false;
             checkoutBtn.textContent = 'Buy Now';
         }
+    }
+
+    async function loadRecommendations() {
+        try {
+            // Load popular recommendations (based on purchases and ratings)
+            const response = await fetch('{{ path("app_api_popular_recommendations", {limit: 6}) }}');
+            const products = await response.json();
+            
+            const grid = document.getElementById('recommendationsGrid');
+            
+            if (products.length === 0) {
+                grid.innerHTML = '<div class="col-span-full text-center py-8 text-gray-500">No recommendations available</div>';
+                return;
+            }
+            
+            grid.innerHTML = products.map(product => {
+                const imageSrc = product.image ? (product.image.startsWith('http') ? product.image : '/uploads/images/' + product.image) : '/default.png';
+                const isOutOfStock = product.quantite <= 0;
+                const rating = product.rating || 0;
+                const ratingCount = product.rating_count || 0;
+                const stars = getStarRating(rating);
+                
+                return `
+                    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                        <div class="aspect-[4/3] bg-gray-100 relative">
+                            <img src="${imageSrc}" alt="${product.nom}" class="w-full h-full object-cover">
+                            ${isOutOfStock ? '<div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center"><span class="text-white font-bold">OUT OF STOCK</span></div>' : ''}
+                        </div>
+                        <div class="p-4">
+                            <h3 class="font-semibold text-gray-900 truncate">${product.nom}</h3>
+                            <div class="flex items-center gap-1 mt-1">
+                                <span class="text-yellow-500 text-sm">${stars}</span>
+                                <span class="text-xs text-gray-500">(${ratingCount})</span>
+                            </div>
+                            <p class="text-orange-600 font-bold mt-1">${product.prix} EUR</p>
+                            <p class="text-sm text-gray-500 mt-1">Stock: ${product.quantite}</p>
+                            <button type="button"
+                                    class="mt-3 w-full px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition font-semibold add-to-cart-btn"
+                                    data-product-id="${product.id}"
+                                    data-product-name="${product.nom}"
+                                    data-product-price="${product.prix}"
+                                    data-product-stock="${product.quantite}"
+                                    ${isOutOfStock ? 'disabled' : ''}>
+                                ${isOutOfStock ? 'OUT OF STOCK' : 'Add to Cart'}
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            document.querySelectorAll('#recommendationsGrid .add-to-cart-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const product = {
+                        id: this.getAttribute('data-product-id'),
+                        name: this.getAttribute('data-product-name'),
+                        price: parseFloat(this.getAttribute('data-product-price')),
+                        stock: parseInt(this.getAttribute('data-product-stock'))
+                    };
+                    addToCart(product);
+                });
+            });
+            
+        } catch (error) {
+            console.error('Error loading recommendations:', error);
+            const grid = document.getElementById('recommendationsGrid');
+            grid.innerHTML = '<div class="col-span-full text-center py-8 text-gray-500">Error loading recommendations</div>';
+        }
+    }
+
+    function getStarRating(rating) {
+        const fullStars = Math.floor(rating);
+        const hasHalfStar = rating % 1 >= 0.5;
+        let stars = '';
+        
+        for (let i = 0; i < 5; i++) {
+            if (i < fullStars) {
+                stars += '<i class="fas fa-star text-yellow-400"></i>';
+            } else if (i === fullStars && hasHalfStar) {
+                stars += '<i class="fas fa-star-half-alt text-yellow-400"></i>';
+            } else {
+                stars += '<i class="far fa-star text-gray-300"></i>';
+            }
+        }
+        return stars;
     }
 
     let currentFormToSubmit = null;
