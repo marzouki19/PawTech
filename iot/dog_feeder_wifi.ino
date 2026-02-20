@@ -327,10 +327,69 @@ void sendToServer()
     {
         Serial.println("Server response:");
         Serial.println(response);
+        connectionRetries = 0;  // Reset retry counter on success
     }
     else
     {
         Serial.println("Error sending request");
         printNetworkHintForError(code);
+        handleConnectionFailure();
+    }
+}
+
+// ======================================================
+// HEARTBEAT - Keep connection alive
+// ======================================================
+
+void sendHeartbeat()
+{
+    if (!ensureWiFiConnected())
+    {
+        Serial.println("Heartbeat: WiFi not connected");
+        return;
+    }
+
+    // Send a lightweight heartbeat request
+    HTTPClient http;
+    String url = String(API_SERVER) + "/iot/heartbeat/" + String(STATION_CODE);
+    
+    Serial.print("Sending heartbeat to: ");
+    Serial.println(url);
+
+    http.setConnectTimeout(5000);
+    http.setTimeout(10000);
+
+    if (!http.begin(url)) {
+        Serial.println("http.begin failed for heartbeat");
+        return;
+    }
+
+    int code = http.GET();
+    
+    if (code > 0) {
+        Serial.print("Heartbeat OK, status: ");
+        Serial.println(code);
+        connectionRetries = 0;
+    } else {
+        Serial.print("Heartbeat failed: ");
+        Serial.println(http.errorToString(code));
+        handleConnectionFailure();
+    }
+
+    http.end();
+}
+
+void handleConnectionFailure()
+{
+    connectionRetries++;
+    Serial.print("Connection failure, retry count: ");
+    Serial.println(connectionRetries);
+    
+    if (connectionRetries >= MAX_RETRIES) {
+        Serial.println("Max retries reached, attempting WiFi reconnection...");
+        WiFi.disconnect();
+        delay(1000);
+        connectWiFi();
+        connectionRetries = 0;
     }
 }

@@ -31,7 +31,12 @@ class IoTStreamController extends AbstractController
         $response->headers->set('Cache-Control', 'no-cache');
         $response->headers->set('Connection', 'keep-alive');
         $response->headers->set('X-Accel-Buffering', 'no');
+        $response->headers->set('Access-Control-Allow-Origin', '*');
+        $response->headers->set('Access-Control-Expose-Headers', 'Last-Event-ID');
 
+        // Disable PHP timeout for long-running connection
+        set_time_limit(300); // 5 minutes max
+        
         // Set SSE headers
         $response->sendHeaders();
 
@@ -39,16 +44,19 @@ class IoTStreamController extends AbstractController
         $lastData = $iotRepo->findLatestByStationId($stationId);
         if ($lastData) {
             $this->sendEvent($response, $this->serializeIoTData($lastData));
+            $this->sendComment($response, "Connected successfully");
         }
 
         // Long polling loop - check for new data every 2 seconds
         $lastId = $lastData?->getId() ?? 0;
-        $timeout = 30; // 30 seconds timeout
+        $timeout = 270; // 4.5 minutes (less than 5 min to prevent timeout)
         $startTime = time();
+        $heartbeatCounter = 0;
         
         while (true) {
             // Check for timeout
             if ((time() - $startTime) > $timeout) {
+                $this->sendComment($response, "timeout");
                 break;
             }
 
@@ -62,6 +70,13 @@ class IoTStreamController extends AbstractController
                 }
             }
 
+            // Send heartbeat comment every ~30 seconds to keep connection alive
+            $heartbeatCounter++;
+            if ($heartbeatCounter >= 15) { // 15 * 2 seconds = 30 seconds
+                $this->sendComment($response, "ping");
+                $heartbeatCounter = 0;
+            }
+
             // Flush output and wait
             if (ob_get_level()) {
                 ob_flush();
@@ -72,6 +87,12 @@ class IoTStreamController extends AbstractController
         }
 
         return $response;
+    }
+
+    private function sendComment(Response $response, string $comment): void
+    {
+        $response->getContent();
+        echo ": $comment\n\n";
     }
 
     /**
@@ -150,6 +171,19 @@ class IoTStreamController extends AbstractController
         $hub->publish($update);
 
         return $this->json(['success' => true]);
+    }
+
+    /**
+     * Heartbeat endpoint for ESP32 to verify connection
+     */
+    #[Route('/iot/heartbeat/{stationId}', name: 'app_iot_heartbeat', methods: ['GET'])]
+    public function heartbeat(int $stationId): \Symfony\Component\HttpFoundation\JsonResponse
+    {
+        return $this->json([
+            'status' => 'ok',
+            'station_id' => $stationId,
+            'timestamp' => (new \DateTime())->format('c'),
+        ]);
     }
 
     private function sendEvent(Response $response, array $data): void
