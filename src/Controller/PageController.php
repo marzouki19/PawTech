@@ -186,7 +186,7 @@ final class PageController extends AbstractController
     {
         return $this->redirectToRoute('app_settings');
     }
-
+//ahawaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
     #[Route('/api/verify-face', name: 'app_verify_face_proxy', methods: ['POST'])]
     public function verifyFaceProxy(Request $request, HttpClientInterface $httpClient, UserRepository $userRepository): JsonResponse
     {
