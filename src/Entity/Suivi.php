@@ -133,8 +133,12 @@ class Suivi
     // Méthode pour obtenir le nom du chien (utile pour l'affichage)
     public function getChienNom(): ?string
     {
-        if ($this->consultation && $this->consultation->getChien()) {
-            return $this->consultation->getChien()->getNom();
+        if ($this->consultation) {
+            // Consultation provides getDog()/getChien() — prefer dog API
+            $dog = method_exists($this->consultation, 'getDog') ? $this->consultation->getDog() : $this->consultation->getDog();
+            if ($dog) {
+                return method_exists($dog, 'getName') ? $dog->getName() : (method_exists($dog, 'getNom') ? $dog->getName() : null);
+            }
         }
         return null;
     }

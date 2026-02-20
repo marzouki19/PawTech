@@ -20,7 +20,7 @@ class ConsultationType extends AbstractType
     {
         $builder
             ->add('date', DateTimeType::class, [
-                'label' => 'Date et heure',
+                'label' => 'Date and Time *',
                 'widget' => 'single_text',
                 'html5' => true,
                 'attr' => [
@@ -28,7 +28,7 @@ class ConsultationType extends AbstractType
                 ]
             ])
             ->add('type', ChoiceType::class, [
-                'label' => 'Type',
+                'label' => 'Type *',
                 'required' => true,
                 'choices' => [
                     'Urgent' => 'Urgent',
@@ -41,31 +41,35 @@ class ConsultationType extends AbstractType
                 ]
             ])
             ->add('diagnostic', TextareaType::class, [
-                'label' => 'Diagnostic',
+                'label' => 'Diagnostic *',
                 'attr' => [
                     'rows' => 5,
-                    'class' => 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-paw-orange focus:border-paw-orange'
+                    'class' => 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-paw-orange focus:border-paw-orange',
+                    'placeholder' => 'Enter diagnostic details...'
                 ]
             ])
             ->add('traitement', TextareaType::class, [
-                'label' => 'Treatment',
+                'label' => 'Treatment (optional)',
                 'required' => false,
                 'attr' => [
                     'rows' => 5,
-                    'class' => 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-paw-orange focus:border-paw-orange'
+                    'class' => 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-paw-orange focus:border-paw-orange',
+                    'placeholder' => 'Enter treatment details (optional)...'
                 ]
             ])
-            ->add('user', EntityType::class, [  // CHANGÉ: 'veterinaire' → 'user'
-                'label' => 'User',
+            ->add('user', EntityType::class, [
+                'label' => 'User *',
                 'class' => User::class,
-                'choice_label' => 'nom',
+                'choice_label' => function(User $user) {
+                    return $user->getPrenom() . ' ' . $user->getNom();
+                },
                 'placeholder' => 'Select a user',
                 'attr' => [
                     'class' => 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-paw-orange focus:border-paw-orange'
                 ]
             ])
-            ->add('dog', EntityType::class, [
-                'label' => 'Dog',
+            ->add('chien', EntityType::class, [
+                'label' => 'Dog *',
                 'class' => Dogs::class,
                 'choice_label' => 'name',
                 'placeholder' => 'Select a dog',
@@ -74,9 +78,9 @@ class ConsultationType extends AbstractType
                 ]
             ])
             ->add('save', SubmitType::class, [
-                'label' => 'Save',
+                'label' => 'Save Consultation',
                 'attr' => [
-                    'class' => 'px-4 py-2 bg-paw-orange text-white rounded-md hover:bg-paw-orange-hover'
+                    'class' => 'px-4 py-2 bg-paw-orange text-white rounded-md hover:bg-paw-orange-hover font-medium'
                 ]
             ]);
     }
@@ -85,9 +89,6 @@ class ConsultationType extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => Consultation::class,
-            'empty_data' => function () {
-                return new Consultation();
-            },
         ]);
     }
 }

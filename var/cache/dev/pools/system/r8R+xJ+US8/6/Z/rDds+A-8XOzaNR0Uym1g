@@ -1,0 +1,3 @@
+<?php //721d48f9720d1e2f608e7e6319d903f4
+
+return [PHP_INT_MAX, 'controllers/delete_confirm_controller.js'];

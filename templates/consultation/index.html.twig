@@ -249,7 +249,7 @@ $(document).ready(function() {
         
         // Requête Ajax
         $.ajax({
-            url: "{{ path('app_consultation_search') }}",
+            url: "/consultation/search",
             type: 'GET',
             data: { 'searchValue': value },
             dataType: 'json',
@@ -370,7 +370,7 @@ $(document).ready(function() {
         
         // Requête Ajax pour trier par date
         $.ajax({
-            url: "{{ path('app_consultation_sort_by_date') }}",
+            url: "/consultation/sort-by-date",
             type: 'GET',
             dataType: 'json',
             success: function(retour) {
