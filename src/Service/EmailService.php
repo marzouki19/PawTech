@@ -6,9 +6,14 @@ use App\Entity\Participation;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 use Psr\Log\LoggerInterface;
+use Endroid\QrCode\QrCode;
+use Endroid\QrCode\Writer\PngWriter;
+use Endroid\QrCode\Encoding\Encoding;
+use Symfony\Component\Mime\Part\DataPart;
 
 /**
  * Service for sending event-related emails
+ * Includes QR code generation for participation verification
  */
 class EmailService
 {
@@ -19,7 +24,62 @@ class EmailService
     ) {}
 
     /**
+     * Generate QR code for participation verification
+     * Returns raw PNG data for email embedding
+     */
+    private function generateQrCode(Participation $participation): ?string
+    {
+        try {
+            $user = $participation->getUser();
+            $event = $participation->getEvenement();
+            
+            // QR code content - clean ticket format
+            $participantName = $user->getPrenom() . ' ' . $user->getNom();
+            $eventDate = $event->getDateDebut()?->format('d/m/Y H:i') ?? 'TBD';
+            $location = $event->getLieu() . ', ' . $event->getVille();
+            
+            $qrData = "══════════════════════
+   PAWTECH EVENT TICKET
+══════════════════════
+
+Ticket #" . $participation->getId() . "
+
+Event: " . $event->getTitre() . "
+Date: " . $eventDate . "
+Location: " . $location . "
+Type: " . $event->getType() . "
+
+──────────────────────
+Participant: " . $participantName . "
+Email: " . $user->getEmail() . "
+──────────────────────
+
+Status: CONFIRMED
+══════════════════════";
+
+            // Create QR code (endroid/qr-code v6.x API)
+            $qrCode = new QrCode(
+                data: $qrData,
+                encoding: new Encoding('UTF-8'),
+                size: 250,
+                margin: 10
+            );
+            
+            // Write to PNG and return raw data
+            $writer = new PngWriter();
+            $result = $writer->write($qrCode);
+
+            return $result->getString();
+            
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to generate QR code: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Send confirmation email when admin approves a participation
+     * Now includes QR code for event check-in
      */
     public function sendParticipationConfirmation(Participation $participation): bool
     {
@@ -37,7 +97,10 @@ class EmailService
             return false;
         }
 
-        $htmlContent = $this->buildConfirmationEmailHtml($participation);
+        // Generate QR code as raw PNG data
+        $qrCodeData = $this->generateQrCode($participation);
+        
+        $htmlContent = $this->buildConfirmationEmailHtml($participation, $qrCodeData !== null);
         $textContent = $this->buildConfirmationEmailText($participation);
 
         $email = (new Email())
@@ -47,9 +110,14 @@ class EmailService
             ->text($textContent)
             ->html($htmlContent);
 
+        // Attach QR code as embedded image if generated successfully
+        if ($qrCodeData !== null) {
+            $email->embed($qrCodeData, 'qrcode', 'image/png');
+        }
+
         try {
             $this->mailer->send($email);
-            $this->logger->info('Confirmation email sent to ' . $userEmail);
+            $this->logger->info('Confirmation email with QR code sent to ' . $userEmail);
             return true;
         } catch (\Exception $e) {
             $this->logger->error('Failed to send confirmation email: ' . $e->getMessage());
@@ -58,9 +126,9 @@ class EmailService
     }
 
     /**
-     * Build HTML content for confirmation email
+     * Build HTML content for confirmation email with QR code
      */
-    private function buildConfirmationEmailHtml(Participation $participation): string
+    private function buildConfirmationEmailHtml(Participation $participation, bool $hasQrCode): string
     {
         $user = $participation->getUser();
         $event = $participation->getEvenement();
@@ -73,6 +141,23 @@ class EmailService
         $eventCity = $event->getVille();
         $eventType = $event->getType();
         $eventDescription = $event->getDescription() ?? '';
+        $participationId = $participation->getId();
+
+        // QR code section - uses cid: reference for embedded image
+        $qrCodeSection = '';
+        if ($hasQrCode) {
+            $qrCodeSection = <<<HTML
+            <!-- QR Code Section -->
+            <div style="background:#f0fdf4;border-radius:12px;padding:25px;margin-bottom:25px;text-align:center;border:2px dashed #22c55e;">
+                <h3 style="color:#166534;margin:0 0 15px;font-size:18px;">Your Event Ticket</h3>
+                <img src="cid:qrcode" alt="QR Code Ticket" style="width:200px;height:200px;"/>
+                <p style="color:#166534;font-size:12px;margin:15px 0 0;">
+                    <strong>Ticket #{$participationId}</strong><br>
+                    Show this QR code at the event entrance
+                </p>
+            </div>
+HTML;
+        }
 
         return <<<HTML
 <!DOCTYPE html>
@@ -85,7 +170,7 @@ class EmailService
     <div style="max-width:600px;margin:0 auto;background-color:#ffffff;">
         <!-- Header -->
         <div style="background:linear-gradient(135deg,#f97316 0%,#fb923c 100%);padding:30px;text-align:center;">
-            <h1 style="color:#ffffff;margin:0;font-size:28px;">🎉 You're In!</h1>
+            <h1 style="color:#ffffff;margin:0;font-size:28px;">You're In!</h1>
             <p style="color:#fff3e0;margin:10px 0 0;font-size:16px;">Your participation has been confirmed</p>
         </div>
 
@@ -104,20 +189,17 @@ class EmailService
                 
                 <table style="width:100%;border-collapse:collapse;">
                     <tr>
-                        <td style="padding:8px 0;color:#666;width:30px;vertical-align:top;">📅</td>
                         <td style="padding:8px 0;color:#333;">
                             <strong>Date:</strong> {$eventDate}
                             {$this->formatEndDate($eventEndDate)}
                         </td>
                     </tr>
                     <tr>
-                        <td style="padding:8px 0;color:#666;vertical-align:top;">📍</td>
                         <td style="padding:8px 0;color:#333;">
                             <strong>Location:</strong> {$eventLocation}, {$eventCity}
                         </td>
                     </tr>
                     <tr>
-                        <td style="padding:8px 0;color:#666;vertical-align:top;">🏷️</td>
                         <td style="padding:8px 0;color:#333;">
                             <strong>Type:</strong> {$eventType}
                         </td>
@@ -127,11 +209,13 @@ class EmailService
                 {$this->formatDescription($eventDescription)}
             </div>
 
+            {$qrCodeSection}
+
             <!-- Important Info -->
             <div style="background:#fef3c7;border-radius:8px;padding:15px;margin-bottom:25px;">
                 <p style="margin:0;color:#92400e;font-size:14px;">
-                    <strong>📌 Important:</strong> Please arrive 15 minutes before the event starts. 
-                    Don't forget to bring this confirmation email or a valid ID.
+                    <strong>Important:</strong> Please arrive 15 minutes before the event starts. 
+                    Present your QR code at the entrance for quick check-in.
                 </p>
             </div>
 
@@ -140,7 +224,7 @@ class EmailService
             </p>
             <p style="font-size:16px;color:#333;margin:0;">
                 Best regards,<br>
-                <strong style="color:#f97316;">The PawTech Team</strong> 🐾
+                <strong style="color:#f97316;">The PawTech Team</strong>
             </p>
         </div>
 
@@ -171,6 +255,7 @@ HTML;
         $eventLocation = $event->getLieu();
         $eventCity = $event->getVille();
         $eventType = $event->getType();
+        $participationId = $participation->getId();
 
         return <<<TEXT
 Hello {$userName},
@@ -182,8 +267,10 @@ DATE: {$eventDate}
 LOCATION: {$eventLocation}, {$eventCity}
 TYPE: {$eventType}
 
+TICKET NUMBER: #{$participationId}
+
 Please arrive 15 minutes before the event starts.
-Don't forget to bring this confirmation email or a valid ID.
+Present your confirmation email at the entrance for check-in.
 
 We look forward to seeing you there!
 
