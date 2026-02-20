@@ -53,6 +53,12 @@ final class ResetPasswordController extends AbstractController
                 $logoUrl = $request->getSchemeAndHttpHost().'/logo.png';
 
                 $fromEmail = $_ENV['MAILER_FROM'] ?? 'aminegaming275@gmail.com';
+                if (!filter_var($fromEmail, FILTER_VALIDATE_EMAIL)) {
+                    $logger->warning('Invalid MAILER_FROM value; falling back to default sender.', [
+                        'configured_from' => $fromEmail,
+                    ]);
+                    $fromEmail = 'aminegaming275@gmail.com';
+                }
 
                 $message = (new Email())
                     ->from($fromEmail)

@@ -15,6 +15,7 @@
     autoAdoptError: '',
     autoAdoptResult: null,
     autoAdoptEndpoint: '{{ path('app_adoption_auto_adopt_match', {'id': dog.id}) }}',
+    resultBasePath: '{{ path('app_adoption_result', {'dogId': dog.id, 'userId': 0}) }}',
     deleteAction: '',
     deleteToken: '',
     deleteLabel: '',
@@ -48,6 +49,22 @@
         } finally {
             this.autoAdoptLoading = false;
         }
+    },
+    getWinner() {
+        if (!this.autoAdoptResult || !this.autoAdoptResult.users_ranked || this.autoAdoptResult.users_ranked.length === 0) {
+            return null;
+        }
+        return this.autoAdoptResult.users_ranked[0];
+    },
+    getWinnerResultUrl() {
+        const winner = this.getWinner();
+        if (!winner) {
+            return '#';
+        }
+        const base = this.resultBasePath.replace(/\/0$/, '/' + encodeURIComponent(String(winner.user_id)));
+        const accuracy = typeof winner.accuracy === 'number' ? winner.accuracy : 0;
+        const records = typeof winner.records_used === 'number' ? winner.records_used : 0;
+        return `${base}?accuracy=${encodeURIComponent(accuracy)}&records=${encodeURIComponent(records)}`;
     }
 }">
 <div class="px-4 sm:px-6 lg:px-8 py-8 max-w-7xl mx-auto">
@@ -276,6 +293,11 @@
                 </template>
             </div>
             <div class="flex justify-end mt-6">
+                <a :href="getWinnerResultUrl()"
+                   :class="getWinner() ? 'px-6 py-2.5 rounded-lg bg-green-600 text-sm font-semibold text-white shadow hover:bg-green-700 mr-3' : 'px-6 py-2.5 rounded-lg bg-gray-200 text-sm font-semibold text-gray-500 cursor-not-allowed mr-3'"
+                   @click.prevent="if (getWinner()) { window.location.href = getWinnerResultUrl(); }">
+                    View Winner Result
+                </a>
                 <button type="button" @click="autoAdoptResultModalOpen = false"
                         class="px-6 py-2.5 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50">
                     Close

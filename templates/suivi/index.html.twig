@@ -37,6 +37,18 @@
             >
         </div>
         
+        <!-- Emergency Level Filter -->
+        <select 
+            id="emergencyFilter" 
+            class="px-4 py-2 border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-paw-orange focus:border-paw-orange outline-none"
+        >
+            <option value="">All Emergency Levels</option>
+            <option value="critical">🔴 Critical</option>
+            <option value="high">🟠 High</option>
+            <option value="medium">🟡 Medium</option>
+            <option value="low">🟢 Low</option>
+        </select>
+        
         <!-- Bouton Filter (Tri par date) -->
         <button 
             type="button" 
@@ -74,6 +86,7 @@
                     <tr class="text-left text-gray-500">
                         <th class="px-6 py-4 font-medium whitespace-nowrap">ID</th>
                         <th class="px-6 py-4 font-medium whitespace-nowrap">STATUS</th>
+                        <th class="px-6 py-4 font-medium whitespace-nowrap">EMERGENCY</th>
                         <th class="px-6 py-4 font-medium whitespace-nowrap">TYPE</th>
                         <th class="px-6 py-4 font-medium whitespace-nowrap">NEXT VISIT</th>
                         <th class="px-6 py-4 font-medium whitespace-nowrap">CONSULTATION</th>
@@ -97,6 +110,24 @@
                                     {{ suivi.etat }}
                                 </span>
                             </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if suivi.emergencyLevel %}
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border 
+                                        {% if suivi.emergencyLevel == 'critical' %}bg-red-100 text-red-800 border-red-300
+                                        {% elseif suivi.emergencyLevel == 'high' %}bg-orange-100 text-orange-800 border-orange-300
+                                        {% elseif suivi.emergencyLevel == 'medium' %}bg-yellow-100 text-yellow-800 border-yellow-300
+                                        {% elseif suivi.emergencyLevel == 'low' %}bg-green-100 text-green-800 border-green-300
+                                        {% else %}bg-gray-100 text-gray-800 border-gray-300{% endif %}">
+                                        {% if suivi.emergencyLevel == 'critical' %}🔴 Critical
+                                        {% elseif suivi.emergencyLevel == 'high' %}🟠 High
+                                        {% elseif suivi.emergencyLevel == 'medium' %}🟡 Medium
+                                        {% elseif suivi.emergencyLevel == 'low' %}🟢 Low
+                                        {% endif %}
+                                    </span>
+                                {% else %}
+                                    <span class="text-gray-400 text-xs">Not analyzed</span>
+                                {% endif %}
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap text-gray-900">{{ suivi.type }}</td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 {% if suivi.prochaineVisite %}
@@ -108,7 +139,9 @@
                             <td class="px-6 py-4 whitespace-nowrap">
                                 {% if suivi.consultation %}
                                     <div class="flex flex-col">
-                                        <span class="font-medium text-gray-900">Consultation #{{ suivi.consultation.id }}</span>
+                                        <a href="/suivi/consultation/{{ suivi.consultation.id }}" class="font-medium text-blue-600 hover:text-blue-900 hover:underline">
+                                            Consultation #{{ suivi.consultation.id }}
+                                        </a>
                                         {% if suivi.consultation.dog %}
                                             <span class="text-sm text-gray-500">{{ suivi.consultation.dog.name }}</span>
                                         {% endif %}
@@ -141,7 +174,7 @@
                         {% endfor %}
                     {% else %}
                     <tr id="noResultsRow">
-                        <td colspan="7" class="px-6 py-8 text-center text-gray-500">No follow-ups found.</td>
+                        <td colspan="8" class="px-6 py-8 text-center text-gray-500">No follow-ups found.</td>
                     </tr>
                     {% endif %}
                 </tbody>
@@ -424,6 +457,120 @@ $(document).ready(function() {
                     '<tr><td colspan="7" class="px-6 py-8 text-center text-red-500">' +
                     'Sort Error: ' + error +
                     '</td></tr>'
+                ).show();
+            }
+        });
+    });
+
+    // Emergency level filter
+    $('#emergencyFilter').change(function() {
+        const level = $(this).val();
+        console.log('Filtering by emergency level:', level);
+        
+        $('#searchtab').html(
+            '<tr><td colspan="8" class="px-6 py-8 text-center text-gray-500">Loading...</td></tr>'
+        ).show();
+        $('#all').hide();
+        
+        $.ajax({
+            url: '/suivi/filter-by-emergency',
+            type: 'GET',
+            data: { level: level },
+            dataType: 'json',
+            success: function(data) {
+                console.log('Emergency filter success! Data:', data);
+                
+                if (data && data.length > 0) {
+                    let html = '';
+                    $.each(data, function(i, item) {
+                        // Classes CSS pour l'état
+                        let etatClass = 'bg-gray-100 text-gray-800';
+                        if (item.etat === 'Planifié') {
+                            etatClass = 'bg-yellow-100 text-yellow-800';
+                        } else if (item.etat === 'En cours') {
+                            etatClass = 'bg-blue-100 text-blue-800';
+                        } else if (item.etat === 'Terminé') {
+                            etatClass = 'bg-green-100 text-green-800';
+                        } else if (item.etat === 'Annulé') {
+                            etatClass = 'bg-red-100 text-red-800';
+                        }
+                        
+                        // Emergency level
+                        let emergencyHtml = '';
+                        if (item.emergency_level) {
+                            let emergencyClass = 'bg-gray-100 text-gray-800 border-gray-300';
+                            let emergencyDisplay = item.emergency_level;
+                            if (item.emergency_level === 'critical') {
+                                emergencyClass = 'bg-red-100 text-red-800 border-red-300';
+                                emergencyDisplay = '🔴 Critical';
+                            } else if (item.emergency_level === 'high') {
+                                emergencyClass = 'bg-orange-100 text-orange-800 border-orange-300';
+                                emergencyDisplay = '🟠 High';
+                            } else if (item.emergency_level === 'medium') {
+                                emergencyClass = 'bg-yellow-100 text-yellow-800 border-yellow-300';
+                                emergencyDisplay = '🟡 Medium';
+                            } else if (item.emergency_level === 'low') {
+                                emergencyClass = 'bg-green-100 text-green-800 border-green-300';
+                                emergencyDisplay = '🟢 Low';
+                            }
+                            
+                            emergencyHtml = `<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${emergencyClass}">${emergencyDisplay}</span>`;
+                        } else {
+                            emergencyHtml = '<span class="text-gray-400 text-xs">Not analyzed</span>';
+                        }
+                        
+                        html += `
+                            <tr id="suivi-${item.id}" class="text-gray-700 hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="font-bold text-gray-900">#${item.id}</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${etatClass}">
+                                        ${item.etat || 'N/A'}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    ${emergencyHtml}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-gray-900">${item.type || 'N/A'}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="${item.prochaine_visite ? 'font-medium text-blue-600' : 'text-gray-400'}">
+                                        ${item.prochaine_visite || 'Not scheduled'}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex flex-col">
+                                        <a href="/suivi/consultation/" + (item.consultation_id || '') + " class="font-medium text-blue-600 hover:text-blue-900 hover:underline">
+                                            Consultation #${item.consultation_id || 'N/A'}
+                                        </a>
+                                        <span class="text-sm text-gray-500">${item.dog_nom || ''}</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="text-gray-900 max-w-xs truncate" title="${item.recommandation || ''}">
+                                        ${item.recommandation ? (item.recommandation.length > 50 ? item.recommandation.substring(0, 50) + '...' : item.recommandation) : 'N/A'}
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex space-x-2">
+                                        <a href="/suivi/${item.id}/edit" class="text-blue-600 hover:text-blue-900">Edit</a>
+                                        <button type="button" class="text-red-600 hover:text-red-900 delete-suivi" data-id="${item.id}" data-type="${item.type || 'N/A'}">Delete</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    $('#searchtab').html(html).show();
+                } else {
+                    $('#searchtab').html(
+                        '<tr><td colspan="8" class="px-6 py-8 text-center text-gray-500">No results found</td></tr>'
+                    ).show();
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Emergency filter AJAX Error:', error);
+                $('#searchtab').html(
+                    '<tr><td colspan="8" class="px-6 py-8 text-center text-red-500">Error: ' + error + '</td></tr>'
                 ).show();
             }
         });

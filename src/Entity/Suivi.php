@@ -18,56 +18,124 @@ class Suivi
     #[Groups(['suivis'])]
     private ?int $id = null;
 
+    private ?string $aiAnalysisReport = null;
+    private ?array $affectedBodyParts = null;
+    private ?string $emergencyLevel = null;
+
     #[ORM\Column(name: 'etat', length: 50)]
     #[Groups(['suivis'])]
-    #[Assert\NotBlank(message: "L'état est requis")]
+    #[Assert\NotBlank(message: "L'etat est requis")]
     #[Assert\Length(
         min: 3,
         max: 50,
-        minMessage: "L'état doit contenir au moins {{ limit }} caractères",
-        maxMessage: "L'état ne peut pas dépasser {{ limit }} caractères"
+        minMessage: "L'etat doit contenir au moins {{ limit }} caracteres",
+        maxMessage: "L'etat ne peut pas depasser {{ limit }} caracteres"
     )]
     private ?string $etat = null;
 
     #[ORM\Column(name: 'recommandation', type: Types::TEXT)]
     #[Groups(['suivis'])]
-    #[Assert\NotBlank(message: "La recommandation est requise")]
+    #[Assert\NotBlank(message: 'La recommandation est requise')]
     #[Assert\Length(
         min: 10,
-        minMessage: "La recommandation doit contenir au moins {{ limit }} caractères"
+        minMessage: 'La recommandation doit contenir au moins {{ limit }} caracteres'
     )]
     private ?string $recommandation = null;
 
     #[ORM\Column(name: 'type', length: 255)]
     #[Groups(['suivis'])]
-    #[Assert\NotBlank(message: "Le type de suivi est requis")]
+    #[Assert\NotBlank(message: 'Le type de suivi est requis')]
     #[Assert\Length(
         min: 3,
         max: 255,
-        minMessage: "Le type doit contenir au moins {{ limit }} caractères",
-        maxMessage: "Le type ne peut pas dépasser {{ limit }} caractères"
+        minMessage: 'Le type doit contenir au moins {{ limit }} caracteres',
+        maxMessage: 'Le type ne peut pas depasser {{ limit }} caracteres'
     )]
     private ?string $type = null;
 
-    #[ORM\Column(name: 'prochaine_visite', type: Types::DATETIME_MUTABLE, nullable: false)] // CHANGÉ: nullable: true → nullable: false
+    #[ORM\Column(name: 'prochaine_visite', type: Types::DATETIME_MUTABLE, nullable: false)]
     #[Groups(['suivis'])]
-    #[Assert\NotBlank(message: "La date de prochaine visite est requise")] // AJOUTÉ
-    #[Assert\Type("\DateTimeInterface", message: "La date de prochaine visite doit être une date valide")]
-    #[Assert\GreaterThanOrEqual(
-        "today",
-        message: "La date de prochaine visite doit être aujourd'hui ou dans le futur"
-    )]
+    #[Assert\NotBlank(message: 'La date de prochaine visite est requise')]
+    #[Assert\Type('\DateTimeInterface', message: 'La date de prochaine visite doit etre une date valide')]
+    #[Assert\GreaterThanOrEqual('today', message: "La date de prochaine visite doit etre aujourd'hui ou dans le futur")]
     private ?\DateTimeInterface $prochaineVisite = null;
 
     #[ORM\ManyToOne(targetEntity: Consultation::class)]
     #[ORM\JoinColumn(name: 'consultation_id', nullable: false)]
     #[Groups(['suivis'])]
-    #[Assert\NotNull(message: "La consultation associée est requise")]
+    #[Assert\NotNull(message: 'La consultation associee est requise')]
     private ?Consultation $consultation = null;
 
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function getAiAnalysisReport(): ?string
+    {
+        return $this->aiAnalysisReport;
+    }
+
+    public function setAiAnalysisReport(?string $aiAnalysisReport): static
+    {
+        $this->aiAnalysisReport = $aiAnalysisReport;
+
+        return $this;
+    }
+
+    public function getAffectedBodyParts(): ?array
+    {
+        return $this->affectedBodyParts;
+    }
+
+    public function setAffectedBodyParts(?array $affectedBodyParts): static
+    {
+        $this->affectedBodyParts = $affectedBodyParts;
+
+        return $this;
+    }
+
+    public function getEmergencyLevel(): ?string
+    {
+        if ($this->emergencyLevel !== null && $this->emergencyLevel !== '') {
+            return strtolower($this->emergencyLevel);
+        }
+
+        $report = (string) ($this->aiAnalysisReport ?? '');
+        if (preg_match('/Predicted emergency:\s*(critical|high|medium|low)/i', $report, $matches) === 1) {
+            return strtolower($matches[1]);
+        }
+
+        return null;
+    }
+
+    public function setEmergencyLevel(?string $emergencyLevel): static
+    {
+        $this->emergencyLevel = $emergencyLevel !== null ? strtolower(trim($emergencyLevel)) : null;
+
+        return $this;
+    }
+
+    public function getEmergencyLevelDisplay(): string
+    {
+        return match ($this->getEmergencyLevel()) {
+            'critical' => 'Critical',
+            'high' => 'High',
+            'medium' => 'Medium',
+            'low' => 'Low',
+            default => 'Not analyzed',
+        };
+    }
+
+    public function getEmergencyLevelClass(): string
+    {
+        return match ($this->getEmergencyLevel()) {
+            'critical' => 'bg-red-100 text-red-800 border-red-300',
+            'high' => 'bg-orange-100 text-orange-800 border-orange-300',
+            'medium' => 'bg-yellow-100 text-yellow-800 border-yellow-300',
+            'low' => 'bg-green-100 text-green-800 border-green-300',
+            default => 'bg-gray-100 text-gray-800 border-gray-300',
+        };
     }
 
     public function getEtat(): ?string
@@ -130,16 +198,24 @@ class Suivi
         return $this;
     }
 
-    // Méthode pour obtenir le nom du chien (utile pour l'affichage)
     public function getChienNom(): ?string
     {
         if ($this->consultation) {
-            // Consultation provides getDog()/getChien() — prefer dog API
-            $dog = method_exists($this->consultation, 'getDog') ? $this->consultation->getDog() : $this->consultation->getDog();
+            $dog = method_exists($this->consultation, 'getDog')
+                ? $this->consultation->getDog()
+                : $this->consultation->getChien();
+
             if ($dog) {
-                return method_exists($dog, 'getName') ? $dog->getName() : (method_exists($dog, 'getNom') ? $dog->getName() : null);
+                if (method_exists($dog, 'getName')) {
+                    return $dog->getName();
+                }
+
+                if (method_exists($dog, 'getNom')) {
+                    return $dog->getName();
+                }
             }
         }
+
         return null;
     }
 

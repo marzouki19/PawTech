@@ -1,6 +1,9 @@
 <?php
+
 namespace App\Entity;
+
 use App\Repository\ConsultationRepository;
+use App\Entity\Dogs;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
@@ -19,6 +22,10 @@ class Consultation
     #[Groups(['consultation'])]
     #[Assert\NotBlank(message: "Date is required")]
     #[Assert\Type("\DateTimeInterface", message: "The value {{ value }} is not a valid date.")]
+    #[Assert\GreaterThanOrEqual(
+        "today",
+        message: "The date cannot be in the past. Please select today or a future date."
+    )]
     private ?\DateTimeImmutable $date = null;
 
     #[ORM\Column(length: 50)]
@@ -46,15 +53,15 @@ class Consultation
     private ?string $traitement = null;
 
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'consultations')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', nullable: false)]
     #[Groups(['consultation'])]
     #[Assert\NotNull(message: "User is required")]
     private ?User $user = null;
 
     #[ORM\ManyToOne(targetEntity: Dogs::class, inversedBy: 'consultations')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(name: 'dog_id', referencedColumnName: 'id', nullable: false)]
     #[Assert\NotNull(message: "Dog is required")]
-    private ?Dogs $dog = null;
+    private ?Dogs $chien = null;
 
     public function getId(): ?int
     {
@@ -69,7 +76,6 @@ class Consultation
     public function setDate(?\DateTimeImmutable $date): static
     {
         $this->date = $date;
-
         return $this;
     }
 
@@ -78,11 +84,9 @@ class Consultation
         return $this->type;
     }
 
-    // CORRECTION: Accepter null
     public function setType(?string $type): static
     {
         $this->type = $type;
-
         return $this;
     }
 
@@ -91,11 +95,9 @@ class Consultation
         return $this->diagnostic;
     }
 
-    // CORRECTION: Accepter null
     public function setDiagnostic(?string $diagnostic): static
     {
         $this->diagnostic = $diagnostic;
-
         return $this;
     }
 
@@ -107,7 +109,6 @@ class Consultation
     public function setTraitement(?string $traitement): static
     {
         $this->traitement = $traitement;
-
         return $this;
     }
 
@@ -119,19 +120,34 @@ class Consultation
     public function setUser(?User $user): static
     {
         $this->user = $user;
-
         return $this;
     }
 
+    public function getChien(): ?Dogs
+    {
+        return $this->chien;
+    }
+
+    public function setChien(?Dogs $chien): static
+    {
+        $this->chien = $chien;
+        return $this;
+    }
+
+    // Alias methods for templates expecting 'dog' naming
     public function getDog(): ?Dogs
     {
-        return $this->dog;
+        return $this->chien;
     }
 
     public function setDog(?Dogs $dog): static
     {
-        $this->dog = $dog;
-
+        $this->chien = $dog;
         return $this;
+    }
+
+    public function dog(): ?Dogs
+    {
+        return $this->chien;
     }
 }

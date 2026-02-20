@@ -5,6 +5,8 @@ namespace App\Controller;
 use App\Form\DonationType;
 use App\Entity\User;
 use App\Entity\Donation;
+use App\Repository\DogsRepository;
+use App\Repository\EvenementRepository;
 use App\Repository\UserRepository;
 use App\Repository\ProduitRepository;
 use App\Repository\CategorieRepository;
@@ -24,9 +26,15 @@ final class PageController extends AbstractController
 {
     #[Route('/', name: 'app_home', methods: ['GET'])]
     #[Route('/home', name: 'app_home_alias', methods: ['GET'])]
-    public function home(): Response
+    public function home(DogsRepository $dogsRepository, EvenementRepository $evenementRepository): Response
     {
-        return $this->render('pages/home.html.twig');
+        $dogs = array_slice($dogsRepository->filterDogs('Available', null, null), 0, 4);
+        $events = $evenementRepository->findUpcomingEvents(3);
+
+        return $this->render('pages/home.html.twig', [
+            'dogs' => $dogs,
+            'events' => $events,
+        ]);
     }
 
 

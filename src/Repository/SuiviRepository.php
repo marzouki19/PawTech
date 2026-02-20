@@ -30,7 +30,7 @@ class SuiviRepository extends ServiceEntityRepository
     }
 
     /**
-     * Recherche les suivis par état exact
+     * Recherche les suivis par etat exact
      */
     public function findByEtat(string $etat): array
     {
@@ -44,7 +44,7 @@ class SuiviRepository extends ServiceEntityRepository
     }
 
     /**
-     * Retourne tous les suivis ordonnés par prochaine visite décroissante
+     * Retourne tous les suivis ordonnes par prochaine visite decroissante
      */
     public function findAllOrdered(): array
     {
@@ -58,11 +58,11 @@ class SuiviRepository extends ServiceEntityRepository
     /**
      * Compter les suivis du mois en cours
      */
-    public function countThisMonth(\DateTimeInterface $startOfMonth): int
+    public function countThisMonth(\DateTime $startOfMonth): int
     {
         $endOfMonth = clone $startOfMonth;
         $endOfMonth->modify('last day of this month')->setTime(23, 59, 59);
-        
+
         return $this->createQueryBuilder('s')
             ->select('COUNT(s.id)')
             ->where('s.prochaineVisite BETWEEN :start AND :end')
@@ -73,7 +73,7 @@ class SuiviRepository extends ServiceEntityRepository
     }
 
     /**
-     * Compter les suivis par état
+     * Compter les suivis par etat
      */
     public function countByEtat(string $etat): int
     {
@@ -86,45 +86,57 @@ class SuiviRepository extends ServiceEntityRepository
     }
 
     /**
-     * Calculer le taux de complétion
+     * Calculer le taux de completion
      */
     public function getCompletionRate(): int
     {
         $total = $this->count([]);
-        
+
         if ($total === 0) {
             return 0;
         }
-        
+
         $completed = $this->createQueryBuilder('s')
             ->select('COUNT(s.id)')
             ->where('s.etat = :etat')
-            ->setParameter('etat', 'Terminé')
+            ->setParameter('etat', 'Termin�')
             ->getQuery()
             ->getSingleScalarResult();
-        
+
         return (int) round(($completed / $total) * 100);
     }
 
     /**
-     * Trouver les suivis à venir
+     * Trouver les suivis a venir
      */
     public function findUpcoming(int $limit = 5): array
     {
         $now = new \DateTime();
-        
+
         return $this->createQueryBuilder('s')
             ->where('s.prochaineVisite >= :now')
             ->andWhere('s.etat IN (:etats)')
             ->setParameter('now', $now)
-            ->setParameter('etats', ['Planifié', 'En cours'])
+            ->setParameter('etats', ['Planifi�', 'Planifie', 'En cours'])
             ->orderBy('s.prochaineVisite', 'ASC')
             ->setMaxResults($limit)
             ->getQuery()
             ->getResult();
     }
 
-    // Méthodes de sauvegarde
+    /**
+     * Recherche les suivis par niveau d'urgence (filtre en PHP via getter)
+     */
+    public function findByEmergencyLevel(string $emergencyLevel): array
+    {
+        $target = strtolower(trim($emergencyLevel));
+        $all = $this->findAll();
+
+        return array_values(array_filter($all, static function (Suivi $suivi) use ($target): bool {
+            return strtolower((string) ($suivi->getEmergencyLevel() ?? '')) === $target;
+        }));
+    }
+
     public function save(Suivi $entity, bool $flush = false): void
     {
         $this->getEntityManager()->persist($entity);
@@ -143,3 +155,4 @@ class SuiviRepository extends ServiceEntityRepository
         }
     }
 }
+
