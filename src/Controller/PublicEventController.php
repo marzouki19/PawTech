@@ -8,9 +8,11 @@ use App\Entity\User;
 use App\Repository\EvenementRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
  * PublicEventController - Public-facing event pages
@@ -164,5 +166,117 @@ final class PublicEventController extends AbstractController
             'formData' => $formData,
             'eventPassed' => $eventPassed,
         ]);
+    }
+
+    /**
+     * Event Recommendation Endpoint - Uses KNN Algorithm via Python API
+     * Part of "Métier Avancé" - AI-powered event recommendations
+     */
+    #[Route('/recommend', name: 'app_event_recommend', methods: ['POST'])]
+    public function recommendEvents(
+        Request $request,
+        EvenementRepository $evenementRepository,
+        HttpClientInterface $httpClient
+    ): JsonResponse {
+        $payload = json_decode($request->getContent(), true);
+        
+        if (!is_array($payload)) {
+            return new JsonResponse([
+                'ok' => false,
+                'message' => 'Invalid JSON payload'
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        $userPreferences = $payload['user_preferences'] ?? [];
+
+        // Get all active upcoming events
+        $events = $evenementRepository->findActiveWithFilters(null, null, null);
+        
+        if (empty($events)) {
+            return new JsonResponse([
+                'ok' => true,
+                'recommendations' => [],
+                'events' => [],
+                'message' => 'No upcoming events available'
+            ]);
+        }
+
+        // Prepare events data for the Python API
+        $eventsData = [];
+        foreach ($events as $event) {
+            $eventsData[] = [
+                'id' => $event->getId(),
+                'type' => $event->getType(),
+                'ville' => $event->getVille(),
+                'date_debut' => $event->getDateDebut()->format('Y-m-d'),
+                'capacite_max' => $event->getCapaciteMax(),
+                'current_participants' => $event->getParticipations()->count(),
+            ];
+        }
+
+        try {
+            // Call Python KNN API
+            $apiResponse = $httpClient->request('POST', 'http://127.0.0.1:8003/recommend', [
+                'json' => [
+                    'user_preferences' => $userPreferences,
+                    'events' => $eventsData,
+                    'top_n' => 6,
+                ],
+                'timeout' => 10,
+            ]);
+
+            $statusCode = $apiResponse->getStatusCode();
+            $apiData = $apiResponse->toArray(false);
+
+            if ($statusCode >= 400 || !($apiData['ok'] ?? false)) {
+                return new JsonResponse([
+                    'ok' => false,
+                    'message' => 'Recommendation API error',
+                    'api_response' => $apiData,
+                ], $statusCode >= 400 ? $statusCode : Response::HTTP_BAD_GATEWAY);
+            }
+
+            $recommendedIds = $apiData['recommendations'] ?? [];
+            $scores = $apiData['scores'] ?? [];
+
+            // Fetch recommended events in order
+            $recommendedEvents = [];
+            foreach ($recommendedIds as $index => $id) {
+                foreach ($events as $event) {
+                    if ($event->getId() === (int)$id) {
+                        $recommendedEvents[] = [
+                            'id' => $event->getId(),
+                            'titre' => $event->getTitre(),
+                            'type' => $event->getType(),
+                            'ville' => $event->getVille(),
+                            'lieu' => $event->getLieu(),
+                            'date_debut' => $event->getDateDebut()->format('M d, Y'),
+                            'date_debut_raw' => $event->getDateDebut()->format('Y-m-d'),
+                            'description' => substr($event->getDescription() ?? '', 0, 100) . '...',
+                            'image' => $event->getImage(),
+                            'capacite_max' => $event->getCapaciteMax(),
+                            'current_participants' => $event->getParticipations()->count(),
+                            'score' => $scores[$index] ?? 0,
+                        ];
+                        break;
+                    }
+                }
+            }
+
+            return new JsonResponse([
+                'ok' => true,
+                'recommendations' => $recommendedIds,
+                'events' => $recommendedEvents,
+                'algorithm' => 'KNN',
+                'scores' => $scores,
+            ]);
+
+        } catch (\Throwable $e) {
+            return new JsonResponse([
+                'ok' => false,
+                'message' => 'Failed to connect to recommendation API. Make sure the Python server is running.',
+                'error' => $e->getMessage(),
+            ], Response::HTTP_BAD_GATEWAY);
+        }
     }
 }
