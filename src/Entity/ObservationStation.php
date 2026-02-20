@@ -82,11 +82,18 @@ class ObservationStation
     #[ORM\OneToMany(targetEntity: IpCamera::class, mappedBy: 'station', orphanRemoval: true)]
     private Collection $cameras;
 
+    /**
+     * @var Collection<int, IoTDevice>
+     */
+    #[ORM\OneToMany(targetEntity: IoTDevice::class, mappedBy: 'station', orphanRemoval: true)]
+    private Collection $iotDevices;
+
     public function __construct()
     {
         $this->alerts = new ArrayCollection();
         $this->iotData = new ArrayCollection();
         $this->cameras = new ArrayCollection();
+        $this->iotDevices = new ArrayCollection();
     }
 
     public function getId(): ?int

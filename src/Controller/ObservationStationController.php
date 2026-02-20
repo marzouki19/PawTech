@@ -6,12 +6,15 @@ use App\Entity\Alert;
 use App\Entity\ObservationStation;
 use App\Entity\IpCamera;
 use App\Entity\IoTData;
+use App\Entity\IoTDevice;
 use App\Entity\DogDetection;
+use App\Form\IoTDeviceType;
 use App\Form\ObservationStationType;
 use App\Form\IpCameraType;
 use App\Repository\ObservationStationRepository;
 use App\Repository\IpCameraRepository;
 use App\Repository\IoTDataRepository;
+use App\Repository\IoTDeviceRepository;
 use App\Repository\DogDetectionRepository;
 use App\Repository\StatisticsRepository;
 use App\Service\StreamTranscoderService;
@@ -131,11 +134,15 @@ final class ObservationStationController extends AbstractController
         ObservationStation $station,
         IpCameraRepository $cameraRepo,
         IoTDataRepository $iotRepo,
+        IoTDeviceRepository $iotDeviceRepo,
         DogDetectionRepository $detectionRepo
     ): Response
     {
         // Get cameras for this station
         $cameras = $cameraRepo->findByStationId($station->getId());
+        
+        // Get IoT devices for this station
+        $iotDevices = $iotDeviceRepo->findByStationId($station->getId());
         
         // Get latest IoT data (last 20 readings)
         $latestIotData = $iotRepo->findLatestByStation($station, 20);
@@ -181,6 +188,7 @@ final class ObservationStationController extends AbstractController
             'stationLat' => $lat,
             'stationLng' => $lng,
             'cameras' => $cameras,
+            'iotDevices' => $iotDevices,
             'latestIotData' => $latestIotData,
             'iotDataForCharts' => $iotDataForCharts,
             'detections' => array_slice($detections, 0, 20),
@@ -695,5 +703,185 @@ final class ObservationStationController extends AbstractController
             'camera' => $camera->getName(),
             'action' => $action
         ]);
+    }
+
+    // ============ IoT DEVICE MANAGEMENT ============
+    
+    /**
+     * List all IoT devices for a station (HTML)
+     */
+    #[Route('/{id}/iot', name: 'app_admin_station_iot_devices', methods: ['GET'], requirements: ['id' => '\d+'])]
+    public function stationIoTDevices(
+        ObservationStation $station,
+        IoTDeviceRepository $deviceRepo
+    ): Response {
+        $devices = $deviceRepo->findByStationId($station->getId());
+        
+        return $this->render('observation_station/iot_devices.html.twig', [
+            'station' => $station,
+            'devices' => $devices,
+            'active' => 'station',
+            'page_title' => 'IoT Devices: ' . $station->getCode(),
+        ]);
+    }
+
+    /**
+     * Add new IoT device to a station
+     */
+    #[Route('/{id}/iot/new', name: 'app_admin_station_iot_new', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
+    public function newIoTDevice(
+        Request $request,
+        ObservationStation $station,
+        EntityManagerInterface $entityManager
+    ): Response {
+        $device = new IoTDevice();
+        $device->setStation($station);
+        $device->setStatus('inactive');
+        $device->setDeviceId(uniqid('IOT_'));
+        
+        $form = $this->createForm(IoTDeviceType::class, $device);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->persist($device);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'IoT device added successfully');
+            return $this->redirectToRoute('app_admin_station_iot_devices', ['id' => $station->getId()], Response::HTTP_SEE_OTHER);
+        }
+
+        return $this->render('observation_station/iot_device_form.html.twig', [
+            'device' => $device,
+            'station' => $station,
+            'form' => $form,
+            'active' => 'station',
+            'page_title' => 'Add IoT Device to ' . $station->getCode(),
+        ]);
+    }
+
+    /**
+     * Edit an IoT device
+     */
+    #[Route('/{stationId}/iot/{deviceId}/edit', name: 'app_admin_station_iot_edit', methods: ['GET', 'POST'], requirements: ['stationId' => '\d+', 'deviceId' => '\d+'])]
+    public function editIoTDevice(
+        Request $request,
+        int $stationId,
+        int $deviceId,
+        EntityManagerInterface $entityManager,
+        IoTDeviceRepository $deviceRepo
+    ): Response {
+        $device = $deviceRepo->find($deviceId);
+        
+        if (!$device || $device->getStation()->getId() != $stationId) {
+            throw $this->createNotFoundException('IoT device not found');
+        }
+        
+        $station = $device->getStation();
+        
+        $form = $this->createForm(IoTDeviceType::class, $device);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $device->setUpdatedAt(new \DateTime());
+            $entityManager->flush();
+
+            $this->addFlash('success', 'IoT device updated successfully');
+            return $this->redirectToRoute('app_admin_station_iot_devices', ['id' => $stationId], Response::HTTP_SEE_OTHER);
+        }
+
+        return $this->render('observation_station/iot_device_form.html.twig', [
+            'device' => $device,
+            'station' => $station,
+            'form' => $form,
+            'active' => 'station',
+            'page_title' => 'Edit IoT Device: ' . $device->getName(),
+        ]);
+    }
+
+    /**
+     * Delete an IoT device
+     */
+    #[Route('/{stationId}/iot/{deviceId}/delete', name: 'app_admin_station_iot_delete', methods: ['POST'], requirements: ['stationId' => '\d+', 'deviceId' => '\d+'])]
+    public function deleteIoTDevice(
+        Request $request,
+        int $stationId,
+        int $deviceId,
+        EntityManagerInterface $entityManager,
+        IoTDeviceRepository $deviceRepo
+    ): Response {
+        $device = $deviceRepo->find($deviceId);
+        
+        if (!$device || $device->getStation()->getId() != $stationId) {
+            throw $this->createNotFoundException('IoT device not found');
+        }
+        
+        if ($this->isCsrfTokenValid('delete_iot_device'.$deviceId, $request->getPayload()->getString('_token'))) {
+            $entityManager->remove($device);
+            $entityManager->flush();
+            $this->addFlash('success', 'IoT device deleted successfully');
+        }
+
+        return $this->redirectToRoute('app_admin_station_iot_devices', ['id' => $stationId], Response::HTTP_SEE_OTHER);
+    }
+
+    // ============ CAMERA MANAGEMENT (Extended CRUD) ============
+
+    /**
+     * Edit a camera
+     */
+    #[Route('/{stationId}/cameras/{id}/edit', name: 'app_admin_station_camera_edit', methods: ['GET', 'POST'], requirements: ['stationId' => '\d+', 'id' => '\d+'])]
+    public function editStationCamera(
+        Request $request,
+        int $stationId,
+        IpCamera $camera,
+        EntityManagerInterface $entityManager,
+        ObservationStationRepository $stationRepo
+    ): Response {
+        $station = $stationRepo->find($stationId);
+        if (!$station) {
+            throw $this->createNotFoundException('Station not found');
+        }
+        
+        $form = $this->createForm(IpCameraType::class, $camera);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $camera->setUpdatedAt(new \DateTime());
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Camera updated successfully');
+            return $this->redirectToRoute('app_admin_station_cameras', ['id' => $stationId], Response::HTTP_SEE_OTHER);
+        }
+
+        return $this->render('observation_station/camera_edit.html.twig', [
+            'camera' => $camera,
+            'station' => $station,
+            'form' => $form,
+            'active' => 'station',
+            'page_title' => 'Edit Camera: ' . $camera->getName(),
+        ]);
+    }
+
+    /**
+     * Delete a camera
+     */
+    #[Route('/{stationId}/cameras/{id}/delete', name: 'app_admin_station_camera_delete', methods: ['POST'], requirements: ['stationId' => '\d+', 'id' => '\d+'])]
+    public function deleteStationCamera(
+        Request $request,
+        int $stationId,
+        IpCamera $camera,
+        EntityManagerInterface $entityManager
+    ): Response {
+        if ($camera->getStation()->getId() != $stationId) {
+            throw $this->createNotFoundException('Camera not found for this station');
+        }
+        
+        if ($this->isCsrfTokenValid('delete_camera'.$camera->getId(), $request->getPayload()->getString('_token'))) {
+            $entityManager->remove($camera);
+            $entityManager->flush();
+            $this->addFlash('success', 'Camera deleted successfully');
+        }
+
+        return $this->redirectToRoute('app_admin_station_cameras', ['id' => $stationId], Response::HTTP_SEE_OTHER);
     }
 }

@@ -1,227 +1,383 @@
 // ======================================================
-// ESP32 DHT11 -> Symfony API Test (DHT11-only mode ready)
-// FIXED: Added heartbeat/keepalive for long-running connections
+// ESP32 DHT11 -> Symfony API (Dynamic Configuration)
+// VERSION 3.0 - Fully Universal Station-Agnostic
+// This code works with ANY observation station - just configure
+// the device ID in the admin panel and the ESP32 will automatically
+// fetch its station configuration from the server.
 // ======================================================
 
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <DHT.h>
 
-// ---------------- WIFI ----------------
-const char* WIFI_SSID = "Airbox-10B3";
-const char* WIFI_PASSWORD = "6D4iNNyYy6NZ";
+// ---------------- CONFIGURATION ----------------
+// EDIT THESE VALUES FOR YOUR SETUP:
+// 1. Set your WiFi credentials
+// 2. Set a unique DEVICE_ID (you'll create this device in the admin panel)
+// 3. Set the initial API_SERVER (will be overridden by server config)
 
-// IMPORTANT: this must be your laptop LAN IP (never 127.0.0.1)
+// WiFi Configuration
+const char* WIFI_SSID = "YOUR_WIFI_SSID";        // Change to your WiFi name
+const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";  // Change to your WiFi password
+
+// API Server (initial server - will be overridden by server config)
 const char* API_SERVER = "http://192.168.1.117:8000";
-const char* PRIMARY_API_ENDPOINT = "/admin/api/iot/data";
-const char* SECONDARY_API_ENDPOINT = "/admin/stations/api/iot/data";
 
-// DHT11 test mode sends only temperature + humidity + device metadata
-const bool DHT11_ONLY_TEST_MODE = true;
+// DEVICE ID - This is the KEY setting!
+// Create a device in the admin panel with this exact ID:
+// 1. Go to Station Dashboard -> IoT Devices -> Add Device
+// 2. Set Device ID to match this value
+// 3. The ESP32 will automatically fetch its station configuration
+const char* DEVICE_ID = "ESP32_001";  // Change to your unique device ID
 
-const char* STATION_CODE = "123456";  // Station ID 79 has code 123456
-const char* DEVICE_ID = "ESP32-DHT-TEST";
-const char* FIRMWARE_VERSION = "1.1.2";  // Updated version with heartbeat
+// API Endpoints - Universal Station-Agnostic
+// These endpoints don't require station ID - they use device ID instead
+const char* UNIVERSAL_CONFIG_ENDPOINT = "/admin/stations/iot/config/";
+const char* UNIVERSAL_DATA_ENDPOINT = "/admin/stations/iot/data";
+const char* UNIVERSAL_HEARTBEAT_ENDPOINT = "/admin/stations/iot/heartbeat/";
+
+// Legacy endpoints (for backward compatibility)
+const char* LEGACY_CONFIG_ENDPOINT = "/admin/stations/%d/iot/config/";
+const char* LEGACY_DATA_ENDPOINT = "/admin/api/iot/data";
+const char* LEGACY_HEARTBEAT_ENDPOINT = "/admin/stations/%d/iot/heartbeat/";
 
 // ---------------- DHT ----------------
-// DHT11 Data pin connected to GPIO4
-// IMPORTANT: Add 4.7kΩ pull-up resistor between GPIO4 and 3.3V
 #define DHTPIN 4
 #define DHTTYPE DHT11
 
 DHT dht(DHTPIN, DHTTYPE);
 
+// ---------------- DYNAMIC CONFIG ----------------
+// Default values - will be overridden by server config
+struct DeviceConfig {
+    int stationId = 0;  // Will be set by server
+    String stationCode = "";  // Will be set by server
+    String apiServer = "http://192.168.1.117:8000";
+    String apiEndpoint = "/admin/api/iot/data";
+    int reportingInterval = 30;    // seconds
+    int heartbeatInterval = 60;    // seconds
+    bool configured = false;
+    String wifiSsid = "";  // WiFi from server config
+    String wifiPassword = "";  // WiFi password from server config
+};
+
+DeviceConfig deviceConfig;
+
 // ---------------- STATE ----------------
 bool wifiConnected = false;
 bool hasValidReading = false;
+bool configLoaded = false;
 
 unsigned long lastSend = 0;
 unsigned long lastHeartbeat = 0;
-const unsigned long SEND_INTERVAL_MS = 10000;      // Send sensor data every 10 seconds
-const unsigned long HEARTBEAT_INTERVAL_MS = 30000; // Send heartbeat every 30 seconds
-const unsigned long RECONNECT_DELAY_MS = 5000;     // Wait 5 seconds before reconnecting
+unsigned long lastConfigFetch = 0;
+
+const unsigned long CONFIG_REFRESH_INTERVAL_MS = 3600000;  // Refresh config every hour
+const unsigned long RECONNECT_DELAY_MS = 5000;
 
 float temperature = 0.0f;
 float humidity = 0.0f;
 
-// Connection retry counter
 int connectionRetries = 0;
 const int MAX_RETRIES = 3;
 
 // ======================================================
-
-void setup()
-{
+// SETUP
+// ======================================================
+void setup() {
     Serial.begin(115200);
-    delay(1000);
-
     Serial.println();
-    Serial.println("======================================");
-    Serial.println("ESP32 DHT11 API TEST v1.1.1");
-    Serial.println("======================================");
-    Serial.print("DHT Pin: GPIO");
-    Serial.println(DHTPIN);
-    Serial.print("Sensor Type: ");
-    Serial.println(DHTTYPE == DHT11 ? "DHT11" : "DHT22/AM2302");
-    Serial.print("API server: ");
-    Serial.println(API_SERVER);
-    Serial.print("Primary endpoint: ");
-    Serial.println(PRIMARY_API_ENDPOINT);
-    Serial.print("Secondary endpoint: ");
-    Serial.println(SECONDARY_API_ENDPOINT);
-    Serial.print("DHT11-only mode: ");
-    Serial.println(DHT11_ONLY_TEST_MODE ? "ON" : "OFF");
-
-    if (String(API_SERVER).indexOf("127.0.0.1") >= 0 || String(API_SERVER).indexOf("localhost") >= 0) {
-        Serial.println("WARNING: API_SERVER cannot use localhost for ESP32. Use your computer LAN IP.");
-    }
-
-    // Initialize DHT sensor with increased timeout for stability
+    Serial.println("=== ESP32 Dynamic Config v2.0 ===");
+    Serial.print("Device ID: ");
+    Serial.println(DEVICE_ID);
+    
     dht.begin();
-    delay(500);  // Give sensor time to initialize
+    delay(1000);
     
-    // Test sensor immediately
-    Serial.println("Testing DHT11 sensor...");
-    float testH = dht.readHumidity();
-    float testT = dht.readTemperature();
-    if (isnan(testH) || isnan(testT)) {
-        Serial.println("WARNING: Initial DHT11 read failed!");
-        Serial.println("Check wiring and pull-up resistor.");
-    } else {
-        Serial.println("DHT11 sensor initialized successfully!");
-    }
+    // Initial config fetch
+    fetchDeviceConfig();
     
-    setupWiFi();
-    connectWiFi();
+    // Connect to WiFi
+    connectToWiFi();
 }
 
 // ======================================================
-
-void loop()
-{
-    readDHT();
-
-    // Send sensor data every 10 seconds
-    if (millis() - lastSend > SEND_INTERVAL_MS)
-    {
+// MAIN LOOP
+// ======================================================
+void loop() {
+    // Ensure WiFi is connected
+    if (!ensureWiFiConnected()) {
+        delay(1000);
+        return;
+    }
+    
+    // Periodically refresh config from server
+    if (millis() - lastConfigFetch > CONFIG_REFRESH_INTERVAL_MS) {
+        fetchDeviceConfig();
+        lastConfigFetch = millis();
+    }
+    
+    // Read sensor
+    readDHTSensor();
+    
+    // Send data at configured interval
+    unsigned long sendInterval = deviceConfig.reportingInterval * 1000;
+    if (hasValidReading && millis() - lastSend > sendInterval) {
+        sendSensorData();
         lastSend = millis();
-        sendToServer();
     }
-
-    // Send heartbeat every 30 seconds to keep connection alive
-    if (millis() - lastHeartbeat > HEARTBEAT_INTERVAL_MS)
-    {
-        lastHeartbeat = millis();
+    
+    // Send heartbeat at configured interval
+    unsigned long heartbeatInterval = deviceConfig.heartbeatInterval * 1000;
+    if (millis() - lastHeartbeat > heartbeatInterval) {
         sendHeartbeat();
+        lastHeartbeat = millis();
     }
-
-    // Periodic WiFi health check
-    ensureWiFiConnected();
-
+    
     delay(100);
 }
 
 // ======================================================
 // WIFI
 // ======================================================
-
-void setupWiFi()
-{
-    WiFi.mode(WIFI_STA);
-    WiFi.setAutoReconnect(true);
-    WiFi.setSleep(false); // improves stream/reporting stability on ESP32
-}
-
-void connectWiFi()
-{
-    if (WiFi.status() == WL_CONNECTED) {
-        wifiConnected = true;
-        return;
-    }
-
-    Serial.print("Connecting to WiFi ");
-    Serial.print(WIFI_SSID);
-    Serial.print(" ");
-
+void connectToWiFi() {
+    Serial.print("Connecting to WiFi: ");
+    Serial.println(WIFI_SSID);
+    
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-
+    
     int attempts = 0;
-    while (WiFi.status() != WL_CONNECTED && attempts < 30)
-    {
+    while (WiFi.status() != WL_CONNECTED && attempts < 20) {
         delay(500);
         Serial.print(".");
         attempts++;
     }
-
-    if (WiFi.status() == WL_CONNECTED)
-    {
-        wifiConnected = true;
-        Serial.println();
-        Serial.println("WiFi connected.");
-        Serial.print("ESP32 IP: ");
-        Serial.println(WiFi.localIP());
-        Serial.print("RSSI: ");
-        Serial.println(WiFi.RSSI());
-    }
-    else
-    {
-        wifiConnected = false;
-        Serial.println();
-        Serial.println("WiFi connection failed.");
-    }
-}
-
-bool ensureWiFiConnected()
-{
+    
     if (WiFi.status() == WL_CONNECTED) {
         wifiConnected = true;
-        return true;
+        Serial.println();
+        Serial.print("WiFi Connected! IP: ");
+        Serial.println(WiFi.localIP());
+    } else {
+        Serial.println();
+        Serial.println("WiFi connection failed!");
+        wifiConnected = false;
     }
+}
 
-    wifiConnected = false;
-    connectWiFi();
-    return wifiConnected;
+bool ensureWiFiConnected() {
+    if (WiFi.status() != WL_CONNECTED) {
+        Serial.println("WiFi lost, reconnecting...");
+        connectToWiFi();
+        return WiFi.status() == WL_CONNECTED;
+    }
+    return true;
 }
 
 // ======================================================
-// READ SENSOR
+// CONFIG FETCH - Universal Station-Agnostic
 // ======================================================
-
-void readDHT()
-{
-    static unsigned long lastRead = 0;
-
-    if (millis() - lastRead < 2500)  // Increased to 2.5s for DHT11 stability
+void fetchDeviceConfig() {
+    if (!ensureWiFiConnected()) {
+        Serial.println("Cannot fetch config: WiFi not connected");
         return;
+    }
+    
+    HTTPClient http;
+    
+    // Use universal endpoint that fetches config by device ID
+    // This makes the ESP32 work with ANY station
+    String url = String(API_SERVER) + String(UNIVERSAL_CONFIG_ENDPOINT) + String(DEVICE_ID);
+    
+    Serial.print("Fetching config from: ");
+    Serial.println(url);
+    
+    http.setConnectTimeout(5000);
+    http.setTimeout(10000);
+    
+    if (!http.begin(url)) {
+        Serial.println("http.begin failed for config");
+        return;
+    }
+    
+    int code = http.GET();
+    
+    if (code == 200) {
+        String response = http.getString();
+        Serial.println("Config response:");
+        Serial.println(response);
+        
+        // Parse JSON response
+        parseConfig(response);
+        configLoaded = true;
+        
+        Serial.println("Config loaded successfully!");
+        Serial.print("Station ID: ");
+        Serial.println(deviceConfig.stationId);
+        Serial.print("Station Code: ");
+        Serial.println(deviceConfig.stationCode);
+        Serial.print("API Server: ");
+        Serial.println(deviceConfig.apiServer);
+        Serial.print("Reporting Interval: ");
+        Serial.println(deviceConfig.reportingInterval);
+        
+        // If server provided WiFi config, use it
+        if (deviceConfig.wifiSsid.length() > 0) {
+            Serial.print("Server provided WiFi config, reconnecting...");
+            reconnectWithNewWiFi();
+        }
+    } else if (code == 404) {
+        Serial.println("Device not found in admin panel!");
+        Serial.println("Please create a device with ID: ");
+        Serial.println(DEVICE_ID);
+        Serial.println("in the admin panel first.");
+    } else {
+        Serial.print("Config fetch failed: ");
+        Serial.println(code);
+        Serial.println(http.getString());
+    }
+    
+    http.end();
+}
 
-    lastRead = millis();
+void reconnectWithNewWiFi() {
+    // Switch to WiFi config from server if available
+    if (deviceConfig.wifiSsid.length() > 0) {
+        Serial.print("Connecting to server-provided WiFi: ");
+        Serial.println(deviceConfig.wifiSsid);
+        
+        WiFi.disconnect();
+        delay(100);
+        
+        WiFi.begin(deviceConfig.wifiSsid.c_str(), deviceConfig.wifiPassword.c_str());
+        
+        int attempts = 0;
+        while (WiFi.status() != WL_CONNECTED && attempts < 20) {
+            delay(500);
+            Serial.print(".");
+            attempts++;
+        }
+        
+        if (WiFi.status() == WL_CONNECTED) {
+            Serial.println();
+            Serial.print("Connected to new WiFi! IP: ");
+            Serial.println(WiFi.localIP());
+        }
+    }
+}
 
-    // First read attempt - sometimes first read fails
-    float h = dht.readHumidity(false);  // forceRead = false
+void parseConfig(String json) {
+    // Simple JSON parsing (for limited memory devices)
+    // In production, consider using ArduinoJSON library
+    
+    // Extract station_id
+    int idPos = json.indexOf("\"station_id\":");
+    if (idPos > 0) {
+        int valueStart = json.indexOf(":", idPos) + 1;
+        int valueEnd = json.indexOf(",", valueStart);
+        if (valueEnd < 0) valueEnd = json.indexOf("}", valueStart);
+        String val = json.substring(valueStart, valueEnd);
+        val.trim();
+        deviceConfig.stationId = val.toInt();
+    }
+    
+    // Extract station_code
+    int codePos = json.indexOf("\"station_code\":");
+    if (codePos > 0) {
+        int valueStart = json.indexOf("\"", codePos + 14) + 1;
+        int valueEnd = json.indexOf("\"", valueStart);
+        deviceConfig.stationCode = json.substring(valueStart, valueEnd);
+    }
+    
+    // Extract api_server
+    int serverPos = json.indexOf("\"api_server\":");
+    if (serverPos > 0) {
+        int valueStart = json.indexOf("\"", serverPos + 12) + 1;
+        int valueEnd = json.indexOf("\"", valueStart);
+        deviceConfig.apiServer = json.substring(valueStart, valueEnd);
+        // Unescape
+        deviceConfig.apiServer.replace("\\/", "/");
+    }
+    
+    // Extract api_endpoint
+    int endpointPos = json.indexOf("\"api_endpoint\":");
+    if (endpointPos > 0) {
+        int valueStart = json.indexOf("\"", endpointPos + 14) + 1;
+        int valueEnd = json.indexOf("\"", valueStart);
+        deviceConfig.apiEndpoint = json.substring(valueStart, valueEnd);
+        deviceConfig.apiEndpoint.replace("\\/", "/");
+    }
+    
+    // Extract reporting_interval
+    int reportPos = json.indexOf("\"reporting_interval\":");
+    if (reportPos > 0) {
+        int valueStart = json.indexOf(":", reportPos) + 1;
+        int valueEnd = json.indexOf(",", valueStart);
+        if (valueEnd < 0) valueEnd = json.indexOf("}", valueStart);
+        String val = json.substring(valueStart, valueEnd);
+        val.trim();
+        deviceConfig.reportingInterval = val.toInt();
+        if (deviceConfig.reportingInterval == 0) deviceConfig.reportingInterval = 30;
+    }
+    
+    // Extract heartbeat_interval
+    int hbPos = json.indexOf("\"heartbeat_interval\":");
+    if (hbPos > 0) {
+        int valueStart = json.indexOf(":", hbPos) + 1;
+        int valueEnd = json.indexOf(",", valueStart);
+        if (valueEnd < 0) valueEnd = json.indexOf("}", valueStart);
+        String val = json.substring(valueStart, valueEnd);
+        val.trim();
+        deviceConfig.heartbeatInterval = val.toInt();
+        if (deviceConfig.heartbeatInterval == 0) deviceConfig.heartbeatInterval = 60;
+    }
+    
+    // Extract wifi_ssid (optional - for remote WiFi configuration)
+    int wifiSsidPos = json.indexOf("\"wifi_ssid\":");
+    if (wifiSsidPos > 0) {
+        int valueStart = json.indexOf("\"", wifiSsidPos + 11) + 1;
+        int valueEnd = json.indexOf("\"", valueStart);
+        if (valueEnd > valueStart) {
+            deviceConfig.wifiSsid = json.substring(valueStart, valueEnd);
+        }
+    }
+    
+    // Extract wifi_password (optional)
+    int wifiPassPos = json.indexOf("\"wifi_password\":");
+    if (wifiPassPos > 0) {
+        int valueStart = json.indexOf("\"", wifiPassPos + 15) + 1;
+        int valueEnd = json.indexOf("\"", valueStart);
+        if (valueEnd > valueStart) {
+            deviceConfig.wifiPassword = json.substring(valueStart, valueEnd);
+        }
+    }
+    
+    deviceConfig.configured = true;
+}
+
+// ======================================================
+// DHT SENSOR
+// ======================================================
+void readDHTSensor() {
+    float h = dht.readHumidity(false);
     float t = dht.readTemperature(false);
     
-    // If first read fails, try once more after a short delay
     if (isnan(h) || isnan(t)) {
         delay(200);
         h = dht.readHumidity();
         t = dht.readTemperature();
     }
-
-    if (isnan(h) || isnan(t))
-    {
+    
+    if (isnan(h) || isnan(t)) {
         Serial.println("DHT11 ERROR: Failed to read sensor");
-        Serial.println("Possible causes:");
-        Serial.println("  1. Check wiring: DHT11 DATA -> GPIO4");
-        Serial.println("  2. Add 4.7kΩ pull-up resistor between GPIO4 and 3.3V");
-        Serial.println("  3. Verify DHT11 VCC -> 3.3V or 5V");
-        Serial.println("  4. Verify DHT11 GND -> GND");
+        hasValidReading = false;
         return;
     }
-
+    
     humidity = h;
     temperature = t;
     hasValidReading = true;
-
+    
     Serial.print("DHT11 OK - Temp: ");
     Serial.print(temperature, 1);
     Serial.print("C   Humidity: ");
@@ -229,167 +385,103 @@ void readDHT()
 }
 
 // ======================================================
-// API SEND
+// SEND DATA - Universal Station-Agnostic
 // ======================================================
-
-String buildPayload()
-{
+void sendSensorData() {
+    if (!ensureWiFiConnected()) {
+        Serial.println("Cannot send data: WiFi not connected");
+        return;
+    }
+    
+    if (!hasValidReading) {
+        Serial.println("No valid reading, skipping send");
+        return;
+    }
+    
+    HTTPClient http;
+    
+    // Use universal endpoint - device identifies itself by device_id
+    String url = deviceConfig.apiServer + String(UNIVERSAL_DATA_ENDPOINT);
+    
+    Serial.print("Sending data to: ");
+    Serial.println(url);
+    
+    // Build JSON payload - includes device_id for server-side lookup
     String json = "{";
-    json += "\"station_code\":\"" + String(STATION_CODE) + "\",";
+    json += "\"device_id\":\"" + String(DEVICE_ID) + "\",";
+    json += "\"station_code\":\"" + deviceConfig.stationCode + "\",";
     json += "\"temperature\":" + String(temperature, 1) + ",";
     json += "\"humidity\":" + String(humidity, 1) + ",";
-    json += "\"device_type\":\"" + String(DHT11_ONLY_TEST_MODE ? "dht11_test" : "dog_feeder") + "\",";
-    json += "\"device_id\":\"" + String(DEVICE_ID) + "\",";
-    json += "\"firmware_version\":\"" + String(FIRMWARE_VERSION) + "\"";
-
-    if (!DHT11_ONLY_TEST_MODE) {
-        json += ",\"distance\":0";
-        json += ",\"dog_detected\":false";
-        json += ",\"food_dispensed\":false";
-    }
-
+    json += "\"device_type\":\"ESP32_UNIVERSAL\",";
+    json += "\"firmware_version\":\"3.0.0\"";
     json += "}";
-    return json;
-}
-
-int postJsonToEndpoint(const char* endpoint, const String& json, String& responseBody)
-{
-    HTTPClient http;
-    String url = String(API_SERVER) + String(endpoint);
-
-    Serial.print("POST ");
-    Serial.println(url);
-
+    
+    Serial.println("Payload: ");
+    Serial.println(json);
+    
     http.setConnectTimeout(5000);
     http.setTimeout(8000);
-
+    
     if (!http.begin(url)) {
         Serial.println("http.begin failed");
-        return HTTPC_ERROR_CONNECTION_REFUSED;
+        return;
     }
-
+    
     http.addHeader("Content-Type", "application/json");
     int code = http.POST(json);
-
-    Serial.print("HTTP Response code: ");
+    
+    Serial.print("HTTP Response: ");
     Serial.println(code);
-
+    
     if (code > 0) {
-        responseBody = http.getString();
+        String response = http.getString();
+        Serial.println("Server response: ");
+        Serial.println(response);
+        connectionRetries = 0;
     } else {
-        Serial.print("HTTP error detail: ");
+        Serial.print("HTTP error: ");
         Serial.println(http.errorToString(code));
     }
-
+    
     http.end();
-    return code;
-}
-
-void printNetworkHintForError(int httpResponseCode)
-{
-    if (httpResponseCode == HTTPC_ERROR_CONNECTION_REFUSED || httpResponseCode == HTTPC_ERROR_CONNECTION_LOST || httpResponseCode == HTTPC_ERROR_READ_TIMEOUT) {
-        Serial.println("Hint: server unreachable.");
-        Serial.println("1) Run Symfony on LAN: symfony server:start --listen-ip=0.0.0.0 --port=8000");
-        Serial.println("2) Keep API_SERVER as your laptop LAN IP, not localhost.");
-        Serial.println("3) Confirm ESP32 and laptop are on same WiFi.");
-    }
-}
-
-void sendToServer()
-{
-    if (!ensureWiFiConnected())
-    {
-        Serial.println("WiFi is not connected.");
-        return;
-    }
-
-    if (!hasValidReading)
-    {
-        Serial.println("No valid DHT11 reading yet, skipping send.");
-        return;
-    }
-
-    String json = buildPayload();
-    Serial.println("Sending JSON:");
-    Serial.println(json);
-
-    String response;
-    int code = postJsonToEndpoint(PRIMARY_API_ENDPOINT, json, response);
-
-    // fallback for projects wired to the station-scoped IoT route
-    if (code == 404 || code == 405)
-    {
-        Serial.println("Primary endpoint unavailable, trying secondary endpoint...");
-        code = postJsonToEndpoint(SECONDARY_API_ENDPOINT, json, response);
-    }
-
-    if (code > 0)
-    {
-        Serial.println("Server response:");
-        Serial.println(response);
-        connectionRetries = 0;  // Reset retry counter on success
-    }
-    else
-    {
-        Serial.println("Error sending request");
-        printNetworkHintForError(code);
-        handleConnectionFailure();
-    }
 }
 
 // ======================================================
-// HEARTBEAT - Keep connection alive
+// HEARTBEAT - Universal Station-Agnostic
 // ======================================================
-
-void sendHeartbeat()
-{
-    if (!ensureWiFiConnected())
-    {
-        Serial.println("Heartbeat: WiFi not connected");
+void sendHeartbeat() {
+    if (!ensureWiFiConnected()) {
+        Serial.println("Cannot send heartbeat: WiFi not connected");
         return;
     }
-
-    // Send a lightweight heartbeat request
+    
     HTTPClient http;
-    String url = String(API_SERVER) + "/iot/heartbeat/" + String(STATION_CODE);
+    // Use universal endpoint - doesn't require station ID
+    String url = deviceConfig.apiServer + String(UNIVERSAL_HEARTBEAT_ENDPOINT) + String(DEVICE_ID);
     
     Serial.print("Sending heartbeat to: ");
     Serial.println(url);
-
+    
     http.setConnectTimeout(5000);
-    http.setTimeout(10000);
-
+    http.setTimeout(8000);
+    
     if (!http.begin(url)) {
         Serial.println("http.begin failed for heartbeat");
         return;
     }
-
-    int code = http.GET();
+    
+    int code = http.POST("");  // Empty body, just registers presence
+    
+    Serial.print("Heartbeat response: ");
+    Serial.println(code);
     
     if (code > 0) {
-        Serial.print("Heartbeat OK, status: ");
-        Serial.println(code);
-        connectionRetries = 0;
+        String response = http.getString();
+        Serial.println(response);
     } else {
-        Serial.print("Heartbeat failed: ");
+        Serial.print("Heartbeat error: ");
         Serial.println(http.errorToString(code));
-        handleConnectionFailure();
     }
-
-    http.end();
-}
-
-void handleConnectionFailure()
-{
-    connectionRetries++;
-    Serial.print("Connection failure, retry count: ");
-    Serial.println(connectionRetries);
     
-    if (connectionRetries >= MAX_RETRIES) {
-        Serial.println("Max retries reached, attempting WiFi reconnection...");
-        WiFi.disconnect();
-        delay(1000);
-        connectWiFi();
-        connectionRetries = 0;
-    }
+    http.end();
 }
