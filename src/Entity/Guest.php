@@ -19,11 +19,19 @@ class Guest
     #[ORM\Column(length: 100)]
     #[Assert\NotBlank(message: 'Le prénom est obligatoire')]
     #[Assert\Length(min: 2, max: 100)]
+    #[Assert\Regex(
+        pattern: '/^[a-zA-ZÀ-ÿ\s\-]+$/',
+        message: 'First name must contain only letters'
+    )]
     private ?string $prenom = null;
 
     #[ORM\Column(length: 100)]
     #[Assert\NotBlank(message: 'Le nom est obligatoire')]
     #[Assert\Length(min: 2, max: 100)]
+    #[Assert\Regex(
+        pattern: '/^[a-zA-ZÀ-ÿ\s\-]+$/',
+        message: 'Last name must contain only letters'
+    )]
     private ?string $nom = null;
 
     #[ORM\Column(length: 255)]
@@ -32,6 +40,10 @@ class Guest
     private ?string $email = null;
 
     #[ORM\Column(length: 20, nullable: true)]
+    #[Assert\Regex(
+        pattern: '/^[0-9]{8}$/',
+        message: 'Phone number must be exactly 8 digits'
+    )]
     private ?string $phone = null;
 
     #[ORM\Column(length: 255, nullable: true)]

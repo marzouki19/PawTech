@@ -19,4 +19,24 @@
     array (
     ),
   ),
+  'simple-datatables' => 
+  array (
+    'version' => '10.2.0',
+    'dependencies' => 
+    array (
+    ),
+    'extraFiles' => 
+    array (
+    ),
+  ),
+  'simple-datatables/dist/style.min.css' => 
+  array (
+    'version' => '10.2.0',
+    'dependencies' => 
+    array (
+    ),
+    'extraFiles' => 
+    array (
+    ),
+  ),
 );

@@ -5,8 +5,10 @@ namespace App\Controller;
 use App\Entity\Participation;
 use App\Form\ParticipationType;
 use App\Repository\ParticipationRepository;
+use App\Service\EmailService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -35,6 +37,41 @@ final class ParticipationController extends AbstractController
             'statut' => $statut,
             'sort' => $sort,
         ]);
+    }
+
+    #[Route('/filter', name: 'app_participation_filter', methods: ['GET'])]
+    public function filter(Request $request, ParticipationRepository $participationRepository): JsonResponse
+    {
+        $q = $request->query->get('q', '');
+        $statut = $request->query->get('statut', '');
+        $sort = $request->query->get('sort', 'dateParticipation_desc');
+
+        $participations = $participationRepository->findWithAdminFilters(
+            $q ?: null,
+            $statut ?: null,
+            $sort
+        );
+
+        $data = [];
+        foreach ($participations as $p) {
+            $data[] = [
+                'id' => $p->getId(),
+                'userFullName' => $p->getUser()->getFullName(),
+                'userEmail' => $p->getUser()->getEmail(),
+                'evenementId' => $p->getEvenement()->getId(),
+                'evenementTitre' => $p->getEvenement()->getTitre(),
+                'evenementVille' => $p->getEvenement()->getVille(),
+                'dateParticipation' => $p->getDateParticipation()->format('d/m/Y'),
+                'statut' => $p->getStatut(),
+                'showUrl' => $this->generateUrl('app_participation_show', ['id' => $p->getId()]),
+                'editUrl' => $this->generateUrl('app_participation_edit', ['id' => $p->getId()]),
+                'evenementUrl' => $this->generateUrl('app_evenement_show', ['id' => $p->getEvenement()->getId()]),
+                'confirmUrl' => $this->generateUrl('app_participation_confirm', ['id' => $p->getId()]),
+                'cancelUrl' => $this->generateUrl('app_participation_cancel', ['id' => $p->getId()]),
+            ];
+        }
+
+        return new JsonResponse(['ok' => true, 'count' => count($data), 'items' => $data]);
     }
 
     #[Route('/new', name: 'app_participation_new', methods: ['GET', 'POST'])]
@@ -101,12 +138,20 @@ final class ParticipationController extends AbstractController
     }
 
     #[Route('/{id}/confirm', name: 'app_participation_confirm', methods: ['POST'])]
-    public function confirm(Request $request, Participation $participation, EntityManagerInterface $entityManager): Response
+    public function confirm(Request $request, Participation $participation, EntityManagerInterface $entityManager, EmailService $emailService): Response
     {
         if ($this->isCsrfTokenValid('confirm'.$participation->getId(), $request->getPayload()->getString('_token'))) {
             $participation->confirm();
             $entityManager->flush();
-            $this->addFlash('success', 'Participation confirmée.');
+
+            // Send confirmation email to participant
+            $emailSent = $emailService->sendParticipationConfirmation($participation);
+            
+            if ($emailSent) {
+                $this->addFlash('success', 'Participation confirmée et email de confirmation envoyé.');
+            } else {
+                $this->addFlash('warning', 'Participation confirmée mais l\'email n\'a pas pu être envoyé.');
+            }
         }
 
         return $this->redirectToRoute('app_participation_index', [], Response::HTTP_SEE_OTHER);

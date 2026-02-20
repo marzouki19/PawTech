@@ -17,20 +17,20 @@ class Participation
     private ?int $id = null;
 
     #[ORM\Column]
-    #[Assert\NotNull(message: 'La date de participation est obligatoire')]
+    #[Assert\NotNull(message: 'The registration date is required')]
     private ?\DateTime $dateParticipation = null;
 
     #[ORM\Column(length: 50)]
-    #[Assert\NotBlank(message: 'Le statut est obligatoire')]
-    #[Assert\Choice(choices: self::STATUTS, message: 'Statut invalide')]
+    #[Assert\NotBlank(message: 'The status is required')]
+    #[Assert\Choice(choices: self::STATUTS, message: 'Invalid status')]
     private ?string $statut = 'EN_ATTENTE';
 
     #[ORM\ManyToOne(inversedBy: 'participations')]
-    #[Assert\NotNull(message: 'L\'utilisateur est obligatoire')]
+    #[Assert\NotNull(message: 'The participant is required')]
     private ?User $user = null;
 
     #[ORM\ManyToOne(inversedBy: 'participations')]
-    #[Assert\NotNull(message: 'L\'événement est obligatoire')]
+    #[Assert\NotNull(message: 'The event is required')]
     private ?Evenement $evenement = null;
 
     public function __construct()

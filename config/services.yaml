@@ -4,7 +4,9 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+
    gemini_api_key: '%env(GEMINI_API_KEY)%'  # Better to use environment variable
+   mailer_from: '%env(MAILER_FROM)%'
 
 
 services:
@@ -22,6 +24,7 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
 
+<<<<<<< HEAD
             
     App\Service\GeminiService:
         arguments:
@@ -38,3 +41,6 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+    App\Service\EmailService:
+        arguments:
+            $mailerFrom: '%mailer_from%'

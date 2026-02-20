@@ -42,10 +42,18 @@ class Evenement
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: 'Le lieu est obligatoire')]
+    #[Assert\Regex(
+        pattern: '/^[a-zA-ZÀ-ÿ\s\-]+$/',
+        message: 'Location must contain only letters'
+    )]
     private ?string $lieu = null;
 
     #[ORM\Column(length: 100)]
     #[Assert\NotBlank(message: 'La ville est obligatoire')]
+    #[Assert\Regex(
+        pattern: '/^[a-zA-ZÀ-ÿ\s\-]+$/',
+        message: 'City name must contain only letters'
+    )]
     private ?string $ville = null;
 
     #[ORM\Column(nullable: true)]

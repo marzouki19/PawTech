@@ -20,17 +20,18 @@
         </div>
     {% endfor %}
 
-    {# Search and Filter #}
-    <form method="get" class="bg-white rounded-xl border border-gray-200 p-4">
+    {# Search and Filter - AJAX #}
+    <div id="filterForm" class="bg-white rounded-xl border border-gray-200 p-4"
+         data-filter-url="{{ path('app_participation_filter') }}">
         <div class="flex flex-wrap gap-4 items-end">
             <div class="flex-1 min-w-[200px]">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
-                <input type="text" name="q" value="{{ q }}" placeholder="Name, email or event..."
+                <input type="text" id="searchInput" value="{{ q }}" placeholder="Name, email or event..."
                        class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-paw-orange focus:border-paw-orange outline-none">
             </div>
             <div class="w-40">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <select name="statut" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-paw-orange focus:border-paw-orange outline-none">
+                <select id="statutFilter" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-paw-orange focus:border-paw-orange outline-none">
                     <option value="">All</option>
                     <option value="EN_ATTENTE" {{ statut == 'EN_ATTENTE' ? 'selected' }}>Pending</option>
                     <option value="CONFIRMEE" {{ statut == 'CONFIRMEE' ? 'selected' }}>Confirmed</option>
@@ -39,7 +40,7 @@
             </div>
             <div class="w-48">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Sort by</label>
-                <select name="sort" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-paw-orange focus:border-paw-orange outline-none">
+                <select id="sortFilter" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-paw-orange focus:border-paw-orange outline-none">
                     <option value="dateParticipation_desc" {{ sort == 'dateParticipation_desc' ? 'selected' }}>Date (newest)</option>
                     <option value="dateParticipation_asc" {{ sort == 'dateParticipation_asc' ? 'selected' }}>Date (oldest)</option>
                     <option value="user_asc" {{ sort == 'user_asc' ? 'selected' }}>Participant (A-Z)</option>
@@ -48,18 +49,22 @@
                 </select>
             </div>
             <div class="flex gap-2">
-                <button type="submit" class="px-4 py-2 bg-paw-orange text-white rounded-lg hover:bg-paw-orange-hover">
-                    Filter
+                <button type="button" id="filterBtn" class="px-4 py-2 bg-paw-orange text-white rounded-lg hover:bg-paw-orange-hover flex items-center gap-2">
+                    <span>Filter</span>
+                    <svg id="filterSpinner" class="hidden w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
                 </button>
-                <a href="{{ path('app_participation_index') }}" class="px-4 py-2 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50">
+                <button type="button" id="resetBtn" class="px-4 py-2 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50">
                     Reset
-                </a>
+                </button>
             </div>
         </div>
-    </form>
+    </div>
 
     {# Results Count #}
-    <div class="text-sm text-gray-600">
+    <div id="resultsCount" class="text-sm text-gray-600">
         {{ participations|length }} participation(s) found
     </div>
 
@@ -75,7 +80,7 @@
                     <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700">Actions</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100">
+            <tbody id="tableBody" class="divide-y divide-gray-100">
                 {% for participation in participations %}
                     <tr class="hover:bg-gray-50">
                         <td class="px-4 py-3">
@@ -144,4 +149,132 @@
         </table>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const filterForm = document.getElementById('filterForm');
+    const searchInput = document.getElementById('searchInput');
+    const statutFilter = document.getElementById('statutFilter');
+    const sortFilter = document.getElementById('sortFilter');
+    const filterBtn = document.getElementById('filterBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const filterSpinner = document.getElementById('filterSpinner');
+    const tableBody = document.getElementById('tableBody');
+    const resultsCount = document.getElementById('resultsCount');
+    
+    const filterUrl = filterForm.dataset.filterUrl;
+    let debounceTimer;
+
+    const statutColors = {
+        'EN_ATTENTE': 'bg-yellow-100 text-yellow-800',
+        'CONFIRMEE': 'bg-green-100 text-green-800',
+        'ANNULEE': 'bg-red-100 text-red-800'
+    };
+
+    function renderTable(items) {
+        if (!items || items.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">No participations found</td></tr>';
+            return;
+        }
+
+        tableBody.innerHTML = items.map(p => {
+            let actionButtons = '';
+            if (p.statut === 'EN_ATTENTE') {
+                actionButtons = `
+                    <form action="${p.confirmUrl}" method="post" class="inline" onsubmit="return confirm('Confirm this participation?')">
+                        <input type="hidden" name="_token" value="">
+                        <button type="submit" class="p-1.5 text-green-600 hover:bg-green-50 rounded" title="Confirm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                        </button>
+                    </form>
+                    <form action="${p.cancelUrl}" method="post" class="inline" onsubmit="return confirm('Cancel this participation?')">
+                        <input type="hidden" name="_token" value="">
+                        <button type="submit" class="p-1.5 text-red-600 hover:bg-red-50 rounded" title="Cancel">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </form>
+                `;
+            }
+            
+            return `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3">
+                        <div class="font-medium text-gray-900">${p.userFullName}</div>
+                        <div class="text-sm text-gray-500">${p.userEmail}</div>
+                    </td>
+                    <td class="px-4 py-3">
+                        <a href="${p.evenementUrl}" class="text-paw-orange hover:underline font-medium">${p.evenementTitre}</a>
+                        <div class="text-sm text-gray-500">${p.evenementVille}</div>
+                    </td>
+                    <td class="px-4 py-3 text-gray-600">${p.dateParticipation}</td>
+                    <td class="px-4 py-3">
+                        <span class="px-2 py-1 rounded-full text-xs font-semibold ${statutColors[p.statut] || 'bg-gray-100 text-gray-800'}">
+                            ${p.statut.replace('_', ' ')}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-right">
+                        <div class="flex justify-end gap-1">
+                            ${actionButtons}
+                            <a href="${p.showUrl}" class="p-1.5 text-gray-600 hover:bg-gray-100 rounded" title="View">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                </svg>
+                            </a>
+                            <a href="${p.editUrl}" class="p-1.5 text-gray-600 hover:bg-gray-100 rounded" title="Edit">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                </svg>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function doFilter() {
+        const params = new URLSearchParams();
+        if (searchInput.value) params.append('q', searchInput.value);
+        if (statutFilter.value) params.append('statut', statutFilter.value);
+        if (sortFilter.value) params.append('sort', sortFilter.value);
+
+        filterSpinner.classList.remove('hidden');
+        filterBtn.disabled = true;
+
+        fetch(`${filterUrl}?${params.toString()}`)
+            .then(r => r.json())
+            .then(data => {
+                filterSpinner.classList.add('hidden');
+                filterBtn.disabled = false;
+                if (data.ok) {
+                    renderTable(data.items);
+                    resultsCount.textContent = `${data.count} participation(s) found`;
+                }
+            })
+            .catch(() => {
+                filterSpinner.classList.add('hidden');
+                filterBtn.disabled = false;
+            });
+    }
+
+    filterBtn.addEventListener('click', doFilter);
+    resetBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        statutFilter.value = '';
+        sortFilter.value = 'dateParticipation_desc';
+        doFilter();
+    });
+    searchInput.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(doFilter, 300);
+    });
+    statutFilter.addEventListener('change', doFilter);
+    sortFilter.addEventListener('change', doFilter);
+});
+</script>
 {% endblock %}
