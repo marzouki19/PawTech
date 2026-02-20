@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{% block title %}PawTech - Pet Shop{% endblock %}</title>
+        <link rel="icon" href="{{ asset('favicon.ico') }}">
+
+        {# Tailwind via CDN for rapid development.
+           Later you can replace this with a compiled Tailwind build if you prefer. #}
+        <script src="https://cdn.tailwindcss.com"></script>
+        
+        {# Font Awesome for icons #}
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        
+        {# Video.js for HLS streaming #}
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/video.js/8.10.0/video-js.min.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/video.js/8.10.0/video.min.js"></script>
+        
+        {# Custom styles for dropdown and animations #}
+        <style>
+            .dropdown {
+                position: relative;
+            }
+            
+            .dropdown-menu {
+                display: none;
+                position: absolute;
+                right: 0;
+                top: 100%;
+                margin-top: 0.5rem;
+                min-width: 200px;
+                background-color: white;
+                border-radius: 0.5rem;
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+                z-index: 50;
+            }
+            
+            .dropdown:hover .dropdown-menu,
+            .dropdown:focus-within .dropdown-menu {
+                display: block;
+            }
+            
+            .user-avatar {
+                background: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
+            }
+            
+            .animate-fade-in {
+                animation: fadeIn 0.3s ease-in-out;
+            }
+            
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(-10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .form-error-list,
+            .form-error-message,
+            .form-errors,
+            .form-error {
+                color: #ef4444;
+                font-size: 0.875rem;
+                margin-top: 0.25rem;
+            }
+
+            .form-error-list {
+                list-style: none;
+                padding-left: 0;
+            }
+
+            .form-error-list li + li {
+                margin-top: 0.25rem;
+            }
+
+            input[aria-invalid="true"]:not([type="checkbox"]):not([type="radio"]),
+            select[aria-invalid="true"],
+            textarea[aria-invalid="true"] {
+                border-color: #ef4444 !important;
+                background-color: #fef2f2 !important;
+                box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.15);
+            }
+
+            /* ============================================
+               ADMIN DASHBOARD RESPONSIVE STYLES
+               ============================================ */
+
+            /* Prevent vertical scroll - key fix */
+            html, body {
+                overflow-x: hidden;
+                max-width: 100vw;
+            }
+
+            .main-content {
+                width: 100%;
+                max-width: 100vw;
+                overflow-x: hidden;
+            }
+
+            .container {
+                max-width: 100%;
+                overflow-x: hidden;
+            }
+
+            .shadow-lg {
+                max-width: 100%;
+                overflow: hidden;
+            }
+
+            .grid {
+                overflow: hidden;
+            }
+
+            /* Header responsive */
+            .admin-header .flex.items-center.justify-between {
+                flex-wrap: wrap;
+                gap: 1rem;
+            }
+
+            .admin-header .flex.items-center.gap-4 {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+
+            /* Mobile header buttons */
+            @media (max-width: 575.98px) {
+                .admin-header .bg-white\/20 {
+                    padding: 0.5rem 0.75rem;
+                    font-size: 0.875rem;
+                }
+            }
+
+            /* Hide non-essential on small screens */
+            @media (max-width: 767.98px) {
+                .hide-mobile {
+                    display: none !important;
+                }
+            }
+
+            @media (min-width: 768px) {
+                .hide-mobile {
+                    display: inline-flex !important;
+                }
+            }
+
+            /* Stats cards - Mobile first */
+            .stats-grid {
+                display: grid;
+                gap: 1rem;
+                grid-template-columns: 1fr;
+            }
+
+            @media (min-width: 576px) and (max-width: 767.98px) {
+                .stats-grid {
+                    grid-template-columns: repeat(2, 1fr);
+                }
+            }
+
+            @media (min-width: 992px) {
+                .stats-grid {
+                    grid-template-columns: repeat(4, 1fr);
+                }
+            }
+
+            .stats-card {
+                padding: 1rem !important;
+            }
+
+            .stats-card .text-3xl {
+                font-size: 1.5rem !important;
+            }
+
+            .stats-card .w-12.h-12 {
+                width: 2.5rem;
+                height: 2.5rem;
+            }
+
+            @media (min-width: 768px) {
+                .stats-card {
+                    padding: 1.5rem !important;
+                }
+
+                .stats-card .text-3xl {
+                    font-size: 1.875rem !important;
+                }
+
+                .stats-card .w-12.h-12 {
+                    width: 3rem;
+                    height: 3rem;
+                }
+            }
+
+            /* Table responsive */
+            .table-responsive-container {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                margin: 0 -1rem;
+                padding: 0 1rem;
+            }
+
+            .table-responsive-container table {
+                min-width: 500px;
+            }
+
+            @media (max-width: 767.98px) {
+                .table-responsive-container .hide-on-mobile {
+                    display: none;
+                }
+            }
+
+            @media (max-width: 575.98px) {
+                .table-responsive-container .hide-on-xs {
+                    display: none;
+                }
+
+                .table-responsive-container td,
+                .table-responsive-container th {
+                    padding: 0.5rem 0.25rem !important;
+                    font-size: 0.75rem;
+                }
+            }
+
+            /* Grid layouts */
+            .main-content-grid {
+                display: grid;
+                gap: 1.5rem;
+            }
+
+            @media (max-width: 991.98px) {
+                .main-content-grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+
+            @media (min-width: 992px) {
+                .main-content-grid {
+                    grid-template-columns: repeat(3, 1fr);
+                }
+
+                .main-content-grid > .lg\:col-span-2 {
+                    grid-column: span 2;
+                }
+            }
+
+            /* Camera grid */
+            .camera-grid {
+                display: grid;
+                gap: 1rem;
+                grid-template-columns: 1fr;
+            }
+
+            @media (min-width: 576px) and (max-width: 767.98px) {
+                .camera-grid {
+                    grid-template-columns: repeat(2, 1fr);
+                }
+            }
+
+            @media (min-width: 768px) {
+                .camera-grid {
+                    grid-template-columns: repeat(3, 1fr);
+                }
+            }
+
+            /* Detections grid */
+            .detections-grid {
+                display: grid;
+                gap: 1rem;
+                grid-template-columns: 1fr;
+            }
+
+            @media (min-width: 576px) and (max-width: 767.98px) {
+                .detections-grid {
+                    grid-template-columns: repeat(2, 1fr);
+                }
+            }
+
+            @media (min-width: 768px) {
+                .detections-grid {
+                    grid-template-columns: repeat(3, 1fr);
+                }
+            }
+
+            /* Charts grid */
+            .charts-grid {
+                display: grid;
+                gap: 1.5rem;
+                grid-template-columns: 1fr;
+            }
+
+            @media (min-width: 992px) {
+                .charts-grid {
+                    grid-template-columns: repeat(2, 1fr);
+                }
+
+                .charts-grid .lg\:col-span-2 {
+                    grid-column: span 2;
+                }
+            }
+
+            /* Map responsive */
+            .map-container {
+                width: 100%;
+                height: 100%;
+                min-height: 250px;
+            }
+
+            @media (min-width: 576px) and (max-width: 991.98px) {
+                .map-container {
+                    height: 50vh;
+                }
+            }
+
+            @media (min-width: 992px) {
+                .map-container {
+                    height: 600px;
+                }
+            }
+
+            /* Map page grid */
+            .map-page-grid {
+                display: grid;
+                gap: 1rem;
+            }
+
+            @media (max-width: 991.98px) {
+                .map-page-grid {
+                    grid-template-columns: 1fr !important;
+                }
+
+                .map-page-grid > div:first-child {
+                    order: 2;
+                }
+
+                .map-page-grid > div:last-child {
+                    order: 1;
+                }
+            }
+
+            .map-sidebar {
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            @media (min-width: 576px) and (max-width: 991.98px) {
+                .map-sidebar {
+                    grid-template-columns: repeat(2, 1fr);
+                }
+            }
+
+            @media (min-width: 992px) {
+                .map-sidebar {
+                    grid-template-columns: 1fr;
+                }
+            }
+
+            /* Filters */
+            .filters-container {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.75rem;
+                align-items: center;
+            }
+
+            @media (max-width: 767.98px) {
+                .filters-container {
+                    flex-direction: column;
+                    align-items: stretch;
+                }
+
+                .filters-container > div {
+                    width: 100%;
+                }
+
+                .filters-container select {
+                    width: 100%;
+                }
+
+                .filters-container button {
+                    width: 100%;
+                    margin-left: 0 !important;
+                    margin-top: 0.5rem;
+                }
+            }
+
+            /* Quick actions */
+            .quick-actions-grid {
+                display: grid;
+                gap: 0.75rem;
+                grid-template-columns: 1fr;
+            }
+
+            @media (min-width: 576px) {
+                .quick-actions-grid {
+                    grid-template-columns: repeat(2, 1fr);
+                }
+            }
+
+            /* Card responsive */
+            .card {
+                break-inside: avoid;
+                margin-bottom: 1rem;
+            }
+
+            @media (max-width: 575.98px) {
+                .card {
+                    padding: 1rem !important;
+                    margin-bottom: 0.75rem;
+                }
+            }
+
+            /* Alert cards */
+            .alert-card {
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            @media (min-width: 576px) {
+                .alert-card {
+                    flex-direction: row;
+                    align-items: flex-start;
+                }
+            }
+
+            /* Health alert item */
+            .health-alert-item {
+                padding: 0.75rem;
+            }
+
+            @media (min-width: 576px) {
+                .health-alert-item {
+                    padding: 1.5rem;
+                }
+            }
+
+            /* Alert list item */
+            .alert-list-item {
+                padding: 0.75rem;
+            }
+
+            @media (min-width: 576px) {
+                .alert-list-item {
+                    padding: 1rem;
+                }
+            }
+
+            /* Camera preview */
+            .camera-preview {
+                height: auto !important;
+                min-height: 140px;
+            }
+
+            @media (min-width: 576px) {
+                .camera-preview {
+                    height: 192px;
+                }
+            }
+
+            /* Flex utilities */
+            .flex-col-mobile {
+                flex-direction: column;
+            }
+
+            @media (min-width: 768px) {
+                .flex-col-mobile {
+                    flex-direction: row;
+                }
+            }
+
+            .flex-wrap-mobile {
+                flex-wrap: wrap;
+            }
+
+            @media (min-width: 768px) {
+                .flex-wrap-mobile {
+                    flex-wrap: nowrap;
+                }
+            }
+
+            /* Text utilities */
+            .text-2xl {
+                font-size: 1.5rem;
+            }
+
+            @media (min-width: 768px) {
+                .text-2xl {
+                    font-size: 1.875rem;
+                }
+            }
+
+            /* Show/hide utilities */
+            .show-mobile-only {
+                display: flex;
+            }
+
+            @media (min-width: 576px) {
+                .show-mobile-only {
+                    display: none;
+                }
+            }
+
+            /* Whitespace */
+            .whitespace-nowrap {
+                white-space: nowrap;
+            }
+        </style>
+
+        {% block stylesheets %}
+        {% endblock %}
+
+        {% block javascripts %}
+            {% block importmap %}{{ importmap('app') }}{% endblock %}
+        {% endblock %}
+    </head>
+    <body class="min-h-screen flex flex-col bg-[#fdfdfd] text-gray-900">
+        {# Main navigation shared by all pages (matches PawTech design) #}
+        <header class="bg-[#fff9f4] sticky top-0 z-50 shadow-sm">
+
+
+
+        
+
+            {% set sessionUser = app.session.get('user') %}
+            {% set activeUser = app.user ? app.user : sessionUser %}
+            {% set sessionRole = sessionUser is not null and sessionUser.role is defined ? sessionUser.role : null %}
+            {% set isAdmin = is_granted('ROLE_ADMIN') or sessionRole == 'ROLE_ADMIN' %}
+            {% set isVet = is_granted('ROLE_VETERINAIRE') or sessionRole == 'ROLE_VETERINAIRE' %}
+            {% set isAgent = is_granted('ROLE_AGENT') or sessionRole == 'ROLE_AGENT' %}
+            {% set isClient = is_granted('ROLE_CLIENT') or sessionRole == 'ROLE_CLIENT' %}
+            {# Top info bar #}
+
+
+
+
+            <div class="border-b border-orange-100">
+                <div class="container mx-auto px-4 lg:px-8 flex items-center justify-between gap-4 py-2 text-[13px] text-gray-600">
+                    <div class="flex flex-wrap items-center gap-4">
+                        <span class="flex items-center gap-1">
+                            <span class="text-orange-500">☎</span>
+                            <span>+216 58 458 152</span>
+                        </span>
+                        <span class="hidden sm:inline-flex items-center gap-1">
+                            <span class="text-orange-500">@</span>
+                            <span>Pawtech@paws.tn</span>
+                        </span>
+                    </div>
+                    <div class="hidden md:block text-gray-500">
+                        8529 Ariana tn. ghazela, TN 20303
+                    </div>
+                </div>
+            </div>
+
+
+
+
+
+
+            
+
+            {# Main nav bar #} 
+            <div class="container mx-auto px-4 lg:px-8 py-4">
+                <div class="hidden md:flex items-center justify-center">
+                    <div class="inline-flex items-center rounded-full bg-white shadow-[0_12px_30px_rgba(0,0,0,0.07)] px-8 py-3 gap-8">
+                        <div class="flex items-center gap-2">
+                            <span><img src="{{ asset('logo.png') }}" alt="PawTech Logo" class="h-8"></span>
+                        </div>
+
+                        <nav class="flex items-center gap-6 text-[15px] font-medium text-gray-800">
+                            {% set current = app.request.attributes.get('_route') %}
+                            {% macro link(label, route, current) %}
+                                <a href="{{ path(route) }}"
+                                   class="relative pb-1 transition-colors {{ current == route ? 'text-orange-500' : 'text-gray-800 hover:text-orange-500' }}">
+                                    {{ label }}
+                                    {% if current == route %}
+                                        <span class="absolute left-0 right-0 -bottom-1 h-0.5 rounded-full bg-orange-500"></span>
+                                    {% endif %}
+                                </a>
+                            {% endmacro %}
+
+                            {{ _self.link('Home', 'app_home', current) }}
+                            {{ _self.link('Notifications', 'app_notifications', current) }}
+                            {{ _self.link('Contact Us', 'app_contact', current) }}
+                            {{ _self.link('About Us', 'app_about', current) }}
+                            
+                            {# Translate Button #}
+                            <span class="relative dropdown">
+                                <button class="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path>
+                                    </svg>
+                                    <span class="hidden sm:inline">Translate</span>
+                                    <i class="fas fa-chevron-down text-xs"></i>
+                                </button>
+                                <div class="dropdown-menu animate-fade-in w-40">
+                                    <a href="#" onclick="translatePage('en'); return false;" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                        <span class="mr-2">🇺🇸</span> English
+                                    </a>
+                                    <a href="#" onclick="translatePage('fr'); return false;" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                        <span class="mr-2">🇫🇷</span> Français
+                                    </a>
+                                    <a href="#" onclick="translatePage('es'); return false;" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                        <span class="mr-2">🇪🇸</span> Español
+                                    </a>
+                                    <a href="#" onclick="translatePage('de'); return false;" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                        <span class="mr-2">🇩🇪</span> Deutsch
+                                    </a>
+                                    <a href="#" onclick="translatePage('ar'); return false;" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                        <span class="mr-2">🇸🇦</span> العربية
+                                    </a>
+                                    <a href="#" onclick="translatePage('zh'); return false;" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                        <span class="mr-2">🇨🇳</span> 中文
+                                    </a>
+                                </div>
+                            </span>
+                        </nav>
+                    </div>
+                </div>
+
+                {# Simple mobile layout #}
+                <div class="md:hidden flex items-center justify-between gap-4">
+                    <div class="flex items-center gap-2">
+                        <span><img src="{{ asset('logo.png') }}" alt="PawTech Logo" class="h-6"></span>
+                        <span class="font-semibold text-base text-orange-500">PawTech</span>
+                    </div>
+                    
+                    {# Mobile user menu #}
+                    <div class="flex items-center gap-4">
+                        <button class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white shadow border border-gray-200 text-gray-700" aria-label="Open menu">
+                            ☰
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        {# Flash Messages #}
+        {% for message in app.flashes('success') %}
+            <div class="fixed top-20 right-4 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg animate-fade-in">
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    {{ message }}
+                </div>
+            </div>
+        {% endfor %}
+        
+        {% for message in app.flashes('error') %}
+            <div class="fixed top-20 right-4 z-50 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg animate-fade-in">
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    {{ message }}
+                </div>
+            </div>
+        {% endfor %}
+
+        <main class="flex-1">
+            {% block body %}{% endblock %}
+        </main>
+
+        <footer class="bg-white border-t mt-10">
+            <div class="container mx-auto px-4 lg:px-8 py-10 grid gap-8 md:grid-cols-4 text-sm">
+                <div>
+                    <div class="flex items-center gap-2">
+                            <span><img src="{{ asset('logo.png') }}" alt="PawTech Logo" class="h-12"></span>
+                    </div>
+                    <p class="text-gray-500">
+                        Caring pet shop offering quality products and services to keep your pets happy, healthy, and comfortable.
+                    </p>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-gray-900 mb-3">Company</h3>
+                    <ul class="space-y-1 text-gray-500">
+                        <li><a href="{{ path('app_about') }}" class="hover:text-orange-500">About Us</a></li>
+                        <li><a href="#" class="hover:text-orange-500">Blog</a></li>
+                        <li><a href="#" class="hover:text-orange-500">Gift Cards</a></li>
+                        <li><a href="#" class="hover:text-orange-500">Careers</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-gray-900 mb-3">Customer Service</h3>
+                    <ul class="space-y-1 text-gray-500">
+                        <li><a href="{{ path('app_contact') }}" class="hover:text-orange-500">Contact us</a></li>
+                        <li><a href="#" class="hover:text-orange-500">Shipping</a></li>
+                        <li><a href="#" class="hover:text-orange-500">Returns</a></li>
+                        <li><a href="#" class="hover:text-orange-500">Order Tracking</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-gray-900 mb-3">Store</h3>
+                    <p class="text-gray-500">
+                        8529 Ariana tn<br>
+                        . ghazela, TN 20303
+                    </p>
+                    <p class="mt-3 text-gray-500">
+                        <span class="block">+216 58 458 152</span>
+                        <span class="block">pawtech@paws.tn</span>
+                    </p>
+                </div>
+            </div>
+            <div class="border-t">
+                <div class="container mx-auto px-4 lg:px-8 py-4 flex flex-col md:flex-row justify-between items-center gap-2 text-xs text-gray-500">
+                    <span>© {{ "now"|date("Y") }} PawTech Pet Shop. All rights reserved.</span>
+                    <span class="flex items-center gap-3">
+                        <span>Visa</span>
+                        <span>Mastercard</span>
+                        <span>PayPal</span>
+                    </span>
+                </div>
+            </div>
+        </footer>
+        
+        {# Auto-hide flash messages after 5 seconds #}
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // Auto-hide flash messages after 5 seconds
+                const flashMessages = document.querySelectorAll('.fixed.top-20.right-4.z-50');
+                flashMessages.forEach(function(message) {
+                    setTimeout(function() {
+                        message.style.transition = 'opacity 0.5s';
+                        message.style.opacity = '0';
+                        setTimeout(function() {
+                            if (message.parentNode) {
+                                message.parentNode.removeChild(message);
+                            }
+                        }, 500);
+                    }, 5000);
+                });
+            });
+            
+            // Toggle notification dropdown
+            function toggleNotifications() {
+                const dropdown = document.getElementById('notification-dropdown');
+                dropdown.classList.toggle('hidden');
+            }
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(event) {
+                const dropdown = document.getElementById('notification-dropdown');
+                const button = event.target.closest('button[onclick="toggleNotifications()"]');
+                if (!dropdown.contains(event.target) && !button) {
+                    dropdown.classList.add('hidden');
+                }
+            });
+            
+            // Translate page function
+            async function translatePage(targetLanguage) {
+                console.log('Translating to:', targetLanguage);
+                
+                const elementsToTranslate = [];
+                const walker = document.createTreeWalker(
+                    document.body,
+                    NodeFilter.SHOW_TEXT,
+                    null,
+                    false
+                );
+                
+                let node;
+                while (node = walker.nextNode()) {
+                    const text = node.textContent.trim();
+                    const parent = node.parentElement;
+                    
+                    // Skip script and style elements
+                    if (parent && parent.tagName !== 'SCRIPT' && parent.tagName !== 'STYLE') {
+                        // Skip very short or very long texts
+                        if (text && text.length > 1 && text.length < 5000) {
+                            // Skip texts that are just numbers or symbols
+                            if (!/^[\d\s\p{P}]+$/u.test(text)) {
+                                elementsToTranslate.push({ node: node, originalText: text });
+                            }
+                        }
+                    }
+                }
+                
+                console.log('Elements to translate:', elementsToTranslate.length);
+                
+                if (elementsToTranslate.length === 0) {
+                    console.log('No elements to translate');
+                    return;
+                }
+                
+                const texts = elementsToTranslate.map(el => el.originalText);
+                
+                try {
+                    console.log('Sending request to translation API...');
+                    const response = await fetch('http://127.0.0.1:5000/translate', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            texts: texts,
+                            target_language: targetLanguage
+                        })
+                    });
+                    
+                    console.log('Response status:', response.status);
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        console.log('Translation successful, received:', data.translated_texts.length, 'translations');
+                        
+                        elementsToTranslate.forEach((el, index) => {
+                            if (data.translated_texts[index]) {
+                                el.node.textContent = data.translated_texts[index];
+                            }
+                        });
+                    } else {
+                        const errorText = await response.text();
+                        console.error('Translation failed:', response.status, errorText);
+                        alert('Translation failed. Please make sure the translation server is running.');
+                    }
+                } catch (error) {
+                    console.error('Translation error:', error);
+                    alert('Translation error: ' + error.message + '. Please make sure the Flask translation server is running on port 5000.');
+                }
+            }
+        </script>
+    </body>
+</html>
