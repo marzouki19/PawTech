@@ -1,5 +1,6 @@
 // ======================================================
 // ESP32 DHT11 -> Symfony API Test (DHT11-only mode ready)
+// FIXED: Added heartbeat/keepalive for long-running connections
 // ======================================================
 
 #include <WiFi.h>
@@ -20,7 +21,7 @@ const bool DHT11_ONLY_TEST_MODE = true;
 
 const char* STATION_CODE = "123456";  // Station ID 79 has code 123456
 const char* DEVICE_ID = "ESP32-DHT-TEST";
-const char* FIRMWARE_VERSION = "1.1.1";
+const char* FIRMWARE_VERSION = "1.1.2";  // Updated version with heartbeat
 
 // ---------------- DHT ----------------
 // DHT11 Data pin connected to GPIO4
@@ -35,10 +36,17 @@ bool wifiConnected = false;
 bool hasValidReading = false;
 
 unsigned long lastSend = 0;
-const unsigned long SEND_INTERVAL_MS = 10000;
+unsigned long lastHeartbeat = 0;
+const unsigned long SEND_INTERVAL_MS = 10000;      // Send sensor data every 10 seconds
+const unsigned long HEARTBEAT_INTERVAL_MS = 30000; // Send heartbeat every 30 seconds
+const unsigned long RECONNECT_DELAY_MS = 5000;     // Wait 5 seconds before reconnecting
 
 float temperature = 0.0f;
 float humidity = 0.0f;
+
+// Connection retry counter
+int connectionRetries = 0;
+const int MAX_RETRIES = 3;
 
 // ======================================================
 
@@ -93,11 +101,22 @@ void loop()
 {
     readDHT();
 
+    // Send sensor data every 10 seconds
     if (millis() - lastSend > SEND_INTERVAL_MS)
     {
         lastSend = millis();
         sendToServer();
     }
+
+    // Send heartbeat every 30 seconds to keep connection alive
+    if (millis() - lastHeartbeat > HEARTBEAT_INTERVAL_MS)
+    {
+        lastHeartbeat = millis();
+        sendHeartbeat();
+    }
+
+    // Periodic WiFi health check
+    ensureWiFiConnected();
 
     delay(100);
 }

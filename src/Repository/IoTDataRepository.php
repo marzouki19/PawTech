@@ -45,6 +45,37 @@ class IoTDataRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * Find latest IoT data by station ID (integer)
+     */
+    public function findLatestByStationId(int $stationId, int $limit = 1): ?IoTData
+    {
+        $result = $this->createQueryBuilder('i')
+            ->andWhere('i.station = :stationId')
+            ->setParameter('stationId', $stationId)
+            ->orderBy('i.createdAt', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+        
+        return $result ? $result[0] : null;
+    }
+
+    /**
+     * Find data newer than a given ID for a station
+     */
+    public function findNewerThan(int $stationId, int $afterId): array
+    {
+        return $this->createQueryBuilder('i')
+            ->andWhere('i.station = :stationId')
+            ->andWhere('i.id > :afterId')
+            ->setParameter('stationId', $stationId)
+            ->setParameter('afterId', $afterId)
+            ->orderBy('i.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
     public function findLatestDataForAllStations(): array
     {
         $sql = '

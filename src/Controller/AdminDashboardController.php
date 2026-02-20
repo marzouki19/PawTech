@@ -705,7 +705,8 @@ class AdminDashboardController extends AbstractController
     public function receiveIoTData(
         Request $request,
         EntityManagerInterface $entityManager,
-        ObservationStationRepository $stationRepo
+        ObservationStationRepository $stationRepo,
+        MercureIoTPublisher $mercurePublisher
     ): JsonResponse {
         $data = json_decode($request->getContent(), true);
         
@@ -748,6 +749,9 @@ class AdminDashboardController extends AbstractController
 
         $entityManager->persist($iotData);
         $entityManager->flush();
+
+        // Publish real-time update via Mercure
+        $mercurePublisher->publishIoTData($iotData);
 
         return new JsonResponse([
             'success' => true,
