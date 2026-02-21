@@ -217,7 +217,6 @@ final class PublicEventController extends AbstractController
 
     /**
      * Event Recommendation Endpoint - Uses KNN Algorithm via Python API
-     * Part of "Métier Avancé" - AI-powered event recommendations
      */
     #[Route('/recommend', name: 'app_event_recommend', methods: ['POST'])]
     public function recommendEvents(
