@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Evenement;
 use App\Form\EvenementType;
 use App\Repository\EvenementRepository;
+use App\Service\DonorNotificationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -15,6 +16,12 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/admin/evenement')]
 final class EvenementController extends AbstractController
 {
+    private DonorNotificationService $donorNotificationService;
+
+    public function __construct(DonorNotificationService $donorNotificationService)
+    {
+        $this->donorNotificationService = $donorNotificationService;
+    }
     #[Route('', name: 'app_evenement_index', methods: ['GET'])]
     public function index(Request $request, EvenementRepository $evenementRepository): Response
     {
@@ -93,6 +100,17 @@ final class EvenementController extends AbstractController
             $entityManager->persist($evenement);
             $entityManager->flush();
 
+            // Notify potential donors if this is a donation-type event
+            $notificationResult = $this->donorNotificationService->notifyPotentialDonors($evenement);
+            if ($notificationResult['emails_sent'] > 0) {
+                $this->addFlash('info', sprintf(
+                    'AI: %d invitation(s) envoyée(s) aux donateurs potentiels (%d haute propension, %d moyenne)',
+                    $notificationResult['emails_sent'],
+                    $notificationResult['high_potential'],
+                    $notificationResult['medium_potential']
+                ));
+            }
+
             $this->addFlash('success', 'Événement créé avec succès.');
             return $this->redirectToRoute('app_evenement_index', [], Response::HTTP_SEE_OTHER);
         }
@@ -162,5 +180,34 @@ final class EvenementController extends AbstractController
         }
 
         return $this->redirectToRoute('app_evenement_index', [], Response::HTTP_SEE_OTHER);
+    }
+
+    #[Route('/{id}/notify-donors', name: 'app_evenement_notify_donors', methods: ['POST'])]
+    public function notifyDonors(Request $request, Evenement $evenement): Response
+    {
+        if ($this->isCsrfTokenValid('notify'.$evenement->getId(), $request->getPayload()->getString('_token'))) {
+            $result = $this->donorNotificationService->notifyPotentialDonors($evenement);
+            
+            if ($result['emails_sent'] > 0) {
+                $this->addFlash('success', sprintf(
+                    '%d invitation(s) envoyée(s) aux donateurs potentiels (%d haute propension, %d moyenne)',
+                    $result['emails_sent'],
+                    $result['high_potential'],
+                    $result['medium_potential']
+                ));
+            } else {
+                $eventType = strtoupper($evenement->getType() ?? '');
+                $eventTitle = strtoupper($evenement->getTitre() ?? '');
+                $combined = $eventType . ' ' . $eventTitle;
+                
+                if (!str_contains($combined, 'DON') && !str_contains($combined, 'COLLECTE') && !str_contains($combined, 'CHARIT')) {
+                    $this->addFlash('warning', 'Cet événement n\'est pas de type donation. Aucun email envoyé.');
+                } else {
+                    $this->addFlash('info', 'Aucun utilisateur avec propension moyenne/haute trouvé.');
+                }
+            }
+        }
+
+        return $this->redirectToRoute('app_evenement_show', ['id' => $evenement->getId()]);
     }
 }

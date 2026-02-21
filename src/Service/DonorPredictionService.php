@@ -82,7 +82,12 @@ class DonorPredictionService
         }
 
         $stats['total_participations'] = $confirmedCount;
-        $stats['avg_satisfaction'] = $confirmedCount > 0 ? min(5, 2 + ($confirmedCount * 0.3)) : 0;
+        
+        // Satisfaction score: base + bonus for donation participation
+        // Users who participate in donation events typically have higher satisfaction
+        $baseSatisfaction = $confirmedCount > 0 ? min(5, 2.5 + ($confirmedCount * 0.3)) : 0;
+        $donationBonus = $stats['donation_events'] * 0.4; // Reward donation participation
+        $stats['avg_satisfaction'] = min(5, $baseSatisfaction + $donationBonus);
 
         return $stats;
     }
