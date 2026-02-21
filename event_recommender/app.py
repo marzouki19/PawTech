@@ -3,12 +3,15 @@ from flask_cors import CORS
 import numpy as np
 import pandas as pd
 from sklearn.neighbors import NearestNeighbors
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from datetime import datetime
 import os
+import joblib
 
 app = Flask(__name__)
 CORS(app)
@@ -215,6 +218,96 @@ def calculate_date_score(event_date_str, preferred_timeframe):
         return 0.5
 
 # ============================================================
+# DONOR PROPENSITY MODEL
+# ============================================================
+
+DONOR_DATASET_PATH = os.path.join(os.path.dirname(__file__), 'donor_dataset.csv')
+print(f"\n[LOADING] Donor dataset from: {DONOR_DATASET_PATH}")
+
+try:
+    donor_dataset = pd.read_csv(DONOR_DATASET_PATH)
+    print(f"[SUCCESS] Loaded {len(donor_dataset)} donor records")
+except Exception as e:
+    print(f"[ERROR] Failed to load donor dataset: {e}")
+    donor_dataset = pd.DataFrame()
+
+# Donor prediction model
+donor_model = None
+donor_scaler = None
+
+def train_donor_model():
+    """Train Logistic Regression model for donor propensity prediction"""
+    global donor_model, donor_scaler
+    
+    if donor_dataset.empty:
+        print("[WARNING] No donor dataset available for training")
+        return False
+    
+    print("\n[TRAINING] Building Donor Propensity model...")
+    
+    # Features for prediction
+    feature_columns = [
+        'total_participations',
+        'donation_events', 
+        'charity_events',
+        'adoption_events',
+        'vaccination_events',
+        'days_since_last',
+        'avg_satisfaction'
+    ]
+    
+    X = donor_dataset[feature_columns].values
+    y = donor_dataset['donated'].values
+    
+    # Scale features for better model performance
+    donor_scaler = StandardScaler()
+    X_scaled = donor_scaler.fit_transform(X)
+    
+    # Train Logistic Regression model
+    donor_model = LogisticRegression(random_state=42, max_iter=1000)
+    donor_model.fit(X_scaled, y)
+    
+    # Calculate training accuracy
+    accuracy = donor_model.score(X_scaled, y)
+    print(f"[SUCCESS] Donor model trained with {accuracy*100:.2f}% accuracy")
+    
+    return True
+
+# Train donor model on startup
+donor_model_trained = train_donor_model()
+
+def predict_donor_propensity(user_stats):
+    """Predict donor propensity for a user based on their stats"""
+    if donor_model is None or donor_scaler is None:
+        return None
+    
+    features = np.array([[
+        user_stats.get('total_participations', 0),
+        user_stats.get('donation_events', 0),
+        user_stats.get('charity_events', 0),
+        user_stats.get('adoption_events', 0),
+        user_stats.get('vaccination_events', 0),
+        user_stats.get('days_since_last', 365),
+        user_stats.get('avg_satisfaction', 0)
+    ]])
+    
+    features_scaled = donor_scaler.transform(features)
+    
+    # Get probability of being a donor (class 1)
+    probability = donor_model.predict_proba(features_scaled)[0][1]
+    
+    return probability
+
+def get_donor_category(propensity_score):
+    """Categorize user based on propensity score"""
+    if propensity_score >= 0.7:
+        return "High Potential"
+    elif propensity_score >= 0.4:
+        return "Medium"
+    else:
+        return "Low"
+
+# ============================================================
 # API ENDPOINTS
 # ============================================================
 
@@ -411,22 +504,202 @@ def recommend_events():
         return jsonify({'ok': False, 'message': str(e)}), 500
 
 # ============================================================
+# DONOR PROPENSITY ENDPOINTS
+# ============================================================
+
+@app.route('/donor/predict', methods=['POST'])
+def predict_donor():
+    """
+    Predict donor propensity for a single user
+    
+    Input: {
+        "total_participations": 5,
+        "donation_events": 2,
+        "charity_events": 1,
+        "adoption_events": 1,
+        "vaccination_events": 1,
+        "days_since_last": 15,
+        "avg_satisfaction": 4.2
+    }
+    
+    Output: {
+        "propensity_score": 78.5,
+        "category": "High Potential",
+        "recommendation": "Include in donation event invitations"
+    }
+    """
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'ok': False, 'message': 'No JSON data provided'}), 400
+        
+        print(f"\n[DONOR PREDICTION] Input: {data}")
+        
+        propensity = predict_donor_propensity(data)
+        
+        if propensity is None:
+            return jsonify({'ok': False, 'message': 'Donor model not trained'}), 500
+        
+        score_percent = round(propensity * 100, 1)
+        category = get_donor_category(propensity)
+        
+        # Generate recommendation based on category
+        if category == "High Potential":
+            recommendation = "Priority: Include in all donation event invitations"
+        elif category == "Medium":
+            recommendation = "Consider: Send personalized donation event invites"
+        else:
+            recommendation = "Nurture: Focus on engagement before donation asks"
+        
+        result = {
+            'ok': True,
+            'propensity_score': score_percent,
+            'category': category,
+            'recommendation': recommendation,
+            'factors': {
+                'total_participations': data.get('total_participations', 0),
+                'donation_events': data.get('donation_events', 0),
+                'days_since_last': data.get('days_since_last', 0)
+            }
+        }
+        
+        print(f"[DONOR PREDICTION] Result: {score_percent}% - {category}")
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        print(f"[ERROR] Donor prediction failed: {str(e)}")
+        return jsonify({'ok': False, 'message': str(e)}), 500
+
+@app.route('/donor/predict-batch', methods=['POST'])
+def predict_donor_batch():
+    """
+    Predict donor propensity for multiple users
+    
+    Input: {
+        "users": [
+            {"user_id": 1, "total_participations": 5, ...},
+            {"user_id": 2, "total_participations": 2, ...}
+        ]
+    }
+    """
+    try:
+        data = request.get_json()
+        users = data.get('users', [])
+        
+        if not users:
+            return jsonify({'ok': False, 'message': 'No users provided'}), 400
+        
+        print(f"\n[DONOR BATCH] Processing {len(users)} users")
+        
+        results = []
+        for user in users:
+            propensity = predict_donor_propensity(user)
+            
+            if propensity is not None:
+                score_percent = round(propensity * 100, 1)
+                category = get_donor_category(propensity)
+                
+                results.append({
+                    'user_id': user.get('user_id'),
+                    'propensity_score': score_percent,
+                    'category': category
+                })
+        
+        # Sort by propensity score (highest first)
+        results.sort(key=lambda x: x['propensity_score'], reverse=True)
+        
+        # Summary stats
+        high_potential = len([r for r in results if r['category'] == 'High Potential'])
+        medium = len([r for r in results if r['category'] == 'Medium'])
+        low = len([r for r in results if r['category'] == 'Low'])
+        
+        return jsonify({
+            'ok': True,
+            'total_users': len(results),
+            'predictions': results,
+            'summary': {
+                'high_potential': high_potential,
+                'medium': medium,
+                'low': low
+            }
+        })
+        
+    except Exception as e:
+        print(f"[ERROR] Batch prediction failed: {str(e)}")
+        return jsonify({'ok': False, 'message': str(e)}), 500
+
+@app.route('/donor/model-info', methods=['GET'])
+def donor_model_info():
+    """Get information about the donor propensity model"""
+    if donor_dataset.empty:
+        return jsonify({'ok': False, 'message': 'No donor dataset loaded'})
+    
+    # Calculate model accuracy with cross-validation
+    if donor_model is not None:
+        feature_columns = [
+            'total_participations', 'donation_events', 'charity_events',
+            'adoption_events', 'vaccination_events', 'days_since_last', 'avg_satisfaction'
+        ]
+        X = donor_dataset[feature_columns].values
+        y = donor_dataset['donated'].values
+        X_scaled = donor_scaler.transform(X)
+        
+        cv_scores = cross_val_score(donor_model, X_scaled, y, cv=5)
+        accuracy = round(cv_scores.mean() * 100, 2)
+    else:
+        accuracy = 0
+    
+    return jsonify({
+        'ok': True,
+        'model': 'Logistic Regression',
+        'dataset_records': len(donor_dataset),
+        'accuracy': accuracy,
+        'features': [
+            'total_participations',
+            'donation_events',
+            'charity_events', 
+            'adoption_events',
+            'vaccination_events',
+            'days_since_last',
+            'avg_satisfaction'
+        ],
+        'categories': {
+            'High Potential': '>= 70%',
+            'Medium': '40-69%',
+            'Low': '< 40%'
+        }
+    })
+
+# ============================================================
 # START SERVER
 # ============================================================
 
 if __name__ == '__main__':
     print("\n" + "=" * 60)
-    print("  EVENT RECOMMENDATION API - PawTech")
-    print("  Algorithm: KNN (K-Nearest Neighbors)")
+    print("  PAWTECH AI SERVICES API")
     print("  Author: Nesrine Fendri")
     print("=" * 60)
-    print(f"\n  Dataset: {len(dataset)} records loaded")
-    print(f"  Model: {'Trained' if model_trained else 'Not trained'}")
+    
+    print("\n  [1] EVENT RECOMMENDATION (KNN)")
+    print(f"      Dataset: {len(dataset)} records")
+    print(f"      Status: {'Ready' if model_trained else 'Not trained'}")
+    
+    print("\n  [2] DONOR PROPENSITY (Logistic Regression)")
+    print(f"      Dataset: {len(donor_dataset)} records")
+    print(f"      Status: {'Ready' if donor_model_trained else 'Not trained'}")
+    
     print("\n  Endpoints:")
-    print("    GET  /health         - Health check")
-    print("    GET  /dataset/info   - Dataset information")
-    print("    GET  /model/accuracy - Model accuracy metrics")
-    print("    POST /recommend      - Get recommendations")
+    print("    GET  /health              - Health check")
+    print("    GET  /dataset/info        - Event dataset info")
+    print("    GET  /model/accuracy      - Event model accuracy")
+    print("    POST /recommend           - Get event recommendations")
+    print("    ---")
+    print("    POST /donor/predict       - Predict single user")
+    print("    POST /donor/predict-batch - Predict multiple users")
+    print("    GET  /donor/model-info    - Donor model info")
+    
     print("\n  Server: http://127.0.0.1:8003")
     print("=" * 60 + "\n")
     
