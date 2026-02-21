@@ -1,0 +1,8 @@
+26bfab,127.0.0.1,GET,http://127.0.0.1:8001/,1771675029,,200,request
+6cee46,127.0.0.1,GET,http://127.0.0.1:8001/events,1771675038,,200,request
+cbe5d2,127.0.0.1,GET,http://127.0.0.1:8001/events,1771675106,,200,request
+71c623,127.0.0.1,GET,http://127.0.0.1:8001/events,1771675163,,200,request
+433d8c,127.0.0.1,POST,http://127.0.0.1:8001/events/recommend,1771675174,,502,request
+a46fc0,127.0.0.1,POST,http://127.0.0.1:8001/events/recommend,1771675191,,502,request
+a2d465,127.0.0.1,POST,http://127.0.0.1:8001/events/recommend,1771675195,,502,request
+9bcf87,127.0.0.1,POST,http://127.0.0.1:8001/events/recommend,1771675218,,200,request
