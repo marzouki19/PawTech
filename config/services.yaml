@@ -9,8 +9,7 @@ parameters:
    gemini_api_key: '%env(GEMINI_API_KEY)%'  # Better to use environment variable
    mailer_from: '%env(MAILER_FROM)%'
 
-
-streams.directory: '%kernel.project_dir%/public/streams'
+   streams.directory: '%kernel.project_dir%/public/streams'
 
 
 services:
@@ -63,4 +62,5 @@ services:
     
     # Add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
 
