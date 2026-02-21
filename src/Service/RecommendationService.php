@@ -259,4 +259,102 @@ class RecommendationService
         
         return array_slice(array_column($recommendations, 'product'), 0, $limit);
     }
+
+    /**
+     * Get products recommended using KNN algorithm
+     * Uses product features (price, quantity, category, purchase count) to find similar products
+     */
+    public function getAllProductsWithKnnScore(int $limit = 6): array
+    {
+        $products = $this->em->getRepository(Produit::class)->findAll();
+        
+        if (empty($products)) {
+            return [];
+        }
+
+        // Build features for all products
+        $this->buildProductFeatures();
+        
+        // Calculate KNN scores based on distance to centroid of popular products
+        $popularProductIds = $this->getPopularProductIds(5);
+        
+        if (empty($popularProductIds)) {
+            // If no purchases yet, just return top rated
+            return $this->getTopRatedProducts($limit);
+        }
+
+        // Calculate centroid of popular products
+        $centroid = $this->calculateCentroid($popularProductIds);
+        
+        // Score all products by their distance to the centroid (closer = better)
+        $recommendations = [];
+        foreach ($products as $product) {
+            if (isset($this->productFeatures[$product->getId()])) {
+                $distance = $this->euclideanDistance($this->productFeatures[$product->getId()], $centroid);
+                $score = 100 - $distance; // Invert distance (closer = higher score)
+                
+                // Boost score for available products
+                if ($product->getQuantite() > 0) {
+                    $score += 10;
+                }
+                
+                // Boost for higher rating
+                $score += $product->getAverageRating() * 5;
+                
+                $recommendations[] = ['product' => $product, 'score' => $score];
+            }
+        }
+        
+        usort($recommendations, function($a, $b) {
+            return $b['score'] - $a['score'];
+        });
+        
+        return array_slice(array_column($recommendations, 'product'), 0, $limit);
+    }
+
+    /**
+     * Get IDs of most purchased products
+     */
+    private function getPopularProductIds(int $limit = 5): array
+    {
+        $products = $this->em->getRepository(Produit::class)->findAll();
+        
+        $purchaseCounts = [];
+        foreach ($products as $product) {
+            $purchaseCounts[$product->getId()] = $this->getProductPurchaseCount($product->getId());
+        }
+        
+        arsort($purchaseCounts);
+        
+        return array_slice(array_keys($purchaseCounts), 0, $limit, true);
+    }
+
+    /**
+     * Calculate centroid (average features) of a set of products
+     */
+    private function calculateCentroid(array $productIds): array
+    {
+        $features = [];
+        $count = 0;
+        
+        foreach ($productIds as $id) {
+            if (isset($this->productFeatures[$id])) {
+                $count++;
+                for ($i = 0; $i < count($this->productFeatures[$id]); $i++) {
+                    if (!isset($features[$i])) {
+                        $features[$i] = 0;
+                    }
+                    $features[$i] += $this->productFeatures[$id][$i];
+                }
+            }
+        }
+        
+        if ($count > 0) {
+            for ($i = 0; $i < count($features); $i++) {
+                $features[$i] /= $count;
+            }
+        }
+        
+        return $features;
+    }
 }

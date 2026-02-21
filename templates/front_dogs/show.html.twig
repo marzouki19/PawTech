@@ -132,6 +132,23 @@
                             <p id="dogDescriptionStatus" class="hidden mt-3 text-xs text-gray-500"></p>
                         </div>
                     </div>
+
+                    <!-- Adoption Action -->
+                    <div class="mt-5">
+                        {% if adoptionStatus == 'Adopted' %}
+                            <button disabled class="w-full inline-flex items-center justify-center rounded-xl bg-gray-100 px-4 py-3 text-sm font-semibold text-gray-400 cursor-not-allowed border border-gray-200">
+                                Adopted
+                            </button>
+                        {% elseif sessionUser is defined and sessionUser %}
+                            <a href="{{ path('app_apply_adoption', {'id': dog.id}) }}" class="w-full inline-flex items-center justify-center rounded-xl bg-orange-600 px-4 py-3 text-sm font-semibold text-white hover:bg-orange-700 hover:shadow-lg active:scale-95 transition-all duration-200">
+                                Apply for Adoption
+                            </a>
+                        {% else %}
+                            <a href="{{ path('app_signin') }}" class="w-full inline-flex items-center justify-center rounded-xl bg-orange-100 px-4 py-3 text-sm font-semibold text-orange-700 hover:bg-orange-200 transition shadow-sm">
+                                Login to Adopt
+                            </a>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>

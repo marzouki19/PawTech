@@ -169,10 +169,11 @@ final class FrontDogsController extends AbstractController
     }
 
     #[Route('/front_dogs/dogs/{id}', name: 'app_front_dogs_show', methods: ['GET'])]
-    public function show(Dogs $dog): Response
+    public function show(Dogs $dog, Request $request): Response
     {
         return $this->render('front_dogs/show.html.twig', [
             'dog' => $dog,
+            'sessionUser' => $request->getSession()->get('user'),
         ]);
     }
 
