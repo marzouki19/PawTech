@@ -9,7 +9,6 @@ use Psr\Log\LoggerInterface;
 use Endroid\QrCode\QrCode;
 use Endroid\QrCode\Writer\PngWriter;
 use Endroid\QrCode\Encoding\Encoding;
-use Symfony\Component\Mime\Part\DataPart;
 
 /**
  * Service for sending event-related emails
@@ -30,6 +29,19 @@ class EmailService
     private function generateQrCode(Participation $participation): ?string
     {
         try {
+            if (
+                !class_exists(QrCode::class)
+                || !class_exists(PngWriter::class)
+                || !class_exists(Encoding::class)
+            ) {
+                $this->logger->warning('QR code library not installed. Sending email without QR code.');
+                return null;
+            }
+            if (!extension_loaded('gd')) {
+                $this->logger->warning('GD extension is not enabled. Sending email without QR code.');
+                return null;
+            }
+
             $user = $participation->getUser();
             $event = $participation->getEvenement();
             
@@ -71,7 +83,7 @@ Status: CONFIRMED
 
             return $result->getString();
             
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $this->logger->error('Failed to generate QR code: ' . $e->getMessage());
             return null;
         }
@@ -117,7 +129,11 @@ Status: CONFIRMED
 
         try {
             $this->mailer->send($email);
-            $this->logger->info('Confirmation email with QR code sent to ' . $userEmail);
+            $this->logger->info(
+                $qrCodeData !== null
+                    ? 'Confirmation email with QR code sent to ' . $userEmail
+                    : 'Confirmation email sent without QR code to ' . $userEmail
+            );
             return true;
         } catch (\Exception $e) {
             $this->logger->error('Failed to send confirmation email: ' . $e->getMessage());
@@ -145,6 +161,7 @@ Status: CONFIRMED
 
         // QR code section - uses cid: reference for embedded image
         $qrCodeSection = '';
+        $entryInstruction = 'Present your confirmation email at the entrance for check-in.';
         if ($hasQrCode) {
             $qrCodeSection = <<<HTML
             <!-- QR Code Section -->
@@ -157,6 +174,7 @@ Status: CONFIRMED
                 </p>
             </div>
 HTML;
+            $entryInstruction = 'Present your QR code at the entrance for quick check-in.';
         }
 
         return <<<HTML
@@ -215,7 +233,7 @@ HTML;
             <div style="background:#fef3c7;border-radius:8px;padding:15px;margin-bottom:25px;">
                 <p style="margin:0;color:#92400e;font-size:14px;">
                     <strong>Important:</strong> Please arrive 15 minutes before the event starts. 
-                    Present your QR code at the entrance for quick check-in.
+                    {$entryInstruction}
                 </p>
             </div>
 
