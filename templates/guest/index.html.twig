@@ -101,11 +101,15 @@
                                 {{ guest.role|replace({'_': ' '}) }}
                             </span>
                         </td>
-                        <td class="px-4 py-3">
-                            <a href="{{ path('app_evenement_show', {'id': guest.evenement.id}) }}" class="text-paw-orange hover:underline">
-                                {{ guest.evenement.titre }}
-                            </a>
-                        </td>
+<td class="px-4 py-3">
+    {% if guest.evenement %}
+        <a href="{{ path('app_evenement_show', {'id': guest.evenement.id}) }}" class="text-paw-orange hover:underline">
+            {{ guest.evenement.titre }}
+        </a>
+    {% else %}
+        <span class="text-gray-500">Aucun événement</span>
+    {% endif %}
+</td>
                         <td class="px-4 py-3 text-right">
                             <div class="flex justify-end gap-1">
                                 <a href="{{ path('app_guest_show', {'id': guest.id}) }}" class="p-1.5 text-gray-600 hover:bg-gray-100 rounded" title="View">
