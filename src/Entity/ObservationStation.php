@@ -9,6 +9,8 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
+use App\Entity\IoTData;
+use App\Entity\IpCamera;
 
 #[UniqueEntity(fields: ['code'], message: 'Ce code existe déjà.')]
 #[ORM\Entity(repositoryClass: ObservationStationRepository::class)]
@@ -68,9 +70,30 @@ class ObservationStation
     #[ORM\OneToMany(targetEntity: Alert::class, mappedBy: 'station', orphanRemoval: true)]
     private Collection $alerts;
 
+    /**
+     * @var Collection<int, IoTData>
+     */
+    #[ORM\OneToMany(targetEntity: IoTData::class, mappedBy: 'station', orphanRemoval: true)]
+    private Collection $iotData;
+
+    /**
+     * @var Collection<int, IpCamera>
+     */
+    #[ORM\OneToMany(targetEntity: IpCamera::class, mappedBy: 'station', orphanRemoval: true)]
+    private Collection $cameras;
+
+    /**
+     * @var Collection<int, IoTDevice>
+     */
+    #[ORM\OneToMany(targetEntity: IoTDevice::class, mappedBy: 'station', orphanRemoval: true)]
+    private Collection $iotDevices;
+
     public function __construct()
     {
         $this->alerts = new ArrayCollection();
+        $this->iotData = new ArrayCollection();
+        $this->cameras = new ArrayCollection();
+        $this->iotDevices = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -150,6 +173,64 @@ class ObservationStation
             // set the owning side to null (unless already changed)
             if ($alert->getStation() === $this) {
                 $alert->setStation(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, IoTData>
+     */
+    public function getIotData(): Collection
+    {
+        return $this->iotData;
+    }
+
+    public function addIotData(IoTData $iotData): static
+    {
+        if (!$this->iotData->contains($iotData)) {
+            $this->iotData->add($iotData);
+            $iotData->setStation($this);
+        }
+
+        return $this;
+    }
+
+    public function removeIotData(IoTData $iotData): static
+    {
+        if ($this->iotData->removeElement($iotData)) {
+            if ($iotData->getStation() === $this) {
+                $iotData->setStation(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, IpCamera>
+     */
+    public function getCameras(): Collection
+    {
+        return $this->cameras;
+    }
+
+    public function addCamera(IpCamera $camera): static
+    {
+        if (!$this->cameras->contains($camera)) {
+            $this->cameras->add($camera);
+            $camera->setStation($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCamera(IpCamera $camera): static
+    {
+        if ($this->cameras->removeElement($camera)) {
+            if ($camera->getStation() === $this) {
+                $camera->setStation(null);
             }
         }
 

@@ -18,7 +18,7 @@ final class PublicNotificationController extends AbstractController
     #[Route('', name: 'app_notifications')]
     public function index(NotificationService $notificationService): Response
     {
-        return $this->render('pages/notifications.html.twig', [
+        return $this->render('notifications.html.twig', [
             'notifications' => $notificationService->getNotifications(),
         ]);
     }

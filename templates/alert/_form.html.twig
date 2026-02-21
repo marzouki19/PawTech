@@ -24,7 +24,7 @@
             {% set type_attr = {'class': 'w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500 transition-colors bg-gray-50 hover:bg-white'} %}
             {% if not form.type.vars.valid %}{% set type_attr = type_attr|merge({'class': 'w-full px-4 py-2.5 border border-red-500 rounded-lg focus:ring-2 focus:ring-red-500 transition-colors bg-gray-50 hover:bg-white'}) %}{% endif %}
             {{ form_widget(form.type, {'attr': type_attr}) }}
-            {{ form_errors(form.type, {'attr': {'class': 'text-red-500 text-sm mt-1 font-medium'}}) }}
+            <div class="text-red-500 text-sm mt-1 font-medium" style="color: #ef4444;">{{ form_errors(form.type) }}</div>
         </div>
         <div class="form-group">
             <label for="{{ form.prioritee.vars.id }}" class="block text-sm font-medium text-gray-700 mb-2">
@@ -36,7 +36,7 @@
             {% set prioritee_attr = {'class': 'w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500 transition-colors bg-gray-50 hover:bg-white', 'min': '1', 'step': '1', 'placeholder': 'Entrez un numéro'} %}
             {% if not form.prioritee.vars.valid %}{% set prioritee_attr = prioritee_attr|merge({'class': 'w-full px-4 py-2.5 border border-red-500 rounded-lg focus:ring-2 focus:ring-red-500 transition-colors bg-gray-50 hover:bg-white'}) %}{% endif %}
             {{ form_widget(form.prioritee, {'attr': prioritee_attr}) }}
-            {{ form_errors(form.prioritee, {'attr': {'class': 'text-red-500 text-sm mt-1 font-medium'}}) }}
+            <div class="text-red-500 text-sm mt-1 font-medium" style="color: #ef4444;">{{ form_errors(form.prioritee) }}</div>
         </div>
         <div class="form-group">
             <label for="{{ form.message.vars.id }}" class="block text-sm font-medium text-gray-700 mb-2">
@@ -48,7 +48,7 @@
             {% set message_attr = {'class': 'w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500 transition-colors bg-gray-50 hover:bg-white', 'rows': '3', 'placeholder': 'Entrez le message'} %}
             {% if not form.message.vars.valid %}{% set message_attr = message_attr|merge({'class': 'w-full px-4 py-2.5 border border-red-500 rounded-lg focus:ring-2 focus:ring-red-500 transition-colors bg-gray-50 hover:bg-white'}) %}{% endif %}
             {{ form_widget(form.message, {'attr': message_attr}) }}
-            {{ form_errors(form.message, {'attr': {'class': 'text-red-500 text-sm mt-1 font-medium'}}) }}
+            <div class="text-red-500 text-sm mt-1 font-medium" style="color: #ef4444;">{{ form_errors(form.message) }}</div>
         </div>
         <div class="form-group">
             <label for="{{ form.statut.vars.id }}" class="block text-sm font-medium text-gray-700 mb-2">
@@ -60,7 +60,7 @@
             {% set statut_attr = {'class': 'w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500 transition-colors bg-gray-50 hover:bg-white'} %}
             {% if not form.statut.vars.valid %}{% set statut_attr = statut_attr|merge({'class': 'w-full px-4 py-2.5 border border-red-500 rounded-lg focus:ring-2 focus:ring-red-500 transition-colors bg-gray-50 hover:bg-white'}) %}{% endif %}
             {{ form_widget(form.statut, {'attr': statut_attr}) }}
-            {{ form_errors(form.statut, {'attr': {'class': 'text-red-500 text-sm mt-1 font-medium'}}) }}
+            <div class="text-red-500 text-sm mt-1 font-medium" style="color: #ef4444;">{{ form_errors(form.statut) }}</div>
         </div>
         <div class="form-group">
             <label for="{{ form.station.vars.id }}" class="block text-sm font-medium text-gray-700 mb-2">
@@ -73,7 +73,7 @@
             {% set station_attr = {'class': 'w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500 transition-colors bg-gray-50 hover:bg-white'} %}
             {% if not form.station.vars.valid %}{% set station_attr = station_attr|merge({'class': 'w-full px-4 py-2.5 border border-red-500 rounded-lg focus:ring-2 focus:ring-red-500 transition-colors bg-gray-50 hover:bg-white'}) %}{% endif %}
             {{ form_widget(form.station, {'attr': station_attr}) }}
-            {{ form_errors(form.station, {'attr': {'class': 'text-red-500 text-sm mt-1 font-medium'}}) }}
+            <div class="text-red-500 text-sm mt-1 font-medium" style="color: #ef4444;">{{ form_errors(form.station) }}</div>
         </div>
         <div class="form-group">
             <label for="{{ form.date.vars.id }}" class="block text-sm font-medium text-gray-700 mb-2">
@@ -85,7 +85,7 @@
             {% set date_attr = {'class': 'w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500 transition-colors bg-gray-50 hover:bg-white'} %}
             {% if not form.date.vars.valid %}{% set date_attr = date_attr|merge({'class': 'w-full px-4 py-2.5 border border-red-500 rounded-lg focus:ring-2 focus:ring-red-500 transition-colors bg-gray-50 hover:bg-white'}) %}{% endif %}
             {{ form_widget(form.date, {'attr': date_attr}) }}
-            {{ form_errors(form.date, {'attr': {'class': 'text-red-500 text-sm mt-1 font-medium'}}) }}
+            <div class="text-red-500 text-sm mt-1 font-medium" style="color: #ef4444;">{{ form_errors(form.date) }}</div>
         </div>
     </div>
 </div>

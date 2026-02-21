@@ -5,8 +5,12 @@
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
 
+
    gemini_api_key: '%env(GEMINI_API_KEY)%'  # Better to use environment variable
    mailer_from: '%env(MAILER_FROM)%'
+
+
+streams.directory: '%kernel.project_dir%/public/streams'
 
 
 services:
@@ -23,6 +27,7 @@ services:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
             - '../src/Kernel.php'
+
 
 
             
@@ -44,3 +49,18 @@ services:
     App\Service\EmailService:
         arguments:
             $mailerFrom: '%mailer_from%'
+
+    App\Service\StreamTranscoderService:
+        arguments:
+            $streamsDirectory: '%streams.directory%'
+
+    App\Service\DirectRtspService:
+        arguments:
+            $streamsDirectory: '%streams.directory%'
+
+    # Override HLS stream URLs to add no-cache headers
+    Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator: null
+    
+    # Add more service definitions when explicit configuration is needed
+    # please note that last definitions always *replace* previous ones
+

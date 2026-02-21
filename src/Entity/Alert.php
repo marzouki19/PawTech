@@ -17,8 +17,7 @@ class Alert
 
     #[ORM\Column(length: 50)]
     #[Assert\NotBlank(message: 'Ce champ ne peut pas être vide')]
-    #[Assert\Length(max: 50)]
-    #[Assert\Choice(choices: ['TECHNICAL'], message: 'Le type doit être TECHNICAL')]
+    #[Assert\Choice(choices: ['TECHNICAL', 'DANGER_DOG', 'HEALTH_ALERT'], message: 'Le type doit être TECHNICAL, DANGER_DOG ou HEALTH_ALERT')]
     private ?string $type = null;
 
     #[ORM\Column(type: Types::TEXT)]
