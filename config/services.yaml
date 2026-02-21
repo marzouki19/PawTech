@@ -49,6 +49,10 @@ services:
         arguments:
             $mailerFrom: '%mailer_from%'
 
+    App\Service\DonorNotificationService:
+        arguments:
+            $mailerFrom: '%mailer_from%'
+
     App\Service\StreamTranscoderService:
         arguments:
             $streamsDirectory: '%streams.directory%'
