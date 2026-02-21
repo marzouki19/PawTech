@@ -527,8 +527,9 @@
             
             // Close dropdown when clicking outside
             document.addEventListener('click', function(event) {
-                const dropdown = document.getElementById('notification-dropdown');
-                const button = event.target.closest('button[onclick="toggleNotifications()"]');
+                var dropdown = document.getElementById('notification-dropdown');
+                if (!dropdown) return;
+                var button = event.target.closest('button[onclick="toggleNotifications()"]');
                 if (!dropdown.contains(event.target) && !button) {
                     dropdown.classList.add('hidden');
                 }

@@ -124,4 +124,26 @@ class RecommendationController extends AbstractController
 
         return $this->json($data);
     }
+
+    #[Route('/recommendations/knn', name: 'app_api_knn_recommendations', methods: ['GET'])]
+    public function getKnnRecommendations(Request $request): JsonResponse
+    {
+        $limit = $request->query->get('limit', 6);
+        $products = $this->recommendationService->getAllProductsWithKnnScore((int) $limit);
+        
+        $data = [];
+        foreach ($products as $product) {
+            $data[] = [
+                'id' => $product->getId(),
+                'nom' => $product->getNom(),
+                'prix' => $product->getPrix(),
+                'image' => $product->getImage(),
+                'quantite' => $product->getQuantite(),
+                'rating' => $product->getAverageRating(),
+                'rating_count' => $product->getRatingCount(),
+            ];
+        }
+
+        return $this->json($data);
+    }
 }

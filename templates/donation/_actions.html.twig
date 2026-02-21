@@ -11,8 +11,8 @@
   </a>
   <form method="post"
         action="{{ path('app_donation_delete', { id: donation.id }) }}"
-        class="inline"
-        onsubmit="return confirm('Delete donation #{{ donation.id }}?')">
+        data-action="submit->delete-confirm#confirm"
+        data-delete-message="Delete donation #{{ donation.id }}?">
     <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ donation.id) }}">
     <button type="submit"
             class="px-3 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 text-sm font-medium">
