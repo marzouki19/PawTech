@@ -1,0 +1,79 @@
+###> symfony/framework-bundle ###
+/.env.local
+/.env.local.php
+/.env.*.local
+/config/secrets/prod/prod.decrypt.private.php
+/public/bundles/
+/vendor/
+###< symfony/framework-bundle ###
+
+###> phpunit/phpunit ###
+/.phpunit.cache/
+###< phpunit/phpunit ###
+
+###> symfony/asset-mapper ###
+/public/assets/
+/assets/vendor/
+###< symfony/asset-mapper ###
+
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+python/venv/
+
+# IDE / Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build / Env
+dist/
+build/
+.env
+.env.local
+*.log
+
+# Large files / cache
+var/
+public/streams/
+python/detections/
+python/__pycache__/
+*.pt
+/vendor/
+/node_modules/
+/var/
+*.pt
+*.h5
+*.onnx
+.env.local
+
+# PID files
+*.pid
+
+# Keys (sensitive)
+key
+key.pub
+
+# Backup files
+*.bak
+.gitignore.backup
+
+# ML models (optional - comment out if you want to commit)
+# python/models/
+# ml/models/
+
+# Camera stream files
+public/streams/**/*.mjpg
+public/streams/**/*.jpg
+public/streams/**/*.png
+public/streams/**/*.log
+public/streams/ffmpeg.pid
