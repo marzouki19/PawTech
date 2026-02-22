@@ -1,0 +1,13 @@
+twig:
+    file_name_pattern: '*.twig'
+    globals:
+        app_timezone: '%app.timezone%'
+
+when@dev:
+    twig:
+        # Avoid heavy Twig template cache warmup in local dev (prevents OOM at 128M).
+        cache: false
+
+when@test:
+    twig:
+        strict_variables: true

@@ -1,0 +1,34 @@
+{
+  "input_root": "/Users/saber/Desktop/PI DEV/integration-final/python/data",
+  "output_root": "/Users/saber/Desktop/PI DEV/integration-final/python/data/health_dataset",
+  "class_map": {
+    "healthy_stray_dogs": "healthy",
+    "contagious_stray_dogs": "ill"
+  },
+  "missing_folders": [],
+  "raw_counts_by_label": {
+    "ill": 200,
+    "healthy": 200
+  },
+  "valid_before_dedup": 299,
+  "invalid_count": 101,
+  "dropped_same_class_duplicates": 5,
+  "dropped_conflicting_hashes": 0,
+  "kept_after_dedup": 294,
+  "copy_mode": "copy",
+  "split_counts": {
+    "train": {
+      "healthy": 107,
+      "ill": 98
+    },
+    "val": {
+      "healthy": 23,
+      "ill": 21
+    },
+    "test": {
+      "healthy": 24,
+      "ill": 21
+    }
+  },
+  "manifest_path": "/Users/saber/Desktop/PI DEV/integration-final/python/data/health_dataset/meta/manifest.csv"
+}

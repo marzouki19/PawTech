@@ -1,0 +1,49 @@
+{
+  "dataset_root": "/Users/saber/Desktop/PI DEV/integration-final/python/data/health_dataset",
+  "class_names": [
+    "healthy",
+    "ill"
+  ],
+  "image_size": 64,
+  "k": 5,
+  "include_val_in_train": false,
+  "counts": {
+    "train": {
+      "healthy": 107,
+      "ill": 98
+    },
+    "val": {
+      "healthy": 23,
+      "ill": 21
+    },
+    "test": {
+      "healthy": 24,
+      "ill": 21
+    }
+  },
+  "metrics": {
+    "val_accuracy": 0.5454545454545454,
+    "test_accuracy": 0.6,
+    "val_confusion_matrix": [
+      [
+        16,
+        7
+      ],
+      [
+        13,
+        8
+      ]
+    ],
+    "test_confusion_matrix": [
+      [
+        17,
+        7
+      ],
+      [
+        11,
+        10
+      ]
+    ]
+  },
+  "model_path": "/Users/saber/Desktop/PI DEV/integration-final/python/models/knn_dog_health.npz"
+}
