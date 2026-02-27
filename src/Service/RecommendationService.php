@@ -11,7 +11,6 @@ class RecommendationService
 {
     private EntityManagerInterface $em;
     private array $productFeatures = [];
-    private array $productDistances = [];
 
     public function __construct(EntityManagerInterface $em)
     {
@@ -78,8 +77,8 @@ class RecommendationService
             }
         }
 
-        usort($recommendations, function($a, $b) {
-            return $b['score'] - $a['score'];
+        usort($recommendations, function($a, $b): int {
+            return $b['score'] <=> $a['score'];
         });
 
         return array_slice(array_column($recommendations, 'product'), 0, $k);
@@ -220,8 +219,8 @@ class RecommendationService
     {
         $products = $this->em->getRepository(Produit::class)->findAll();
         
-        usort($products, function($a, $b) {
-            return $b->getAverageRating() - $a->getAverageRating();
+        usort($products, function($a, $b): int {
+            return $b->getAverageRating() <=> $a->getAverageRating();
         });
         
         return array_slice($products, 0, $limit);
@@ -253,8 +252,8 @@ class RecommendationService
             $recommendations[] = ['product' => $product, 'score' => $score];
         }
         
-        usort($recommendations, function($a, $b) {
-            return $b['score'] - $a['score'];
+        usort($recommendations, function($a, $b): int {
+            return $b['score'] <=> $a['score'];
         });
         
         return array_slice(array_column($recommendations, 'product'), 0, $limit);
@@ -305,8 +304,8 @@ class RecommendationService
             }
         }
         
-        usort($recommendations, function($a, $b) {
-            return $b['score'] - $a['score'];
+        usort($recommendations, function($a, $b): int {
+            return $b['score'] <=> $a['score'];
         });
         
         return array_slice(array_column($recommendations, 'product'), 0, $limit);

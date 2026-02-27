@@ -10,13 +10,11 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route('/admin/events')]
 class AdminEventsController extends AbstractController
 {
     public function __construct(
-        private ValidatorInterface $validator,
         private EntityManagerInterface $entityManager
     ) {}
 

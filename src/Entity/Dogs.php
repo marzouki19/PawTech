@@ -22,6 +22,7 @@ class Dogs
     #[ORM\GeneratedValue]
     #[ORM\Column]
     #[Groups(['dogs'])] // Added back for ID
+    // @phpstan-ignore-next-line Doctrine sets generated IDs at runtime.
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]

@@ -488,7 +488,6 @@ class SuiviController extends AbstractController
                     'etat' => $suivi->getEtat() ?? 'N/A',
                     'type' => $suivi->getType() ?? 'N/A',
                     'recommandation' => $suivi->getRecommandation() ?? '',
-                    'ai_analysis_report' => $suivi->getAiAnalysisReport() ?? '',
                     'prochaine_visite' => $suivi->getProchaineVisite() ? 
                         $suivi->getProchaineVisite()->format('d/m/Y H:i') : null,
                     'consultation_id' => $suivi->getConsultation() ? $suivi->getConsultation()->getId() : null,

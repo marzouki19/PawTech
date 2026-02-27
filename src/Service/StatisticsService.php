@@ -23,14 +23,21 @@ class StatisticsService
     private ObservationStationRepository $stationRepo;
     private IpCameraRepository $cameraRepo;
 
-    public function __construct(EntityManagerInterface $entityManager)
+    public function __construct(
+        EntityManagerInterface $entityManager,
+        StatisticsRepository $statsRepo,
+        IoTDataRepository $iotRepo,
+        DogDetectionRepository $detectionRepo,
+        ObservationStationRepository $stationRepo,
+        IpCameraRepository $cameraRepo
+    )
     {
         $this->entityManager = $entityManager;
-        $this->statsRepo = $entityManager->getRepository(Statistics::class);
-        $this->iotRepo = $entityManager->getRepository(IoTData::class);
-        $this->detectionRepo = $entityManager->getRepository(DogDetection::class);
-        $this->stationRepo = $entityManager->getRepository(ObservationStation::class);
-        $this->cameraRepo = $entityManager->getRepository(IpCamera::class);
+        $this->statsRepo = $statsRepo;
+        $this->iotRepo = $iotRepo;
+        $this->detectionRepo = $detectionRepo;
+        $this->stationRepo = $stationRepo;
+        $this->cameraRepo = $cameraRepo;
     }
 
     /**

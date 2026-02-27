@@ -121,7 +121,7 @@ class IoTStreamController extends AbstractController
     #[Route('/iot/wait/{stationId}', name: 'app_iot_wait', methods: ['GET'])]
     public function waitForData(int $stationId, IoTDataRepository $iotRepo): \Symfony\Component\HttpFoundation\JsonResponse
     {
-        $lastId = (int) $_GET['after'] ?? 0;
+        $lastId = (int) ($_GET['after'] ?? 0);
         $timeout = 25; // 25 second timeout
         
         $startTime = time();

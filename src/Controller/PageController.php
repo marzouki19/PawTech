@@ -21,6 +21,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
 
 final class PageController extends AbstractController
 {
@@ -233,7 +235,12 @@ final class PageController extends AbstractController
     }
 //ahawaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
     #[Route('/api/verify-face', name: 'app_verify_face_proxy', methods: ['POST'])]
-    public function verifyFaceProxy(Request $request, HttpClientInterface $httpClient, UserRepository $userRepository): JsonResponse
+    public function verifyFaceProxy(
+        Request $request,
+        HttpClientInterface $httpClient,
+        UserRepository $userRepository,
+        TokenStorageInterface $tokenStorage
+    ): JsonResponse
     {
         $payload = json_decode($request->getContent(), true);
         $userFace = is_array($payload) ? (string) ($payload['user_face'] ?? '') : '';
@@ -259,10 +266,6 @@ final class PageController extends AbstractController
             $status = $apiResponse->getStatusCode();
             $data = $apiResponse->toArray(false);
 
-            if (!is_array($data)) {
-                $data = ['message' => 'no', 'username' => null];
-            }
-
             if (($data['message'] ?? null) === 'yes') {
                 $username = (string) ($data['username'] ?? '');
                 $matchedUser = null;
@@ -274,6 +277,10 @@ final class PageController extends AbstractController
                 }
 
                 if ($matchedUser) {
+                    $token = new UsernamePasswordToken($matchedUser, 'main', $matchedUser->getRoles());
+                    $tokenStorage->setToken($token);
+                    $request->getSession()->set('_security_main', serialize($token));
+
                     $roles = $matchedUser->getRoles();
                     $request->getSession()->set('user', [
                         'id' => $matchedUser->getId(),
@@ -489,15 +496,6 @@ final class PageController extends AbstractController
             ['name' => 'email', 'type' => 'email', 'placeholder' => 'Email address'],
             ['name' => 'phone', 'placeholder' => 'Phone number'],
         ]);
-    }
-
-    #[Route('/logout', name: 'app_logout', methods: ['GET'])]
-    public function logout(Request $request): Response
-    {
-        $session = $request->getSession();
-        $session->remove('user');
-
-        return $this->redirectToRoute('app_home');
     }
 
     private function renderEntity(

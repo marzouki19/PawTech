@@ -205,20 +205,8 @@ class Suivi
 
     public function getChienNom(): ?string
     {
-        if ($this->consultation) {
-            $dog = method_exists($this->consultation, 'getDog')
-                ? $this->consultation->getDog()
-                : $this->consultation->getChien();
-
-            if ($dog) {
-                if (method_exists($dog, 'getName')) {
-                    return $dog->getName();
-                }
-
-                if (method_exists($dog, 'getNom')) {
-                    return $dog->getName();
-                }
-            }
+        if ($this->consultation && $this->consultation->getDog()) {
+            return $this->consultation->getDog()->getName();
         }
 
         return null;

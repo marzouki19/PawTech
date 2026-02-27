@@ -191,7 +191,7 @@ final class PublicNotificationController extends AbstractController
     private function canAccessChat(Request $request): bool
     {
         $session = $request->getSession();
-        $sessionUser = $session?->get('user');
+        $sessionUser = $session->get('user');
         if (!is_array($sessionUser)) {
             return false;
         }
@@ -225,7 +225,7 @@ final class PublicNotificationController extends AbstractController
 
     private function resolveChatIdentity(Request $request): array
     {
-        $sessionUser = $request->getSession()?->get('user');
+        $sessionUser = $request->getSession()->get('user');
         if (!is_array($sessionUser)) {
             return [
                 'user_id' => 0,

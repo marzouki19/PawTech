@@ -236,4 +236,33 @@ class ObservationStation
 
         return $this;
     }
+
+    /**
+     * @return Collection<int, IoTDevice>
+     */
+    public function getIotDevices(): Collection
+    {
+        return $this->iotDevices;
+    }
+
+    public function addIotDevice(IoTDevice $iotDevice): static
+    {
+        if (!$this->iotDevices->contains($iotDevice)) {
+            $this->iotDevices->add($iotDevice);
+            $iotDevice->setStation($this);
+        }
+
+        return $this;
+    }
+
+    public function removeIotDevice(IoTDevice $iotDevice): static
+    {
+        if ($this->iotDevices->removeElement($iotDevice)) {
+            if ($iotDevice->getStation() === $this) {
+                $iotDevice->setStation(null);
+            }
+        }
+
+        return $this;
+    }
 }

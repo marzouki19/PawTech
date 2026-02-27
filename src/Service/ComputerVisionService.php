@@ -82,7 +82,7 @@ class ComputerVisionService
      */
     public function processAllCameras(): array
     {
-        $cameras = $this->entityManager->getRepository(IpCamera::class)->findActiveCameras();
+        $cameras = $this->entityManager->getRepository(IpCamera::class)->findBy(['status' => 'active']);
         $results = [];
 
         foreach ($cameras as $camera) {
@@ -109,59 +109,59 @@ class ComputerVisionService
         $symptoms = $detectionData['symptoms'] ?? [];
 
         // Check for common health conditions
-        if (in_array('red_eyes', $symptoms) || $detectionData['eye_color_anomaly'] ?? false) {
+        if (in_array('red_eyes', $symptoms, true) || ($detectionData['eye_color_anomaly'] ?? false)) {
             $healthConditions[] = 'red_eyes';
         }
 
-        if (in_array('oral_discharge', $symptoms) || $detectionData['mouth_discharge'] ?? false) {
+        if (in_array('oral_discharge', $symptoms, true) || ($detectionData['mouth_discharge'] ?? false)) {
             $healthConditions[] = 'oral_discharge';
         }
 
-        if (in_array('excessive_drooling', $symptoms) || $detectionData['drooling'] ?? false) {
+        if (in_array('excessive_drooling', $symptoms, true) || ($detectionData['drooling'] ?? false)) {
             $healthConditions[] = 'excessive_drooling';
         }
 
-        if (in_array('lethargy', $symptoms) || $detectionData['low_activity'] ?? false) {
+        if (in_array('lethargy', $symptoms, true) || ($detectionData['low_activity'] ?? false)) {
             $healthConditions[] = 'lethargy';
         }
 
-        if (in_array('limping', $symptoms) || $detectionData['abnormal_gait'] ?? false) {
+        if (in_array('limping', $symptoms, true) || ($detectionData['abnormal_gait'] ?? false)) {
             $healthConditions[] = 'limping';
         }
 
-        if (in_array('hair_loss', $symptoms) || $detectionData['bald_patches'] ?? false) {
+        if (in_array('hair_loss', $symptoms, true) || ($detectionData['bald_patches'] ?? false)) {
             $healthConditions[] = 'hair_loss';
         }
 
-        if (in_array('skin_irritation', $symptoms) || $detectionData['skin_lesions'] ?? false) {
+        if (in_array('skin_irritation', $symptoms, true) || ($detectionData['skin_lesions'] ?? false)) {
             $healthConditions[] = 'skin_irritation';
         }
 
-        if (in_array('weight_loss', $symptoms) || $detectionData['ribs_visible'] ?? false) {
+        if (in_array('weight_loss', $symptoms, true) || ($detectionData['ribs_visible'] ?? false)) {
             $healthConditions[] = 'weight_loss';
         }
 
-        if (in_array('appetite_loss', $symptoms) || $detectionData['not_eating'] ?? false) {
+        if (in_array('appetite_loss', $symptoms, true) || ($detectionData['not_eating'] ?? false)) {
             $healthConditions[] = 'appetite_loss';
         }
 
-        if (in_array('vomiting', $symptoms) || $detectionData['vomiting'] ?? false) {
+        if (in_array('vomiting', $symptoms, true) || ($detectionData['vomiting'] ?? false)) {
             $healthConditions[] = 'vomiting';
         }
 
-        if (in_array('diarrhea', $symptoms) || $detectionData['loose_stool'] ?? false) {
+        if (in_array('diarrhea', $symptoms, true) || ($detectionData['loose_stool'] ?? false)) {
             $healthConditions[] = 'diarrhea';
         }
 
-        if (in_array('breathing_difficulty', $symptoms) || $detectionData['heavy_breathing'] ?? false) {
+        if (in_array('breathing_difficulty', $symptoms, true) || ($detectionData['heavy_breathing'] ?? false)) {
             $healthConditions[] = 'breathing_difficulty';
         }
 
-        if (in_array('eye_discharge', $symptoms) || $detectionData['eye_discharge'] ?? false) {
+        if (in_array('eye_discharge', $symptoms, true) || ($detectionData['eye_discharge'] ?? false)) {
             $healthConditions[] = 'eye_discharge';
         }
 
-        if (in_array('ear_infection', $symptoms) || $detectionData['ear_scratching'] ?? false) {
+        if (in_array('ear_infection', $symptoms, true) || ($detectionData['ear_scratching'] ?? false)) {
             $healthConditions[] = 'ear_infection';
         }
 

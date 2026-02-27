@@ -4,7 +4,6 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Form\UserType;
-use App\Form\SigninType;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
@@ -16,29 +15,22 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Component\String\Slugger\SluggerInterface;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
 final class UserController extends AbstractController
 {
-        #[Route('/users/ajax-sort', name: 'app_users_ajax_sort', methods: ['GET'])]
-        public function ajaxSort(Request $request, UserRepository $userRepository): Response
-        {
-            $sortDir = strtolower((string) $request->query->get('sort', 'asc'));
-            $sortBy = (string) $request->query->get('sort_by', 'id');
-            $users = $userRepository->sortAll($sortDir, $sortBy);
-            $rows = [];
-            foreach ($users as $user) {
-                $rows[] = [
-                    $user->getId(),
-                    $user->getFirstName(),
-                    $user->getLastName(),
-                    $user->getEmail(),
-                    $user->getPhone(),
-                    $user->getRole(),
-                    $user->getStatus(),
-                    // Optionally add actions HTML here if needed
-                ];
-            }
-            return $this->json($rows);
-        }
+    #[Route('/logout', name: 'app_logout', methods: ['GET'])]
+    public function logout(Request $request, TokenStorageInterface $tokenStorage): Response
+    {
+        $tokenStorage->setToken(null);
+
+        $session = $request->getSession();
+        $session->clear();
+        $session->invalidate();
+
+        return $this->redirectToRoute('app_home');
+    }
+
     #[Route('/user', name: 'app_user_index', methods: ['GET'])]
     public function index(UserRepository $userRepository): Response
     {
@@ -148,51 +140,6 @@ final class UserController extends AbstractController
 
 
 
-    /*
-    #[Route('/users/edits/{id}', name: 'app_users_edit', methods: ['GET', 'POST'])]
-    public function editUser(Request $request, UserRepository $userRepository, EntityManagerInterface $entityManager, SluggerInterface $slugger, UserPasswordHasherInterface $passwordHasher, int $id): Response
-    {
-        $user = $userRepository->find($id);
-
-        if (!$user) {
-            throw $this->createNotFoundException('User not found');
-        }
-
-        $currentPassword = $user->getPassword();
-        $form = $this->createForm(UserType::class, $user);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $plainPassword = $form->get('password')->getData();
-            if (!$plainPassword) {
-                $user->setPassword($currentPassword);
-            } else {
-                $this->hashUserPassword($user, $plainPassword, $passwordHasher);
-            }
-            $this->handleUserImageUpload($form->get('user_image')->getData(), $user, $slugger);
-            $this->applyRoleNulls($user);
-            $entityManager->flush();
-
-            return $this->redirectToRoute('app_users_index');
-        }
-
-        [$cardRows, $tableRows] = $this->buildUserRows($userRepository->findAll());
-
-        return $this->renderEntity('users/index.html.twig', 'Users', 'users', [
-            'ID', 'First Name', 'Last Name', 'Email', 'Phone', 'Role', 'Status',
-        ], $tableRows, 'Add New User', [
-            ['name' => 'first_name', 'placeholder' => 'First name'],
-            ['name' => 'last_name', 'placeholder' => 'Last name'],
-            ['name' => 'email', 'type' => 'email', 'placeholder' => 'Email address'],
-        ], null, [
-            'edit_mode' => true,
-            'edit_form' => $form->createView(),
-            'card_rows' => $cardRows,
-        ]);
-    }
-
-   */
-
     private function handleUserImageUpload(?UploadedFile $uploadedFile, User $user, SluggerInterface $slugger): void
     {
         if ($uploadedFile instanceof UploadedFile) {
@@ -257,6 +204,19 @@ final class UserController extends AbstractController
     //creation card ou tableau
     private function buildUserRows(array $users): array
     {
+        $cardRows = array_map(static function ($user) {
+            return [
+                $user->getId(),
+                $user->getPrenom(),
+                $user->getNom(),
+                $user->getEmail(),
+                $user->getTelephone(),
+                $user->getRole(),
+                $user->getStatus(),
+                $user->getUserImage(),
+            ];
+        }, $users);
+
         $tableRows = array_map(static function ($user) {
             return [
                 $user->getId(),
@@ -268,7 +228,8 @@ final class UserController extends AbstractController
                 $user->getStatus(),
             ];
         }, $users);
-        return $tableRows;
+
+        return [$cardRows, $tableRows];
     }
 
 
@@ -276,42 +237,36 @@ final class UserController extends AbstractController
 
 
 
-
-
-
-
-
-
-
-    
+  
     #[Route('/signup', name: 'app_signup', methods: ['GET', 'POST'])]
     public function signup(Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher): Response
     {
-        $user = new \App\Entity\User();
+        $user = new User();
         $form = $this->createForm(\App\Form\SignupType::class, $user);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // Set additional fields not mapped by the form
             $user->setRole('Client');
             $user->setStatus('Actif');
+            $user->setUserImage('uploads/users/default.png');
 
-            // If a face image was captured during signup, use it as avatar.
-            $faceImage = trim((string) ($user->getUserFace() ?? ''));
+            $faceImage = (string) $request->request->get('user_face_raw', '');
             if ($faceImage === '') {
-                $faceImage = trim((string) $request->request->get('user_face_raw', ''));
+                $faceImage = $this->extractUserFaceFromRequest($request);
             }
-            if (str_starts_with($faceImage, 'data:image/')) {
-                $user->setUserFace($faceImage);
-                $user->setUserImage($faceImage);
-            } else {
-                $user->setUserImage('uploads/users/default.png');
+            if ($faceImage === '') {
+                $faceImage = (string) ($form->get('user_face')->getData() ?? '');
+            }
+            $user->setUserFace($faceImage);
+
+            if ($user->getTelephone() === null) {
+                $user->setTelephone(0);
             }
 
-            // Hash password
-            $user->setPassword(
-                $passwordHasher->hashPassword($user, $form->get('password')->getData())
-            );
+            $plainPassword = $form->get('password')->getData();
+            if (is_string($plainPassword) && $plainPassword !== '') {
+                $user->setPassword($passwordHasher->hashPassword($user, $plainPassword));
+            }
 
             $entityManager->persist($user);
             $entityManager->flush();
@@ -324,6 +279,32 @@ final class UserController extends AbstractController
         ]);
     }
     
+
+
+
+
+
+
+    private function extractUserFaceFromRequest(Request $request): string
+    {
+        $directValue = (string) $request->request->get('user_face', '');
+        if ($directValue !== '') {
+            return $directValue;
+        }
+
+        foreach ($request->request->all() as $value) {
+            if (is_array($value) && isset($value['user_face']) && is_string($value['user_face'])) {
+                return $value['user_face'];
+            }
+        }
+
+        return '';
+    }
+    
+   
+
+
+    
    
 
 
@@ -332,29 +313,37 @@ final class UserController extends AbstractController
 
 
     #[Route('/signin', name: 'app_signin', methods: ['GET', 'POST'])]
-    public function signin(Request $request, UserRepository $userRepository, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher): Response
+    public function signin(Request $request, UserRepository $userRepository, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher, TokenStorageInterface $tokenStorage): Response
     {
         $session = $request->getSession();
-        if ($session->has('user')) {
+        if ($this->getUser() instanceof User) {
             return $this->redirectToRoute('app_home');
         }
 
         $error = null;
         $lastEmail = '';
 
-        $form = $this->createForm(SigninType::class);
+        $form = $this->createForm(\App\Form\SigninType::class, new User());
         $form->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
+        if ($form->isSubmitted()) {
             $data = $form->getData();
-            if ($data instanceof User) {
-                $email = (string) ($data->getEmail() ?? '');
-                $password = (string) ($data->getPassword() ?? '');
-            } else {
-                $email = (string) ($data['email'] ?? '');
-                $password = (string) ($data['password'] ?? '');
-            }
+            $email = trim((string) ($data?->getEmail() ?? ''));
+            $password = (string) ($data?->getPassword() ?? '');
             $lastEmail = $email;
+
+            if ($email === '' || $password === '') {
+                $error = [
+                    'messageKey' => 'Email and password are required.',
+                    'messageData' => [],
+                ];
+
+                return $this->render('sign/signin.html.twig', [
+                    'form' => $form->createView(),
+                    'error' => $error,
+                    'last_email' => $lastEmail,
+                ]);
+            }
 
             $user = $userRepository->findOneBy(['email' => $email]);
 
@@ -365,6 +354,7 @@ final class UserController extends AbstractController
                         'messageData' => [],
                     ];
                 } else {
+                    $this->setAuthenticatedToken($user, $request, $tokenStorage);
                     $roles = $user->getRoles();
                     $session->set('user', [
                         'id' => $user->getId(),
@@ -393,6 +383,7 @@ final class UserController extends AbstractController
                 $entityManager->persist($user);
                 $entityManager->flush();
 
+                $this->setAuthenticatedToken($user, $request, $tokenStorage);
                 $roles = $user->getRoles();
                 $session->set('user', [
                     'id' => $user->getId(),
@@ -404,17 +395,6 @@ final class UserController extends AbstractController
                 ]);
                 return $this->redirectToRoute('app_home');
             }
-        } elseif ($form->isSubmitted()) {
-            $data = $form->getData();
-            if ($data instanceof User) {
-                $lastEmail = (string) ($data->getEmail() ?? '');
-            } else {
-                $lastEmail = (string) ($data['email'] ?? '');
-            }
-            $error = [
-                'messageKey' => 'Email and password are required.',
-                'messageData' => [],
-            ];
         }
 
         return $this->render('sign/signin.html.twig', [
@@ -423,7 +403,6 @@ final class UserController extends AbstractController
             'last_email' => $lastEmail,
         ]);
     }
-
    
 
 
@@ -432,7 +411,7 @@ final class UserController extends AbstractController
 
 
     #[Route('/auth/google', name: 'app_google_auth_start', methods: ['GET'])]
-        public function googleAuthStart(Request $request): Response
+    public function googleAuthStart(Request $request): Response
     {
         $clientId = $_ENV['GOOGLE_CLIENT_ID'] ?? 'YOUR_GOOGLE_CLIENT_ID';
         $redirectUri = $_ENV['GOOGLE_REDIRECT_URI']
@@ -450,13 +429,15 @@ final class UserController extends AbstractController
         return $this->redirect('https://accounts.google.com/o/oauth2/v2/auth?'.$params);
     }
     
+    
     #[Route('/auth/google/callback', name: 'app_google_auth_callback', methods: ['GET'])]
     public function googleAuthCallback(
         Request $request,
         HttpClientInterface $httpClient,
         UserRepository $userRepository,
         EntityManagerInterface $entityManager,
-        UserPasswordHasherInterface $passwordHasher
+        UserPasswordHasherInterface $passwordHasher,
+        TokenStorageInterface $tokenStorage
     ): Response
     {
         if ($request->query->get('error')) {
@@ -532,6 +513,7 @@ final class UserController extends AbstractController
                 $entityManager->flush();
             }
 
+            $this->setAuthenticatedToken($user, $request, $tokenStorage);
             $roles = $user->getRoles();
             $request->getSession()->set('user', [
                 'id' => $user->getId(),
@@ -552,31 +534,11 @@ final class UserController extends AbstractController
 
 
 
- private function renderEntity(
-        string $template,
-        string $pageTitle,
-        string $active,
-        array $columns,
-        array $rows,
-        string $modalTitle,
-        array $modalFields,
-        ?string $addHref = null,
-        array $extra = []
-    ): Response {
-        return $this->render($template, array_merge([
-            'page_title' => $pageTitle,
-            'active' => $active,
-            'entity_name' => $pageTitle,
-            'columns' => $columns,
-            'rows' => $rows,
-            'modal_title' => $modalTitle,
-            'modal_fields' => $modalFields,
-            'add_href' => $addHref,
-            'total_records' => count($rows),
-            'per_page' => 10,
-            'page' => 1,
-            'total_pages' => 1,
-        ], $extra));
+    private function setAuthenticatedToken(User $user, Request $request, TokenStorageInterface $tokenStorage): void
+    {
+        $token = new UsernamePasswordToken($user, 'main', $user->getRoles());
+        $tokenStorage->setToken($token);
+        $request->getSession()->set('_security_main', serialize($token));
     }
 
 
@@ -608,16 +570,27 @@ final class UserController extends AbstractController
         $users = $searchQuery === ''
             ? $userRepository->sortAll($sortDir, $sortBy)
             : $userRepository->search($searchQuery, $searchField);
-        $tableRows = $this->buildUserRows($users);
+        [$cardRows, $tableRows] = $this->buildUserRows($users);
 
-        return $this->renderEntity('users/index.html.twig', 'Users', 'users', [
-            'ID', 'First Name', 'Last Name', 'Email', 'Phone', 'Role', 'Status',
-        ], $tableRows, 'Add New User', [
-            ['name' => 'first_name', 'placeholder' => 'First name'],
-            ['name' => 'last_name', 'placeholder' => 'Last name'],
-            ['name' => 'email', 'type' => 'email', 'placeholder' => 'Email address'],
-        ], null, [
+        return $this->render('users/index.html.twig', [
+            'page_title' => 'Users',
+            'active' => 'users',
+            'entity_name' => 'Users',
+            'columns' => ['ID', 'First Name', 'Last Name', 'Email', 'Phone', 'Role', 'Status'],
+            'rows' => $tableRows,
+            'modal_title' => 'Add New User',
+            'modal_fields' => [
+                ['name' => 'first_name', 'placeholder' => 'First name'],
+                ['name' => 'last_name', 'placeholder' => 'Last name'],
+                ['name' => 'email', 'type' => 'email', 'placeholder' => 'Email address'],
+            ],
+            'add_href' => null,
+            'total_records' => count($tableRows),
+            'per_page' => 10,
+            'page' => 1,
+            'total_pages' => 1,
             'form' => $form->createView(),
+            'card_rows' => $cardRows,
             'search_query' => $searchQuery,
             'search_field' => $searchField,
             'sort_dir' => $sortDir,

@@ -14,8 +14,7 @@ use Symfony\Component\Mime\Email;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Psr\Log\LoggerInterface;
-use Symfony\Contracts\Cache\CacheInterface;
-use Symfony\Contracts\Cache\ItemInterface;
+use Psr\Cache\CacheItemPoolInterface;
 
 final class ResetPasswordController extends AbstractController
 {
@@ -23,7 +22,7 @@ final class ResetPasswordController extends AbstractController
     public function forgotPassword(
         Request $request,
         UserRepository $userRepository,
-        CacheInterface $cache,
+        CacheItemPoolInterface $cache,
         MailerInterface $mailer,
         LoggerInterface $logger,
         UrlGeneratorInterface $urlGenerator
@@ -34,20 +33,20 @@ final class ResetPasswordController extends AbstractController
                 $this->addFlash('error', 'Email is required.');
                 return $this->redirectToRoute('app_forgot_password');
             }
-            $user = $email !== '' ? $userRepository->findOneBy(['email' => $email]) : null;
+            $user = $userRepository->findOneBy(['email' => $email]);
             $token = bin2hex(random_bytes(16));
 
             if ($user) {
                 $code = (string) random_int(100000, 999999);
                 $cacheKey = 'password_reset_'.$token;
 
-                $cache->get($cacheKey, function (ItemInterface $item) use ($email, $code) {
-                    $item->expiresAfter(900);
-                    return [
-                        'email' => $email,
-                        'code' => $code,
-                    ];
-                });
+                $item = $cache->getItem($cacheKey);
+                $item->set([
+                    'email' => $email,
+                    'code' => $code,
+                ]);
+                $item->expiresAfter(900);
+                $cache->save($item);
 
                 $verifyUrl = $urlGenerator->generate('app_verify_reset', ['token' => $token], UrlGeneratorInterface::ABSOLUTE_URL);
                 $logoUrl = $request->getSchemeAndHttpHost().'/logo.png';
@@ -102,7 +101,7 @@ final class ResetPasswordController extends AbstractController
     }
 
     #[Route('/reset-password/verify/{token}', name: 'app_verify_reset', methods: ['GET', 'POST'])]
-    public function verifyCode(string $token, Request $request, CacheInterface $cache): Response
+    public function verifyCode(string $token, Request $request, CacheItemPoolInterface $cache): Response
     {
         $cacheKey = 'password_reset_'.$token;
         $item = $cache->getItem($cacheKey);
@@ -124,10 +123,10 @@ final class ResetPasswordController extends AbstractController
                 $this->addFlash('error', 'Invalid code.');
             } else {
                 $verifiedKey = 'password_reset_verified_'.$token;
-                $cache->get($verifiedKey, function (ItemInterface $item) {
-                    $item->expiresAfter(900);
-                    return true;
-                });
+                $verifiedItem = $cache->getItem($verifiedKey);
+                $verifiedItem->set(true);
+                $verifiedItem->expiresAfter(900);
+                $cache->save($verifiedItem);
 
                 return $this->redirectToRoute('app_reset_password', ['token' => $token]);
             }
@@ -142,7 +141,7 @@ final class ResetPasswordController extends AbstractController
     public function resetPassword(
         string $token,
         Request $request,
-        CacheInterface $cache,
+        CacheItemPoolInterface $cache,
         UserRepository $userRepository,
         EntityManagerInterface $entityManager,
         UserPasswordHasherInterface $passwordHasher

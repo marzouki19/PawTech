@@ -231,13 +231,14 @@ class PTZControlService
         }
 
         // Empty response usually means success for ONVIF
+        $isSuccess = $statusCode < 400;
         return [
-            'success' => $statusCode >= 200 && $statusCode < 400,
+            'success' => $isSuccess,
             'status_code' => $statusCode,
             'action' => $action,
             'protocol' => 'onvif',
-            'message' => $statusCode >= 200 && $statusCode < 400 ? 'PTZ command sent' : 'PTZ command failed',
-            'error' => $statusCode >= 200 && $statusCode < 400 ? null : 'Unknown PTZ transport error',
+            'message' => $isSuccess ? 'PTZ command sent' : 'PTZ command failed',
+            'error' => $isSuccess ? null : 'Unknown PTZ transport error',
             'response_length' => strlen($response),
         ];
     }

@@ -112,9 +112,10 @@ class CategorieController extends AbstractController
         $categorie = new Categorie();
         $form = $this->createForm(CategorieType::class, $categorie);
         $form->handleRequest($request);
+        $isAjax = $request->isXmlHttpRequest();
 
         // Ajax GET -> fragment
-        if ($request->isXmlHttpRequest() && !$form->isSubmitted()) {
+        if ($isAjax && !$form->isSubmitted()) {
             return $this->render('categorie/_form_content.html.twig', [
                 'page_title' => 'New Category',
                 'categorie' => $categorie,
@@ -129,19 +130,8 @@ class CategorieController extends AbstractController
                 try {
                     $em->persist($categorie);
                     $em->flush();
-                    
-                    if ($request->isXmlHttpRequest()) {
-                        return $this->json([
-                            'success' => true, 
-                            'message' => 'Category "' . $categorie->getNom() . '" created successfully!',
-                            'redirect' => $this->generateUrl('app_eshop_categorie_index')
-                        ]);
-                    }
-                    
-                    $this->addFlash('success', 'Category "' . $categorie->getNom() . '" created successfully!');
-                    return $this->redirectToRoute('app_eshop_categorie_index');
                 } catch (\Exception $e) {
-                    if ($request->isXmlHttpRequest()) {
+                    if ($isAjax) {
                         return $this->json([
                             'success' => false,
                             'message' => 'Error: ' . $e->getMessage()
@@ -150,8 +140,19 @@ class CategorieController extends AbstractController
                     
                     $this->addFlash('error', 'Error creating category: ' . $e->getMessage());
                 }
+
+                if ($isAjax) {
+                    return $this->json([
+                        'success' => true, 
+                        'message' => 'Category "' . $categorie->getNom() . '" created successfully!',
+                        'redirect' => $this->generateUrl('app_eshop_categorie_index')
+                    ]);
+                }
+                
+                $this->addFlash('success', 'Category "' . $categorie->getNom() . '" created successfully!');
+                return $this->redirectToRoute('app_eshop_categorie_index');
             } else {
-                if ($request->isXmlHttpRequest()) {
+                if ($isAjax) {
                     return $this->render('categorie/_form_content.html.twig', [
                         'page_title' => 'New Category',
                         'categorie' => $categorie,
@@ -202,8 +203,9 @@ class CategorieController extends AbstractController
     {
         $form = $this->createForm(CategorieType::class, $categorie);
         $form->handleRequest($request);
+        $isAjax = $request->isXmlHttpRequest();
 
-        if ($request->isXmlHttpRequest() && !$form->isSubmitted()) {
+        if ($isAjax && !$form->isSubmitted()) {
             return $this->render('categorie/_form_content.html.twig', [
                 'page_title' => 'Modify Category',
                 'categorie' => $categorie,
@@ -217,19 +219,8 @@ class CategorieController extends AbstractController
             if ($form->isValid()) {
                 try {
                     $em->flush();
-                    
-                    if ($request->isXmlHttpRequest()) {
-                        return $this->json([
-                            'success' => true, 
-                            'message' => 'Category "' . $categorie->getNom() . '" updated successfully!',
-                            'redirect' => $this->generateUrl('app_eshop_categorie_index')
-                        ]);
-                    }
-                    
-                    $this->addFlash('success', 'Category "' . $categorie->getNom() . '" updated successfully!');
-                    return $this->redirectToRoute('app_eshop_categorie_index');
                 } catch (\Exception $e) {
-                    if ($request->isXmlHttpRequest()) {
+                    if ($isAjax) {
                         return $this->json([
                             'success' => false,
                             'message' => 'Error: ' . $e->getMessage()
@@ -238,8 +229,19 @@ class CategorieController extends AbstractController
                     
                     $this->addFlash('error', 'Error updating category: ' . $e->getMessage());
                 }
+
+                if ($isAjax) {
+                    return $this->json([
+                        'success' => true, 
+                        'message' => 'Category "' . $categorie->getNom() . '" updated successfully!',
+                        'redirect' => $this->generateUrl('app_eshop_categorie_index')
+                    ]);
+                }
+                
+                $this->addFlash('success', 'Category "' . $categorie->getNom() . '" updated successfully!');
+                return $this->redirectToRoute('app_eshop_categorie_index');
             } else {
-                if ($request->isXmlHttpRequest()) {
+                if ($isAjax) {
                     return $this->render('categorie/_form_content.html.twig', [
                         'page_title' => 'Modify Category',
                         'categorie' => $categorie,

@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Service\RecommendationService;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -12,10 +13,12 @@ use Symfony\Component\Routing\Attribute\Route;
 class RecommendationController extends AbstractController
 {
     private RecommendationService $recommendationService;
+    private EntityManagerInterface $entityManager;
 
-    public function __construct(RecommendationService $recommendationService)
+    public function __construct(RecommendationService $recommendationService, EntityManagerInterface $entityManager)
     {
         $this->recommendationService = $recommendationService;
+        $this->entityManager = $entityManager;
     }
 
     #[Route('/recommendations/product/{id}', name: 'app_api_product_recommendations', methods: ['GET'])]
@@ -59,7 +62,7 @@ class RecommendationController extends AbstractController
     #[Route('/recommendations/similar/{productId}', name: 'app_api_similar_products', methods: ['GET'])]
     public function getSimilarProducts(int $productId): JsonResponse
     {
-        $product = $this->getDoctrine()->getRepository(\App\Entity\Produit::class)->find($productId);
+        $product = $this->entityManager->getRepository(\App\Entity\Produit::class)->find($productId);
         
         if (!$product) {
             return $this->json(['error' => 'Product not found'], 404);

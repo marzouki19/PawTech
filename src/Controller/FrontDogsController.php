@@ -225,14 +225,12 @@ final class FrontDogsController extends AbstractController
 
             if ($statusCode >= 400) {
                 $detail = '';
-                if (is_array($data)) {
-                    if (isset($data['detail']) && is_string($data['detail'])) {
-                        $detail = $data['detail'];
-                    } elseif (isset($data['detail']) && is_array($data['detail'])) {
-                        $detail = json_encode($data['detail'], JSON_UNESCAPED_UNICODE);
-                    } else {
-                        $detail = json_encode($data, JSON_UNESCAPED_UNICODE);
-                    }
+                if (isset($data['detail']) && is_string($data['detail'])) {
+                    $detail = $data['detail'];
+                } elseif (isset($data['detail']) && is_array($data['detail'])) {
+                    $detail = json_encode($data['detail'], JSON_UNESCAPED_UNICODE);
+                } else {
+                    $detail = json_encode($data, JSON_UNESCAPED_UNICODE);
                 }
 
                 return new JsonResponse([

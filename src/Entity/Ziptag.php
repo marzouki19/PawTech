@@ -19,6 +19,7 @@ class Ziptag
     #[ORM\GeneratedValue]
     #[ORM\Column]
     #[Groups(['ziptags'])]
+    // @phpstan-ignore-next-line Doctrine sets generated IDs at runtime.
     private ?int $id = null;
 
     #[ORM\Column(length: 255, unique: true)]

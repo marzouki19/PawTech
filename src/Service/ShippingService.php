@@ -2,12 +2,8 @@
 
 namespace App\Service;
 
-use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
-
 class ShippingService
 {
-    private ParameterBagInterface $params;
-
     // Shipping rates (can be moved to parameters.yml or database)
     private const BASE_RATE = 8; // Base shipping cost in TND
     private const FREE_SHIPPING_THRESHOLD = 200; // Free shipping for orders above 200 TND
@@ -22,11 +18,6 @@ class ShippingService
         'south' => ['name' => 'South Tunisia', 'multiplier' => 2.0, 'days' => '3-5'],
         'international' => ['name' => 'International', 'multiplier' => 3.5, 'days' => '7-14'],
     ];
-
-    public function __construct(ParameterBagInterface $params)
-    {
-        $this->params = $params;
-    }
 
     /**
      * Calculate shipping cost based on order total and weight

@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface;
@@ -34,7 +35,9 @@ class ClictopayService
      */
     private function getBaseUrl(): string
     {
-        $isProduction = (bool) $this->params->get('clictopay.production', false);
+        $isProduction = $this->params->has('clictopay.production')
+            ? (bool) $this->params->get('clictopay.production')
+            : false;
         
         if ($isProduction) {
             return 'https://ipay.clictopay.com/payment/rest';
@@ -87,9 +90,13 @@ class ClictopayService
         string $orderNumber,
         int $amount,
         int $currency = self::CURRENCY_TND,
-        string $returnUrl,
+        ?string $returnUrl = null,
         ?string $language = 'fr'
     ): array {
+        if ($returnUrl === null || $returnUrl === '') {
+            throw new \InvalidArgumentException('Return URL is required.');
+        }
+
         $baseUrl = $this->getBaseUrl();
         
         $payload = [
@@ -166,9 +173,13 @@ class ClictopayService
         string $orderNumber,
         int $amount,
         int $currency = self::CURRENCY_TND,
-        string $returnUrl,
+        ?string $returnUrl = null,
         ?string $language = 'fr'
     ): array {
+        if ($returnUrl === null || $returnUrl === '') {
+            throw new \InvalidArgumentException('Return URL is required.');
+        }
+
         $baseUrl = $this->getBaseUrl();
         
         $payload = [
@@ -364,7 +375,7 @@ class ClictopayService
      * @param Request $request Symfony request object
      * @return array Parsed callback parameters
      */
-    public function parseCallback(\Symfony\Component\HttpFoundation\Request $request): array
+    public function parseCallback(Request $request): array
     {
         return [
             'orderId' => $request->query->get('orderId'),

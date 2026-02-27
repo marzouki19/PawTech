@@ -12,6 +12,7 @@ class Adoption
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
+    // @phpstan-ignore-next-line Doctrine sets generated IDs at runtime.
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: User::class)]

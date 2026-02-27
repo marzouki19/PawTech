@@ -57,11 +57,6 @@ class StreamTranscoderService
         return $this->getCameraOutputDir($cameraId) . '/frame.jpg';
     }
 
-    private function escapeForPowerShellSingleQuoted(string $value): string
-    {
-        return str_replace("'", "''", $value);
-    }
-
     /**
      * Start FFmpeg transcoding process for a camera
      * Optimized for minimum latency RTSP to HLS streaming
@@ -142,6 +137,7 @@ class StreamTranscoderService
             $quotedLogOutput = escapeshellarg($outputDir . '/ffmpeg.log');
             $quotedStdoutOutput = escapeshellarg($outputDir . '/ffmpeg.out.log');
             $quotedPidOutput = escapeshellarg($outputDir . '/ffmpeg.pid');
+            $ffmpegCommand = '';
 
             if (!$this->isWindows()) {
                 $ffmpegCommand = sprintf(
@@ -160,6 +156,11 @@ class StreamTranscoderService
                     $quotedLogOutput,
                     $quotedPidOutput
                 );
+            }
+
+            if ($ffmpegCommand === '') {
+                $this->logger->error("Unable to build FFmpeg command for camera {$cameraId}");
+                return false;
             }
 
             $this->logger->info("Starting FFmpeg transcoding for camera {$cameraId} (low-latency mode)");

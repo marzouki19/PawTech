@@ -57,9 +57,7 @@ class StripePaymentService
         string $customerEmail,
         ?string $successUrl = null,
         ?string $cancelUrl = null
-    ): \StripeCheckout\Session {
-        $this->stripe->setApiKey($this->getSecretKey());
-        
+    ): \Stripe\Checkout\Session {
         $sessionParams = [
             'payment_method_types' => ['card'],
             'line_items' => [
@@ -97,8 +95,6 @@ class StripePaymentService
         string $currency,
         ?array $metadata = []
     ): \Stripe\PaymentIntent {
-        $this->stripe->setApiKey($this->getSecretKey());
-        
         return $this->stripe->paymentIntents->create([
             'amount' => $amount,
             'currency' => $currency,
@@ -112,10 +108,8 @@ class StripePaymentService
     /**
      * Retrieve a checkout session
      */
-    public function getCheckoutSession(string $sessionId): \StripeCheckout\Session
+    public function getCheckoutSession(string $sessionId): \Stripe\Checkout\Session
     {
-        $this->stripe->setApiKey($this->getSecretKey());
-        
         return $this->stripe->checkout->sessions->retrieve($sessionId);
     }
 
@@ -124,8 +118,6 @@ class StripePaymentService
      */
     public function getPaymentIntent(string $paymentIntentId): \Stripe\PaymentIntent
     {
-        $this->stripe->setApiKey($this->getSecretKey());
-        
         return $this->stripe->paymentIntents->retrieve($paymentIntentId);
     }
 
@@ -169,8 +161,6 @@ class StripePaymentService
      */
     public function refundPayment(string $paymentIntentId, ?int $amount = null): \Stripe\Refund
     {
-        $this->stripe->setApiKey($this->getSecretKey());
-        
         $params = ['payment_intent' => $paymentIntentId];
         
         if ($amount !== null) {

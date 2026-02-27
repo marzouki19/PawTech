@@ -538,6 +538,7 @@ class AdminDashboardController extends AbstractController
     #[Route('/detections', name: 'app_admin_detections', methods: ['GET'])]
     public function detections(
         DogDetectionRepository $detectionRepo,
+        IpCameraRepository $cameraRepo,
         Request $request
     ): Response {
         $severity = $request->query->get('severity');
@@ -547,7 +548,7 @@ class AdminDashboardController extends AbstractController
             $detections = $detectionRepo->findBy([], ['detectedAt' => 'DESC']);
             $detections = array_filter($detections, fn($d) => $d->getSeverity() === $severity);
         } elseif ($cameraId) {
-            $camera = $detectionRepo->getEntityManager()->find(IpCamera::class, $cameraId);
+            $camera = $cameraRepo->find((int) $cameraId);
             $detections = $camera ? $detectionRepo->findByCamera($camera) : [];
         } else {
             $detections = $detectionRepo->findRecentDetections(100);
@@ -896,7 +897,7 @@ class AdminDashboardController extends AbstractController
             
             set_time_limit(0);
             
-            while (true) {
+            while (!connection_aborted()) {
                 if (file_exists($mjpegFile)) {
                     $currentSize = filesize($mjpegFile);
                     
@@ -1079,7 +1080,7 @@ class AdminDashboardController extends AbstractController
         }
 
         $jpeg = substr($prefix, $soi);
-        if (!is_string($jpeg) || strlen($jpeg) < 200) {
+        if ($jpeg === '' || strlen($jpeg) < 200) {
             return null;
         }
 

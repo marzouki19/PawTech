@@ -225,7 +225,7 @@ final class PublicNotificationController extends AbstractController
     {
         $roles = [];
 
-        if ($this->getUser() !== null && method_exists($this->getUser(), 'getRoles')) {
+        if ($this->getUser() !== null) {
             foreach ((array) $this->getUser()->getRoles() as $role) {
                 $roles[] = $this->normalizeRole((string) $role);
             }
@@ -280,7 +280,7 @@ final class PublicNotificationController extends AbstractController
         }
 
         $role = $this->normalizeRole((string) ($sessionUser['role'] ?? ''));
-        if ($role === '' && $this->getUser() !== null && method_exists($this->getUser(), 'getRoles')) {
+        if ($role === '' && $this->getUser() !== null) {
             $roles = $this->getUser()->getRoles();
             $role = isset($roles[0]) ? $this->normalizeRole((string) $roles[0]) : '';
         }

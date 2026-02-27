@@ -20,7 +20,7 @@ class ClictopayController extends AbstractController
         EntityManagerInterface $em
     ): Response {
         $orderId = $request->request->getInt('order_id');
-        $amount = $request->request->getFloat('amount');
+        $amount = (float) $request->request->get('amount', 0);
         
         // Get order from database
         $commande = null;
@@ -87,7 +87,7 @@ class ClictopayController extends AbstractController
             if ($commande) {
                 // Check payment status with Clictopay
                 try {
-                    $status = $clictopayService->getOrderStatus($orderId);
+                    $status = $clictopayService->getOrderStatus((string) $orderId);
                     
                     // OrderStatus: 1 = deposited (successful)
                     $success = isset($status['OrderStatus']) && $status['OrderStatus'] === ClictopayService::STATUS_DEPOSITED;
@@ -148,7 +148,7 @@ class ClictopayController extends AbstractController
     #[Route('/clictopay/preauth', name: 'app_clictopay_preauth', methods: ['POST'])]
     public function registerPreAuth(Request $request, ClictopayService $clictopayService): Response
     {
-        $amount = $request->request->getFloat('amount');
+        $amount = (float) $request->request->get('amount', 0);
         
         $orderNumber = 'PREAUTH-' . uniqid() . '-' . time();
         $amountInMillimes = $clictopayService->convertToSmallestUnit($amount);

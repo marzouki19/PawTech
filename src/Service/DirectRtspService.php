@@ -3,7 +3,6 @@
 namespace App\Service;
 
 use App\Entity\IpCamera;
-use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -22,7 +21,6 @@ class DirectRtspService
 {
     private string $streamDirectory;
     private LoggerInterface $logger;
-    private EntityManagerInterface $entityManager;
     private array $mjpegProcesses = [];
     private array $frameProcesses = [];
 
@@ -30,15 +28,12 @@ class DirectRtspService
     private const MJPEG_PORT_BASE = 8888;
     private const MAX_RESTART_ATTEMPTS = 3;
     private const FRAME_TIMEOUT_SECONDS = 10; // Frame must be updated within this time
-    private const PROCESS_CHECK_INTERVAL = 5; // seconds
 
     public function __construct(
         LoggerInterface $logger,
-        EntityManagerInterface $entityManager,
         string $streamsDirectory
     ) {
         $this->logger = $logger;
-        $this->entityManager = $entityManager;
         $this->streamDirectory = $streamsDirectory;
         
         if (!is_dir($this->streamDirectory)) {

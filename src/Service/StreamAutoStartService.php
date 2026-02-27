@@ -2,9 +2,7 @@
 
 namespace App\Service;
 
-use App\Entity\IpCamera;
 use App\Repository\IpCameraRepository;
-use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -13,18 +11,15 @@ use Psr\Log\LoggerInterface;
  */
 class StreamAutoStartService
 {
-    private EntityManagerInterface $entityManager;
     private StreamTranscoderService $transcoderService;
     private IpCameraRepository $cameraRepository;
     private LoggerInterface $logger;
 
     public function __construct(
-        EntityManagerInterface $entityManager,
         StreamTranscoderService $transcoderService,
         IpCameraRepository $cameraRepository,
         LoggerInterface $logger
     ) {
-        $this->entityManager = $entityManager;
         $this->transcoderService = $transcoderService;
         $this->cameraRepository = $cameraRepository;
         $this->logger = $logger;

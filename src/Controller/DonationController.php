@@ -49,7 +49,7 @@ class DonationController extends AbstractController
         $totalRecords = $totalQueryBuilder->select('COUNT(d.id)')->getQuery()->getSingleScalarResult();
         
         // Pagination
-        $totalPages = $perPage > 0 ? ceil($totalRecords / $perPage) : 1;
+        $totalPages = ceil($totalRecords / $perPage);
         $page = max(1, min($page, $totalPages));
         
         // Récupérer les résultats paginés
