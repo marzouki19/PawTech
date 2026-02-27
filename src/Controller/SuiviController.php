@@ -7,6 +7,7 @@ use App\Form\SuiviType;
 use App\Repository\SuiviRepository;
 use App\Service\AiSymptomsService;
 use Doctrine\ORM\EntityManagerInterface;
+use Nucleos\DompdfBundle\Wrapper\DompdfWrapperInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -18,13 +19,16 @@ class SuiviController extends AbstractController
 {
     private EntityManagerInterface $entityManager;
     private AiSymptomsService $aiSymptomsService;
+    private DompdfWrapperInterface $dompdfWrapper;
     
     public function __construct(
         EntityManagerInterface $entityManager,
-        AiSymptomsService $aiSymptomsService
+        AiSymptomsService $aiSymptomsService,
+        DompdfWrapperInterface $dompdfWrapper
     ) {
         $this->entityManager = $entityManager;
         $this->aiSymptomsService = $aiSymptomsService;
+        $this->dompdfWrapper = $dompdfWrapper;
     }
 
     #[Route('/', name: 'app_suivi_index', methods: ['GET'])]
@@ -112,9 +116,6 @@ class SuiviController extends AbstractController
             ['id' => 'muscles', 'name' => 'Muscles', 'number' => 17]
         ];
         
-        // Select a fallback analysis organ when nothing is detected from diagnostic
-        $analysisOrgan = $detectedOrgan ?? $organs[array_rand($organs)];
-
         // Sélectionner une partie aléatoire
         $randomBodyPart = $bodyParts[array_rand($bodyParts)];
         $savedReport = (string) ($suivi->getAiAnalysisReport() ?? '');
@@ -131,7 +132,6 @@ class SuiviController extends AbstractController
             'initial_body_part_name' => $randomBodyPart['name'],
             'body_parts' => $bodyParts,
             'detected_organ' => $detectedOrgan,
-            'analysis_organ' => $analysisOrgan,
             'organs_list' => $organs,
             'saved_symptoms' => $savedSymptoms !== 'N/A' ? $savedSymptoms : '',
             'saved_analysis_report' => $savedReport,
@@ -154,54 +154,23 @@ class SuiviController extends AbstractController
 
         $dogName = $consultation->getDog() ? (string) $consultation->getDog()->getName() : 'N/A';
         $affectedParts = $suivi->getAffectedBodyParts() ?? [];
-        $analysisReport = (string) ($suivi->getAiAnalysisReport() ?? '');
-
-        // Auto-generate AI report for PDF when missing
-        if ($analysisReport === '') {
-            $diagnosticText = (string) ($consultation->getDiagnostic() ?? '');
-            $inferredParts = !empty($affectedParts) ? $affectedParts : $this->inferAffectedPartsFromDiagnostic($diagnosticText);
-            $seedSymptoms = trim($diagnosticText) !== '' ? trim($diagnosticText) : 'general clinical monitoring';
-
-            $generated = $this->aiSymptomsService->generateMedicalAnalysis(
-                $dogName,
-                (string) ($consultation->getType() ?? 'Normal'),
-                $diagnosticText !== '' ? $diagnosticText : 'not specified',
-                (string) ($consultation->getTraitement() ?? 'not specified'),
-                $inferredParts,
-                $seedSymptoms
-            );
-
-            if (($generated['success'] ?? false) === true) {
-                $analysisReport = (string) ($generated['report'] ?? '');
-                $emergencyLevel = (string) ($generated['emergency_level'] ?? '');
-                $affectedParts = $inferredParts;
-
-                $suivi->setAiAnalysisReport($analysisReport);
-                $suivi->setAffectedBodyParts($affectedParts);
-                if ($emergencyLevel !== '') {
-                    $suivi->setEmergencyLevel($emergencyLevel);
-                }
-                $this->entityManager->flush();
-            }
-        }
-
         $affectedPartsText = empty($affectedParts) ? 'N/A' : implode(', ', array_map('strval', $affectedParts));
+        $analysisReport = (string) ($suivi->getAiAnalysisReport() ?? '');
         $symptoms = $this->extractSymptomsFromReport($analysisReport);
         $predictedCondition = $this->extractReportField($analysisReport, 'Predicted condition');
         $predictedEmergency = $this->extractReportField($analysisReport, 'Predicted emergency');
         $consultationDate = $consultation->getDate() ? $consultation->getDate()->format('d/m/Y H:i') : 'N/A';
         $nextVisit = $suivi->getProchaineVisite() ? $suivi->getProchaineVisite()->format('d/m/Y H:i') : 'N/A';
+        $resolvedOrgan = $this->resolvePrimaryOrgan($affectedParts, (string) ($consultation->getDiagnostic() ?? ''));
+        $organId = (string) ($resolvedOrgan['id'] ?? '');
+        $organName = (string) ($resolvedOrgan['name'] ?? 'N/A');
 
         $logoDataUri = null;
-        // PNG decoding in Dompdf requires GD (imagecreatefrompng). If GD is missing,
-        // skip logo embedding so PDF export can still work.
-        if (function_exists('imagecreatefrompng')) {
-            $logoPath = (string) $this->getParameter('kernel.project_dir') . '/public/logo.png';
-            if (is_file($logoPath)) {
-                $logoBinary = @file_get_contents($logoPath);
-                if ($logoBinary !== false) {
-                    $logoDataUri = 'data:image/png;base64,' . base64_encode($logoBinary);
-                }
+        $logoPath = (string) $this->getParameter('kernel.project_dir') . '/public/logo.png';
+        if (is_file($logoPath)) {
+            $logoBinary = @file_get_contents($logoPath);
+            if ($logoBinary !== false) {
+                $logoDataUri = 'data:image/png;base64,' . base64_encode($logoBinary);
             }
         }
 
@@ -218,23 +187,14 @@ class SuiviController extends AbstractController
             'predicted_condition' => $predictedCondition,
             'predicted_emergency' => $predictedEmergency,
             'analysis_report' => $analysisReport !== '' ? $analysisReport : 'N/A',
+            'organ_name' => $organName,
+            'organ_image_data_uri' => $this->resolveOrganImageDataUri($organId),
         ]);
 
-        if (!class_exists(\Dompdf\Dompdf::class) || !class_exists(\Dompdf\Options::class)) {
-            return new Response('PDF generation is not available. Please install dompdf/dompdf.', 500);
-        }
-
-        $options = new \Dompdf\Options();
-        $options->set('defaultFont', 'DejaVu Sans');
-        $options->set('isRemoteEnabled', true);
-        $options->set('isHtml5ParserEnabled', true);
-        $options->set('chroot', (string) $this->getParameter('kernel.project_dir') . '/public');
-
-        $dompdf = new \Dompdf\Dompdf($options);
-        $dompdf->loadHtml($html);
-        $dompdf->setPaper('A4', 'portrait');
-        $dompdf->render();
-        $pdfContent = $dompdf->output();
+        $pdfContent = $this->dompdfWrapper->getPdf($html, [
+            'defaultPaperSize' => 'a4',
+            'defaultPaperOrientation' => 'portrait',
+        ]);
         $consultationId = (string) $consultation->getId();
         $filename = 'consultation_' . $consultationId . '_followup_' . (string) $suivi->getId() . '.pdf';
 
@@ -242,33 +202,6 @@ class SuiviController extends AbstractController
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ]);
-    }
-
-    private function inferAffectedPartsFromDiagnostic(string $diagnostic): array
-    {
-        $d = strtolower($diagnostic);
-        $map = [
-            'brain' => ['brain', 'neurological', 'head', 'cerebral'],
-            'lungs' => ['lung', 'lungs', 'respiratory', 'breathing', 'pulmonary'],
-            'heart' => ['heart', 'cardiac', 'cardio'],
-            'liver' => ['liver', 'hepatic'],
-            'stomach' => ['stomach', 'gastric', 'gastro'],
-            'guts' => ['gut', 'guts', 'intestine', 'bowel', 'intestinal'],
-            'kidney' => ['kidney', 'renal'],
-            'bladder' => ['bladder', 'urinary', 'urine'],
-        ];
-
-        $parts = [];
-        foreach ($map as $part => $keywords) {
-            foreach ($keywords as $kw) {
-                if (str_contains($d, $kw)) {
-                    $parts[] = $part;
-                    break;
-                }
-            }
-        }
-
-        return !empty($parts) ? array_values(array_unique($parts)) : ['kidney'];
     }
 
     // AJAX: Generate AI Analysis
@@ -334,7 +267,7 @@ class SuiviController extends AbstractController
             }
 
             $analysisReport = (string) ($analysis['report'] ?? '');
-            $emergencyLevel = (string) ($analysis['emergency_level'] ?? 'low');
+            $emergencyLevel = (string) ($analysis['emergency_level'] ?? Suivi::EMERGENCY_LOW);
             $analysisSource = (string) ($analysis['source'] ?? 'unknown');
 
             if ($analysisMode === 'knn_only' && $analysisSource !== 'knn') {
@@ -605,7 +538,6 @@ class SuiviController extends AbstractController
                     'etat' => $suivi->getEtat() ?? 'N/A',
                     'type' => $suivi->getType() ?? 'N/A',
                     'recommandation' => $suivi->getRecommandation() ?? '',
-                    'ai_analysis_report' => $suivi->getAiAnalysisReport() ?? '',
                     'prochaine_visite' => $suivi->getProchaineVisite() ? 
                         $suivi->getProchaineVisite()->format('d/m/Y H:i') : null,
                     'consultation_id' => $suivi->getConsultation() ? $suivi->getConsultation()->getId() : null,
@@ -639,7 +571,6 @@ class SuiviController extends AbstractController
                     'etat' => $suivi->getEtat() ?? 'N/A',
                     'type' => $suivi->getType() ?? 'N/A',
                     'recommandation' => $suivi->getRecommandation() ?? '',
-                    'ai_analysis_report' => $suivi->getAiAnalysisReport() ?? '',
                     'prochaine_visite' => $suivi->getProchaineVisite() ? 
                         $suivi->getProchaineVisite()->format('d/m/Y H:i') : null,
                     'consultation_id' => $suivi->getConsultation() ? $suivi->getConsultation()->getId() : null,
@@ -703,11 +634,11 @@ class SuiviController extends AbstractController
         ]);
     }
 
-    #[Route('/delete/{id}', name: 'app_suivi_delete', methods: ['DELETE'])]
+    #[Route('/delete/{id}', name: 'app_suivi_delete', methods: ['POST', 'DELETE'])]
     public function delete(Request $request, Suivi $suivi): JsonResponse
     {
         // Vérifier le token CSRF
-        $csrfToken = $request->headers->get('X-CSRF-Token');
+        $csrfToken = $request->headers->get('X-CSRF-Token') ?? (string) $request->request->get('_token', '');
         if (!$this->isCsrfTokenValid('app', $csrfToken)) {
             return $this->json([
                 'success' => false,
@@ -765,6 +696,96 @@ class SuiviController extends AbstractController
         }
 
         return 'N/A';
+    }
+
+    private function resolvePrimaryOrgan(array $affectedParts, string $diagnostic): array
+    {
+        $organs = [
+            ['id' => 'brain', 'name' => 'Brain', 'keywords' => ['brain', 'cerebral', 'neurological', 'head', 'cerveau']],
+            ['id' => 'lungs', 'name' => 'Lungs', 'keywords' => ['lung', 'lungs', 'pulmonary', 'respiratory', 'poumon']],
+            ['id' => 'heart', 'name' => 'Heart', 'keywords' => ['heart', 'cardiac', 'cardiovascular', 'coeur']],
+            ['id' => 'liver', 'name' => 'Liver', 'keywords' => ['liver', 'hepatic', 'foie']],
+            ['id' => 'stomach', 'name' => 'Stomach', 'keywords' => ['stomach', 'gastric', 'gastro', 'estomac']],
+            ['id' => 'guts', 'name' => 'Guts', 'keywords' => ['gut', 'guts', 'intestine', 'intestinal', 'bowel', 'intestin']],
+            ['id' => 'kidney', 'name' => 'Kidney', 'keywords' => ['kidney', 'renal', 'rein']],
+            ['id' => 'bladder', 'name' => 'Urinary Bladder', 'keywords' => ['bladder', 'urinary', 'vessie']],
+        ];
+
+        $normalize = static fn (string $value): string => strtolower(trim($value));
+        $alias = [
+            'head' => 'brain',
+            'chest' => 'lungs',
+            'abdomen' => 'stomach',
+            'kidneys' => 'kidney',
+            'urinary bladder' => 'bladder',
+        ];
+
+        foreach ($affectedParts as $part) {
+            $key = $normalize((string) $part);
+            if ($key === '') {
+                continue;
+            }
+            $key = $alias[$key] ?? $key;
+            foreach ($organs as $organ) {
+                if ($key === $organ['id']) {
+                    return ['id' => $organ['id'], 'name' => $organ['name']];
+                }
+            }
+        }
+
+        $diag = $normalize($diagnostic);
+        if ($diag !== '') {
+            foreach ($organs as $organ) {
+                foreach ($organ['keywords'] as $keyword) {
+                    if (str_contains($diag, $normalize((string) $keyword))) {
+                        return ['id' => $organ['id'], 'name' => $organ['name']];
+                    }
+                }
+            }
+        }
+
+        return ['id' => '', 'name' => 'N/A'];
+    }
+
+    private function resolveOrganImageDataUri(string $organId): ?string
+    {
+        $projectDir = (string) $this->getParameter('kernel.project_dir');
+        $organId = strtolower(trim($organId));
+        $paths = [];
+
+        if ($organId !== '') {
+            $paths = [
+                $projectDir . '/public/organs/' . $organId . '.png',
+                $projectDir . '/public/organs/' . $organId . '.jpg',
+                $projectDir . '/public/organs/' . $organId . '.jpeg',
+                $projectDir . '/public/organs/' . $organId . '.webp',
+            ];
+        }
+
+        // Fallback image if organ-specific image is not present yet.
+        $paths[] = $projectDir . '/public/default.png';
+
+        foreach ($paths as $path) {
+            if (!is_file($path)) {
+                continue;
+            }
+
+            $content = @file_get_contents($path);
+            if ($content === false) {
+                continue;
+            }
+
+            $ext = strtolower((string) pathinfo($path, PATHINFO_EXTENSION));
+            $mime = match ($ext) {
+                'jpg', 'jpeg' => 'image/jpeg',
+                'webp' => 'image/webp',
+                default => 'image/png',
+            };
+
+            return 'data:' . $mime . ';base64,' . base64_encode($content);
+        }
+
+        return null;
     }
 
 }

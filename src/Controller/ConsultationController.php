@@ -5,9 +5,10 @@ namespace App\Controller;
 use App\Entity\Consultation;
 use App\Form\ConsultationType;
 use App\Repository\ConsultationRepository;
-use App\Repository\UserRepository;
+use App\Repository\SuiviRepository;
 use App\Service\TwilioNotificationService;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -17,130 +18,68 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/consultation')]
 class ConsultationController extends AbstractController
 {
+    public function __construct(private readonly LoggerInterface $logger) {}
+
     #[Route('/', name: 'app_consultation_index', methods: ['GET'])]
     public function index(ConsultationRepository $repo): Response
     {
         return $this->render('consultation/index.html.twig', [
-            'consultations' => $repo->findAll(),
+            'consultations' => $repo->findAllOrdered(),
             'active' => 'consultation',
-            'page_title' => 'Consultations'
+            'page_title' => 'Consultations',
         ]);
     }
-
-
-    #[Route('/veterinaire', name: 'app_veterinaire_index', methods: ['GET'])]
-    public function indexfront(): Response
-    {
-            return $this->render('pages/veterinarian.html.twig');
-    }
-
-
-
-    #[Route('/appointment/new', name: 'app_frontveterinaire_new', methods: ['GET', 'POST'])]
-    public function newFront(Request $request, EntityManagerInterface $em, TwilioNotificationService $twilioNotificationService): Response
-    {
-        $consultation = new Consultation();
-        $form = $this->createForm(ConsultationType::class, $consultation);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $em->persist($consultation);
-            $em->flush();
-            $this->notifyConsultationBySms($consultation, $twilioNotificationService);
-
-            $this->addFlash('success', 'Appointment request sent successfully! We will contact you soon.');
-            return $this->redirectToRoute('app_veterinaire_index');
-        }
-
-        // Render a dedicated template for the appointment form (no sidebar)
-        return $this->render('pages/newcons.html.twig', [
-            'form' => $form,
-            'active' => 'consultation',
-            'page_title' => 'Add Consultation'
-        ]);
-    }
-
-
-
-
 
     #[Route('/search', name: 'app_consultation_search', methods: ['GET'])]
     public function search(Request $request, ConsultationRepository $repo): JsonResponse
     {
-        $searchTerm = $request->query->get('searchValue', '');
-        
-        if (empty($searchTerm)) {
-            $consultations = $repo->findAll();
-        } else {
-            $consultations = $repo->search($searchTerm);
+        try {
+            $searchValue = trim((string) $request->query->get('searchValue', ''));
+            $consultations = $searchValue === '' ? $repo->findAllOrdered() : $repo->search($searchValue);
+            return new JsonResponse($this->serializeConsultations($consultations));
+        } catch (\Exception $e) {
+            $this->logger->error('Search error: ' . $e->getMessage());
+            return new JsonResponse(['error' => 'Server error', 'message' => $e->getMessage()], 500);
         }
-        
-        // Format personnalisÃ© pour la compatibilitÃ© avec le template
-        $data = [];
-        foreach ($consultations as $consultation) {
-            $user = $consultation->getUser();
-            $userLastName = $user ? $user->getNom() : '';
-            $userFirstName = $user ? $user->getPrenom() : '';
-            
-            $data[] = [
-                'id' => $consultation->getId(),
-                'date' => $consultation->getDate()->format('Y-m-d H:i'),
-                'type' => $consultation->getType(),
-                'user_lastName' => $userLastName,
-                'user_firstName' => $userFirstName,
-                'diagnostic' => $consultation->getDiagnostic(),
-                'traitement' => $consultation->getTraitement(),
-            ];
-        }
-        
-        return $this->json($data);
     }
 
     #[Route('/sort-by-date', name: 'app_consultation_sort_by_date', methods: ['GET'])]
     public function sortByDate(ConsultationRepository $repo): JsonResponse
     {
-        $consultations = $repo->findAllOrdered();
-        
-        $data = [];
-        foreach ($consultations as $consultation) {
-            $user = $consultation->getUser();
-            $userLastName = $user ? $user->getNom() : '';
-            $userFirstName = $user ? $user->getPrenom() : '';
-            
-            $data[] = [
-                'id' => $consultation->getId(),
-                'date' => $consultation->getDate()->format('Y-m-d H:i'),
-                'type' => $consultation->getType(),
-                'user_lastName' => $userLastName,
-                'user_firstName' => $userFirstName,
-                'diagnostic' => $consultation->getDiagnostic(),
-                'traitement' => $consultation->getTraitement(),
-            ];
+        try {
+            return new JsonResponse($this->serializeConsultations($repo->findAllOrdered()));
+        } catch (\Exception $e) {
+            $this->logger->error('Sort error: ' . $e->getMessage());
+            return new JsonResponse(['error' => 'Server error', 'message' => $e->getMessage()], 500);
         }
-        
-        return $this->json($data);
     }
 
     #[Route('/new', name: 'app_consultation_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $em, TwilioNotificationService $twilioNotificationService): Response
-    {
+    public function new(
+        Request $request,
+        EntityManagerInterface $em,
+        TwilioNotificationService $twilioService
+    ): Response {
         $consultation = new Consultation();
         $form = $this->createForm(ConsultationType::class, $consultation);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $em->persist($consultation);
-            $em->flush();
-            $this->notifyConsultationBySms($consultation, $twilioNotificationService);
-
-            $this->addFlash('success', 'Appointment request sent successfully! We will contact you soon.');
-            return $this->redirectToRoute('app_consultation_index');
+            try {
+                $em->persist($consultation);
+                $em->flush();
+                $this->notifyVeterinarian($consultation, $twilioService);
+                return $this->redirectToRoute('app_consultation_index');
+            } catch (\Exception $e) {
+                $this->logger->error('Create consultation error: ' . $e->getMessage());
+                $this->addFlash('error', 'Error while creating consultation.');
+            }
         }
 
         return $this->render('consultation/new.html.twig', [
-            'form' => $form,
+            'form' => $form->createView(),
             'active' => 'consultation',
-            'page_title' => 'Add Consultation'
+            'page_title' => 'Ajouter une consultation',
         ]);
     }
 
@@ -150,52 +89,14 @@ class ConsultationController extends AbstractController
         $form = $this->createForm(ConsultationType::class, $consultation);
         $form->handleRequest($request);
 
-        // VÃ‰RIFICATION EXACTEMENT COMME DANS SUIVI
-        if ($form->isSubmitted()) {
-            // Validation manuelle pour s'assurer que les champs ne sont pas null aprÃ¨s validation
-            $type = $form->get('type')->getData();
-            $diagnostic = $form->get('diagnostic')->getData();
-            $date = $form->get('date')->getData();
-            $user = $form->get('user')->getData();
-            $chien = $form->get('chien')->getData();
-            
-            if (empty($type)) {
-                $form->get('type')->addError(
-                    new \Symfony\Component\Form\FormError('Type is required')
-                );
-            }
-            
-            if (empty($diagnostic)) {
-                $form->get('diagnostic')->addError(
-                    new \Symfony\Component\Form\FormError('Diagnostic is required')
-                );
-            }
-            
-            if (empty($date)) {
-                $form->get('date')->addError(
-                    new \Symfony\Component\Form\FormError('Date is required')
-                );
-            }
-            
-            if (empty($user)) {
-                $form->get('user')->addError(
-                    new \Symfony\Component\Form\FormError('User is required')
-                );
-            }
-            
-            if (empty($chien)) {
-                $form->get('chien')->addError(
-                    new \Symfony\Component\Form\FormError('Dog is required')
-                );
-            }
-            
-            if ($form->isValid()) {
+        if ($form->isSubmitted() && $form->isValid()) {
+            try {
                 $em->flush();
-
-                $this->addFlash('success', 'Consultation updated successfully');
+                $this->addFlash('success', 'Consultation mise a jour avec succes');
                 return $this->redirectToRoute('app_consultation_index');
-            } else {
-                $this->addFlash('error', 'Please correct the errors in the form.');
+            } catch (\Exception $e) {
+                $this->logger->error('Error updating consultation: ' . $e->getMessage());
+                $this->addFlash('error', 'Une erreur est survenue lors de la mise a jour de la consultation.');
             }
         }
 
@@ -203,64 +104,112 @@ class ConsultationController extends AbstractController
             'consultation' => $consultation,
             'form' => $form->createView(),
             'active' => 'consultation',
-            'page_title' => 'Edit Consultation'
+            'page_title' => 'Modifier la consultation',
         ]);
     }
 
-    #[Route('/delete/{id}', name: 'app_consultation_delete', methods: ['DELETE'])]
-    public function delete(Request $request, Consultation $consultation, EntityManagerInterface $em): JsonResponse
-    {
-        // VÃ©rifier le token CSRF
-        $csrfToken = $request->headers->get('X-CSRF-Token');
+    #[Route('/delete/{id}', name: 'app_consultation_delete', methods: ['POST', 'DELETE'])]
+    public function delete(
+        Request $request,
+        Consultation $consultation,
+        EntityManagerInterface $em,
+        SuiviRepository $suiviRepository
+    ): JsonResponse {
+        $csrfToken = $request->headers->get('X-CSRF-Token') ?? (string) $request->request->get('_token', '');
         if (!$this->isCsrfTokenValid('app', $csrfToken)) {
-            return $this->json([
-                'success' => false,
-                'message' => 'Invalid CSRF token'
-            ], 400);
+            return $this->json(['success' => false, 'message' => 'Token CSRF invalide'], 400);
         }
 
         try {
+            foreach ($suiviRepository->findBy(['consultation' => $consultation]) as $suivi) {
+                $em->remove($suivi);
+            }
             $em->remove($consultation);
             $em->flush();
-            
-            return $this->json([
-                'success' => true,
-                'message' => 'Consultation deleted successfully!'
-            ]);
-            
+            return $this->json(['success' => true, 'message' => 'Consultation supprimee avec succes']);
         } catch (\Exception $e) {
-            return $this->json([
-                'success' => false,
-                'message' => 'Error deleting consultation: ' . $e->getMessage()
-            ], 500);
+            $this->logger->error('Error deleting consultation: ' . $e->getMessage());
+            return $this->json(['success' => false, 'message' => 'Erreur lors de la suppression: ' . $e->getMessage()], 500);
         }
     }
 
     #[Route('/suivi', name: 'app_consultation_suivi', methods: ['GET'])]
     public function suivi(): Response
     {
-        // Redirection vers le SuiviController pour Ã©viter la duplication de code
         return $this->redirectToRoute('app_suivi_index');
     }
 
-    private function notifyConsultationBySms(Consultation $consultation, TwilioNotificationService $twilioNotificationService): void
+    private function serializeConsultations(array $consultations): array
+    {
+        $data = [];
+        foreach ($consultations as $consultation) {
+            $user = $consultation->getUser();
+            $dog = $consultation->getChien();
+            $data[] = [
+                'id' => $consultation->getId(),
+                'date' => $consultation->getDate()->format('Y-m-d H:i'),
+                'type' => $consultation->getType() ?? 'N/A',
+                'user_lastName' => $user ? $user->getNom() : '',
+                'user_firstName' => $user ? $user->getPrenom() : '',
+                'chien_nom' => $dog ? $dog->getName() : 'N/A',
+                'diagnostic' => $consultation->getDiagnostic() ?? '',
+                'traitement' => $consultation->getTraitement() ?? '',
+            ];
+        }
+        return $data;
+    }
+
+    private function notifyVeterinarian(Consultation $consultation, TwilioNotificationService $twilioService): void
     {
         $user = $consultation->getUser();
-        if ($user === null) {
+        $dog = $consultation->getChien();
+        if (!$user || !$dog) {
+            $this->addFlash('success', 'Consultation creee avec succes');
             return;
         }
 
-        $phone = (string) ($user->getPhone() ?? '');
-        if (trim($phone) === '') {
+        $phone = $this->formatPhoneNumberForTwilio((string) $user->getTelephone());
+        if (!$phone) {
+            $this->addFlash('warning', 'Consultation creee, mais numero invalide');
             return;
         }
 
-        $twilioNotificationService->sendConsultationNotification(
+        $sent = $twilioService->sendConsultationNotification(
             $phone,
-            trim(($user->getPrenom() ?? '') . ' ' . ($user->getNom() ?? '')),
-            $consultation->getChien()?->getName() ?? 'Unknown',
-            $consultation->getType() ?? 'Normal',
-            $consultation->getDate()?->format('Y-m-d H:i') ?? ''
+            trim((string) $user->getPrenom() . ' ' . (string) $user->getNom()),
+            (string) $dog->getName(),
+            (string) ($consultation->getType() ?? 'N/A'),
+            $consultation->getDate()->format('d/m/Y H:i')
         );
+
+        if ($sent) {
+            $this->addFlash('success', 'Consultation creee et SMS envoye');
+            return;
+        }
+        $this->addFlash('warning', 'Consultation creee, mais echec envoi SMS');
+    }
+
+    private function formatPhoneNumberForTwilio(?string $phoneNumber): ?string
+    {
+        $digits = preg_replace('/\D+/', '', (string) $phoneNumber) ?? '';
+        if ($digits === '') {
+            return null;
+        }
+        if (preg_match('/^[2-9]\d{7}$/', $digits)) {
+            return '+216' . $digits;
+        }
+        if (preg_match('/^0[2-9]\d{7}$/', $digits)) {
+            return '+216' . substr($digits, 1);
+        }
+        if (preg_match('/^216[2-9]\d{7}$/', $digits)) {
+            return '+' . $digits;
+        }
+        if (preg_match('/^\+216[2-9]\d{7}$/', (string) $phoneNumber)) {
+            return (string) $phoneNumber;
+        }
+        if (preg_match('/^\+\d{10,15}$/', (string) $phoneNumber)) {
+            return (string) $phoneNumber;
+        }
+        return null;
     }
 }

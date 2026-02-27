@@ -5,42 +5,27 @@ namespace App\Controller;
 use App\Form\DonationType;
 use App\Entity\User;
 use App\Entity\Donation;
-use App\Repository\DogsRepository;
-use App\Repository\EvenementRepository;
 use App\Repository\UserRepository;
 use App\Repository\ProduitRepository;
 use App\Repository\CategorieRepository;
-use App\Form\ProfileSettingsType;
+use App\Form\UserType;
 use Symfony\Component\HttpFoundation\RedirectResponse;
-use Symfony\Component\HttpFoundation\JsonResponse;
-
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
-use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
-use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
 
 final class PageController extends AbstractController
 {
     #[Route('/', name: 'app_home', methods: ['GET'])]
     #[Route('/home', name: 'app_home_alias', methods: ['GET'])]
-    public function home(Request $request, DogsRepository $dogsRepository, EvenementRepository $evenementRepository, UserRepository $userRepository): Response
+    public function home(): Response
     {
-        $this->refreshSessionUserFromDatabase($request, $userRepository);
-
-        $dogs = array_slice($dogsRepository->filterDogs('Available', null, null), 0, 4);
-        $events = $evenementRepository->findUpcomingEvents(3);
-
-        return $this->render('pages/home.html.twig', [
-            'dogs' => $dogs,
-            'events' => $events,
-        ]);
+        return $this->render('pages/home.html.twig');
     }
-
 
     #[Route('/signin', name: 'app_signin', methods: ['GET', 'POST'])]
     public function signin(Request $request, UserRepository $userRepository, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher): Response
@@ -127,8 +112,6 @@ final class PageController extends AbstractController
             'last_email' => $lastEmail,
         ]);
     }
-
-
    
 
     
@@ -155,19 +138,21 @@ final class PageController extends AbstractController
             return $this->redirectToRoute('app_signin');
         }
 
-
-        $form = $this->createForm(ProfileSettingsType::class, $user);
+        $formType = class_exists(\App\Form\AccountinfoType::class)
+            ? \App\Form\AccountinfoType::class
+            : UserType::class;
+        $form = $this->createForm($formType, $user, [
+            'validation_groups' => ['Default'],
+        ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $submitted = $request->request->all('profile_settings');
-            $submittedFace = is_array($submitted) ? (string) ($submitted['user_face'] ?? '') : '';
-            if ($submittedFace !== '') {
-                $user->setUserFace($submittedFace);
+            $avatarFile = $form->has('user_image') ? $form->get('user_image')->getData() : null;
+            if ($avatarFile) {
+                $this->handleUserImageUpload($avatarFile, $user);
             }
 
             $entityManager->flush();
-
 
             $roles = $user->getRoles();
             $request->getSession()->set('user', [
@@ -175,21 +160,17 @@ final class PageController extends AbstractController
                 'email' => $user->getEmail(),
                 'prenom' => $user->getPrenom(),
                 'nom' => $user->getNom(),
-                'userImage' => $user->getUserFace() ?: $user->getUserImage(),
+                'userImage' => $user->getUserImage(),
                 'role' => $roles[0] ?? 'ROLE_USER',
             ]);
-
-
 
             $this->addFlash('success', 'Profile updated successfully.');
             return $this->redirectToRoute('app_settings');
         }
 
         return $this->render('accountinfo/account.html.twig', [
-
             'form' => $form->createView(),
             'user' => $user,
-
         ]);
     }
 
@@ -197,110 +178,6 @@ final class PageController extends AbstractController
     public function profile(): Response
     {
         return $this->redirectToRoute('app_settings');
-    }
-
-    private function refreshSessionUserFromDatabase(Request $request, UserRepository $userRepository): void
-    {
-        if (!$request->hasSession()) {
-            return;
-        }
-
-        $session = $request->getSession();
-        $sessionUser = $session->get('user');
-        if (!is_array($sessionUser)) {
-            return;
-        }
-
-        $userId = isset($sessionUser['id']) ? (int) $sessionUser['id'] : 0;
-        if ($userId <= 0) {
-            return;
-        }
-
-        $user = $userRepository->find($userId);
-        if ($user === null) {
-            $session->remove('user');
-
-            return;
-        }
-
-        $roles = $user->getRoles();
-        $session->set('user', [
-            'id' => $user->getId(),
-            'email' => $user->getEmail(),
-            'prenom' => $user->getPrenom(),
-            'nom' => $user->getNom(),
-            'userImage' => $user->getUserFace() ?: $user->getUserImage(),
-            'role' => $roles[0] ?? 'ROLE_USER',
-        ]);
-    }
-//ahawaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-    #[Route('/api/verify-face', name: 'app_verify_face_proxy', methods: ['POST'])]
-    public function verifyFaceProxy(
-        Request $request,
-        HttpClientInterface $httpClient,
-        UserRepository $userRepository,
-        TokenStorageInterface $tokenStorage
-    ): JsonResponse
-    {
-        $payload = json_decode($request->getContent(), true);
-        $userFace = is_array($payload) ? (string) ($payload['user_face'] ?? '') : '';
-
-        if ($userFace === '') {
-            return $this->json([
-                'message' => 'no',
-                'username' => null,
-                'error' => 'Missing user_face',
-            ], Response::HTTP_BAD_REQUEST);
-        }
-
-        try {
-            $apiResponse = $httpClient->request('POST', 'http://localhost:9010/verify-face', [
-                'headers' => [
-                    'Content-Type' => 'application/json',
-                ],
-                'json' => [
-                    'user_face' => $userFace,
-                ],
-            ]);
-
-            $status = $apiResponse->getStatusCode();
-            $data = $apiResponse->toArray(false);
-
-            if (($data['message'] ?? null) === 'yes') {
-                $username = (string) ($data['username'] ?? '');
-                $matchedUser = null;
-
-                if ($username !== '') {
-                    $matchedUser = $userRepository->findOneBy(['email' => $username])
-                        ?? $userRepository->findOneBy(['prenom' => $username])
-                        ?? $userRepository->findOneBy(['nom' => $username]);
-                }
-
-                if ($matchedUser) {
-                    $token = new UsernamePasswordToken($matchedUser, 'main', $matchedUser->getRoles());
-                    $tokenStorage->setToken($token);
-                    $request->getSession()->set('_security_main', serialize($token));
-
-                    $roles = $matchedUser->getRoles();
-                    $request->getSession()->set('user', [
-                        'id' => $matchedUser->getId(),
-                        'email' => $matchedUser->getEmail(),
-                        'prenom' => $matchedUser->getPrenom(),
-                        'nom' => $matchedUser->getNom(),
-                        'userImage' => $matchedUser->getUserFace() ?: $matchedUser->getUserImage(),
-                        'role' => $roles[0] ?? 'ROLE_USER',
-                    ]);
-                }
-            }
-
-            return $this->json($data, $status);
-        } catch (\Throwable $e) {
-            return $this->json([
-                'message' => 'no',
-                'username' => null,
-                'error' => 'Face verification service unavailable',
-            ], Response::HTTP_BAD_GATEWAY);
-        }
     }
 
     #[Route('/my-pets', name: 'app_my_pets', methods: ['GET'])]
@@ -459,7 +336,6 @@ final class PageController extends AbstractController
     }
 
 
-
     #[Route('/pages/veterinarian', name: 'app_veterinarian_page', methods: ['GET'])]
     public function veterinarianPage(UserRepository $userRepository): Response
     {
@@ -498,6 +374,15 @@ final class PageController extends AbstractController
         ]);
     }
 
+    #[Route('/logout', name: 'app_logout', methods: ['GET'])]
+    public function logout(Request $request): Response
+    {
+        $session = $request->getSession();
+        $session->remove('user');
+
+        return $this->redirectToRoute('app_home');
+    }
+
     private function renderEntity(
         string $template,
         string $pageTitle,
@@ -523,6 +408,23 @@ final class PageController extends AbstractController
             'page' => 1,
             'total_pages' => 1,
         ], $extra));
+    }
+
+    private function handleUserImageUpload(?UploadedFile $uploadedFile, User $user): void
+    {
+        if ($uploadedFile instanceof UploadedFile) {
+            $originalFilename = pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME);
+            $safeFilename = preg_replace('/[^a-zA-Z0-9_-]/', '', $originalFilename) ?: 'user';
+            $newFilename = $safeFilename.'-'.uniqid().'.'.$uploadedFile->guessExtension();
+            $uploadDir = $this->getParameter('kernel.project_dir').'/public/uploads/users';
+
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0775, true);
+            }
+
+            $uploadedFile->move($uploadDir, $newFilename);
+            $user->setUserImage('uploads/users/'.$newFilename);
+        }
     }
 
 }
