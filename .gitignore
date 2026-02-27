@@ -45,3 +45,7 @@ build/
 /public/assets/
 /assets/vendor/
 ###< symfony/asset-mapper ###
+
+/ml/data/
+/public/uploads/
+/ml/__pycache__/
