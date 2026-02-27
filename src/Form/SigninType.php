@@ -32,7 +32,6 @@ class SigninType extends AbstractType
                 ]
             ])
            
-
             ->add('password', PasswordType::class, [
                 'required' => false,
                 'label' => 'Password',
@@ -40,7 +39,6 @@ class SigninType extends AbstractType
                     'placeholder' => 'Enter your password',
                     'class' => 'form-input',
                 ]
-
             ]);
  
     }
@@ -49,10 +47,9 @@ class SigninType extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => User::class,
-            'validation_groups' => false,
             'csrf_protection' => true,
             'csrf_field_name' => '_token',
-            'csrf_token_id'   => 'signin_item',
+            'csrf_token_id'   => 'signup_item',
         ]);
     }
 }
