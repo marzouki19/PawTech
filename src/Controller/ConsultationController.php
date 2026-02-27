@@ -6,6 +6,7 @@ namespace App\Controller;
 use App\Entity\Consultation;
 use App\Form\ConsultationType;
 use App\Repository\ConsultationRepository;
+use App\Repository\SuiviRepository;
 use App\Service\TwilioNotificationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -347,11 +348,16 @@ class ConsultationController extends AbstractController
         ]);
     }
 
-    #[Route('/delete/{id}', name: 'app_consultation_delete', methods: ['DELETE'])]
-    public function delete(Request $request, Consultation $consultation, EntityManagerInterface $em): JsonResponse
+    #[Route('/delete/{id}', name: 'app_consultation_delete', methods: ['POST', 'DELETE'])]
+    public function delete(
+        Request $request,
+        Consultation $consultation,
+        EntityManagerInterface $em,
+        SuiviRepository $suiviRepository
+    ): JsonResponse
     {
         // Vérifier le token CSRF
-        $csrfToken = $request->headers->get('X-CSRF-Token');
+        $csrfToken = $request->headers->get('X-CSRF-Token') ?? (string) $request->request->get('_token', '');
         if (!$this->isCsrfTokenValid('app', $csrfToken)) {
             return $this->json([
                 'success' => false,
@@ -360,6 +366,12 @@ class ConsultationController extends AbstractController
         }
 
         try {
+            // Delete follow-ups linked to this consultation first to avoid FK constraint errors.
+            $linkedSuivis = $suiviRepository->findBy(['consultation' => $consultation]);
+            foreach ($linkedSuivis as $suivi) {
+                $em->remove($suivi);
+            }
+
             $em->remove($consultation);
             $em->flush();
             

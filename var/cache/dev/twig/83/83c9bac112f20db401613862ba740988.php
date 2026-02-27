@@ -76,10 +76,19 @@ class __TwigTemplate_5c2dd83901c7e6527189027174074c8f extends Template
             <svg class=\"w-5 h-5 flex-shrink-0\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z\"/></svg>
             Suivi
         </a>
+        <a href=\"";
+        // line 19
+        yield $this->extensions['Symfony\Bridge\Twig\Extension\RoutingExtension']->getPath("app_radiology_triage");
+        yield "\" class=\"nav-item flex items-center gap-3 px-4 py-3 rounded-lg ";
+        yield ((((isset($context["active"]) || array_key_exists("active", $context) ? $context["active"] : (function () { throw new RuntimeError('Variable "active" does not exist.', 19, $this->source); })()) == "radiology")) ? ("bg-paw-orange text-white") : ("text-gray-600 hover:bg-gray-100"));
+        yield "\">
+            <svg class=\"w-5 h-5 flex-shrink-0\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M3 7h18M5 7l1.5 12h11L19 7M9 11h6m-6 4h6M9 3h6\"/></svg>
+            Radiology AI
+        </a>
     </nav>
     <div class=\"p-3 border-t border-gray-200\">
         <a href=\"";
-        // line 21
+        // line 25
         yield $this->extensions['Symfony\Bridge\Twig\Extension\RoutingExtension']->getPath("app_logout");
         yield "\" class=\"flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50\">
             <svg class=\"w-5 h-5 flex-shrink-0\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1\"/></svg>
@@ -118,7 +127,7 @@ class __TwigTemplate_5c2dd83901c7e6527189027174074c8f extends Template
      */
     public function getDebugInfo(): array
     {
-        return array (  83 => 21,  72 => 15,  63 => 11,  52 => 3,  48 => 1,);
+        return array (  92 => 25,  81 => 19,  72 => 15,  63 => 11,  52 => 3,  48 => 1,);
     }
 
     public function getSourceContext(): Source
@@ -140,6 +149,10 @@ class __TwigTemplate_5c2dd83901c7e6527189027174074c8f extends Template
         <a href=\"{{ path('app_suivi_index') }}\" class=\"nav-item flex items-center gap-3 px-4 py-3 rounded-lg {{ active == 'suivi' ? 'bg-paw-orange text-white' : 'text-gray-600 hover:bg-gray-100' }}\">
             <svg class=\"w-5 h-5 flex-shrink-0\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z\"/></svg>
             Suivi
+        </a>
+        <a href=\"{{ path('app_radiology_triage') }}\" class=\"nav-item flex items-center gap-3 px-4 py-3 rounded-lg {{ active == 'radiology' ? 'bg-paw-orange text-white' : 'text-gray-600 hover:bg-gray-100' }}\">
+            <svg class=\"w-5 h-5 flex-shrink-0\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M3 7h18M5 7l1.5 12h11L19 7M9 11h6m-6 4h6M9 3h6\"/></svg>
+            Radiology AI
         </a>
     </nav>
     <div class=\"p-3 border-t border-gray-200\">

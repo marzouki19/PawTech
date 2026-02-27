@@ -161,6 +161,9 @@ class SuiviController extends AbstractController
         $predictedEmergency = $this->extractReportField($analysisReport, 'Predicted emergency');
         $consultationDate = $consultation->getDate() ? $consultation->getDate()->format('d/m/Y H:i') : 'N/A';
         $nextVisit = $suivi->getProchaineVisite() ? $suivi->getProchaineVisite()->format('d/m/Y H:i') : 'N/A';
+        $resolvedOrgan = $this->resolvePrimaryOrgan($affectedParts, (string) ($consultation->getDiagnostic() ?? ''));
+        $organId = (string) ($resolvedOrgan['id'] ?? '');
+        $organName = (string) ($resolvedOrgan['name'] ?? 'N/A');
 
         $logoDataUri = null;
         $logoPath = (string) $this->getParameter('kernel.project_dir') . '/public/logo.png';
@@ -184,6 +187,8 @@ class SuiviController extends AbstractController
             'predicted_condition' => $predictedCondition,
             'predicted_emergency' => $predictedEmergency,
             'analysis_report' => $analysisReport !== '' ? $analysisReport : 'N/A',
+            'organ_name' => $organName,
+            'organ_image_data_uri' => $this->resolveOrganImageDataUri($organId),
         ]);
 
         $pdfContent = $this->dompdfWrapper->getPdf($html, [
@@ -629,11 +634,11 @@ class SuiviController extends AbstractController
         ]);
     }
 
-    #[Route('/delete/{id}', name: 'app_suivi_delete', methods: ['DELETE'])]
+    #[Route('/delete/{id}', name: 'app_suivi_delete', methods: ['POST', 'DELETE'])]
     public function delete(Request $request, Suivi $suivi): JsonResponse
     {
         // Vérifier le token CSRF
-        $csrfToken = $request->headers->get('X-CSRF-Token');
+        $csrfToken = $request->headers->get('X-CSRF-Token') ?? (string) $request->request->get('_token', '');
         if (!$this->isCsrfTokenValid('app', $csrfToken)) {
             return $this->json([
                 'success' => false,
@@ -691,6 +696,96 @@ class SuiviController extends AbstractController
         }
 
         return 'N/A';
+    }
+
+    private function resolvePrimaryOrgan(array $affectedParts, string $diagnostic): array
+    {
+        $organs = [
+            ['id' => 'brain', 'name' => 'Brain', 'keywords' => ['brain', 'cerebral', 'neurological', 'head', 'cerveau']],
+            ['id' => 'lungs', 'name' => 'Lungs', 'keywords' => ['lung', 'lungs', 'pulmonary', 'respiratory', 'poumon']],
+            ['id' => 'heart', 'name' => 'Heart', 'keywords' => ['heart', 'cardiac', 'cardiovascular', 'coeur']],
+            ['id' => 'liver', 'name' => 'Liver', 'keywords' => ['liver', 'hepatic', 'foie']],
+            ['id' => 'stomach', 'name' => 'Stomach', 'keywords' => ['stomach', 'gastric', 'gastro', 'estomac']],
+            ['id' => 'guts', 'name' => 'Guts', 'keywords' => ['gut', 'guts', 'intestine', 'intestinal', 'bowel', 'intestin']],
+            ['id' => 'kidney', 'name' => 'Kidney', 'keywords' => ['kidney', 'renal', 'rein']],
+            ['id' => 'bladder', 'name' => 'Urinary Bladder', 'keywords' => ['bladder', 'urinary', 'vessie']],
+        ];
+
+        $normalize = static fn (string $value): string => strtolower(trim($value));
+        $alias = [
+            'head' => 'brain',
+            'chest' => 'lungs',
+            'abdomen' => 'stomach',
+            'kidneys' => 'kidney',
+            'urinary bladder' => 'bladder',
+        ];
+
+        foreach ($affectedParts as $part) {
+            $key = $normalize((string) $part);
+            if ($key === '') {
+                continue;
+            }
+            $key = $alias[$key] ?? $key;
+            foreach ($organs as $organ) {
+                if ($key === $organ['id']) {
+                    return ['id' => $organ['id'], 'name' => $organ['name']];
+                }
+            }
+        }
+
+        $diag = $normalize($diagnostic);
+        if ($diag !== '') {
+            foreach ($organs as $organ) {
+                foreach ($organ['keywords'] as $keyword) {
+                    if (str_contains($diag, $normalize((string) $keyword))) {
+                        return ['id' => $organ['id'], 'name' => $organ['name']];
+                    }
+                }
+            }
+        }
+
+        return ['id' => '', 'name' => 'N/A'];
+    }
+
+    private function resolveOrganImageDataUri(string $organId): ?string
+    {
+        $projectDir = (string) $this->getParameter('kernel.project_dir');
+        $organId = strtolower(trim($organId));
+        $paths = [];
+
+        if ($organId !== '') {
+            $paths = [
+                $projectDir . '/public/organs/' . $organId . '.png',
+                $projectDir . '/public/organs/' . $organId . '.jpg',
+                $projectDir . '/public/organs/' . $organId . '.jpeg',
+                $projectDir . '/public/organs/' . $organId . '.webp',
+            ];
+        }
+
+        // Fallback image if organ-specific image is not present yet.
+        $paths[] = $projectDir . '/public/default.png';
+
+        foreach ($paths as $path) {
+            if (!is_file($path)) {
+                continue;
+            }
+
+            $content = @file_get_contents($path);
+            if ($content === false) {
+                continue;
+            }
+
+            $ext = strtolower((string) pathinfo($path, PATHINFO_EXTENSION));
+            $mime = match ($ext) {
+                'jpg', 'jpeg' => 'image/jpeg',
+                'webp' => 'image/webp',
+                default => 'image/png',
+            };
+
+            return 'data:' . $mime . ';base64,' . base64_encode($content);
+        }
+
+        return null;
     }
 
 }

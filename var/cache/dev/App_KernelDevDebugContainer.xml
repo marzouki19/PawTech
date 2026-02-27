@@ -388,6 +388,13 @@
         <argument type="service" id=".service_locator.O2p6Lk7.App\Controller\PageController"/>
       </call>
     </service>
+    <service id="App\Controller\RadiologyController" class="App\Controller\RadiologyController" public="true" autowire="true" autoconfigure="true">
+      <tag name="controller.service_arguments"/>
+      <tag name="container.service_subscriber"/>
+      <call method="setContainer">
+        <argument type="service" id=".service_locator.O2p6Lk7.App\Controller\RadiologyController"/>
+      </call>
+    </service>
     <service id="App\Controller\SuiviController" class="App\Controller\SuiviController" public="true" autowire="true" autoconfigure="true">
       <tag name="controller.service_arguments"/>
       <tag name="container.service_subscriber"/>
@@ -457,7 +464,7 @@
     </service>
     <service id="argument_resolver.service" class="Symfony\Component\HttpKernel\Controller\ArgumentResolver\ServiceValueResolver">
       <tag priority="-50" name="Symfony\Component\HttpKernel\Controller\ArgumentResolver\ServiceValueResolver">controller.argument_value_resolver</tag>
-      <argument type="service" id=".service_locator.lRzV.gs"/>
+      <argument type="service" id=".service_locator.RB3ZYQN"/>
     </service>
     <service id="argument_resolver.default" class="Symfony\Component\HttpKernel\Controller\ArgumentResolver\DefaultValueResolver">
       <tag priority="-100" name="Symfony\Component\HttpKernel\Controller\ArgumentResolver\DefaultValueResolver">controller.argument_value_resolver</tag>
@@ -3359,7 +3366,7 @@
     </service>
     <service id="argument_resolver.not_tagged_controller" class="Symfony\Component\HttpKernel\Controller\ArgumentResolver\NotTaggedControllerValueResolver">
       <tag name="controller.argument_value_resolver" priority="-200"/>
-      <argument type="service" id=".service_locator.lRzV.gs"/>
+      <argument type="service" id=".service_locator.RB3ZYQN"/>
     </service>
     <service id="debug.log_processor" class="Symfony\Bridge\Monolog\Processor\DebugProcessor">
       <tag name="kernel.reset" method="reset"/>
@@ -7195,6 +7202,9 @@
     <service id=".instanceof.Symfony\Contracts\Service\ServiceSubscriberInterface.0.App\Controller\PageController" class="App\Controller\PageController" autowire="true" abstract="true"/>
     <service id=".instanceof.Symfony\Bundle\FrameworkBundle\Controller\AbstractController.0.App\Controller\PageController" class="App\Controller\PageController" autowire="true" abstract="true"/>
     <service id=".abstract.instanceof.App\Controller\PageController" class="App\Controller\PageController" autowire="true" autoconfigure="true" abstract="true"/>
+    <service id=".instanceof.Symfony\Contracts\Service\ServiceSubscriberInterface.0.App\Controller\RadiologyController" class="App\Controller\RadiologyController" autowire="true" abstract="true"/>
+    <service id=".instanceof.Symfony\Bundle\FrameworkBundle\Controller\AbstractController.0.App\Controller\RadiologyController" class="App\Controller\RadiologyController" autowire="true" abstract="true"/>
+    <service id=".abstract.instanceof.App\Controller\RadiologyController" class="App\Controller\RadiologyController" autowire="true" autoconfigure="true" abstract="true"/>
     <service id=".instanceof.Symfony\Contracts\Service\ServiceSubscriberInterface.0.App\Controller\SuiviController" class="App\Controller\SuiviController" autowire="true" abstract="true"/>
     <service id=".instanceof.Symfony\Bundle\FrameworkBundle\Controller\AbstractController.0.App\Controller\SuiviController" class="App\Controller\SuiviController" autowire="true" abstract="true"/>
     <service id=".abstract.instanceof.App\Controller\SuiviController" class="App\Controller\SuiviController" autowire="true" autoconfigure="true" abstract="true"/>
@@ -7655,6 +7665,14 @@
         <argument key="em" type="service_closure" id="doctrine.orm.default_entity_manager"/>
       </argument>
     </service>
+    <service id=".service_locator.APN3E1U" class="Symfony\Component\DependencyInjection\ServiceLocator">
+      <tag name="container.service_locator"/>
+      <argument type="collection">
+        <argument key="consultation" type="service_closure" id=".errored..service_locator.APN3E1U.App\Entity\Consultation"/>
+        <argument key="em" type="service_closure" id="doctrine.orm.default_entity_manager"/>
+        <argument key="suiviRepository" type="service_closure" id="App\Repository\SuiviRepository"/>
+      </argument>
+    </service>
     <service id=".service_locator.NjUBG3v" class="Symfony\Component\DependencyInjection\ServiceLocator">
       <tag name="container.service_locator"/>
       <argument type="collection">
@@ -7687,10 +7705,10 @@
         <argument key="suivi" type="service_closure" id=".errored..service_locator.Fg93DDd.App\Entity\Suivi"/>
       </argument>
     </service>
-    <service id=".service_locator.lRzV.gs" class="Symfony\Component\DependencyInjection\ServiceLocator">
+    <service id=".service_locator.RB3ZYQN" class="Symfony\Component\DependencyInjection\ServiceLocator">
       <tag name="container.service_locator"/>
       <argument type="collection">
-        <argument key="App\Controller\ConsultationController::delete" type="service_closure" id=".service_locator.dKSU_jY"/>
+        <argument key="App\Controller\ConsultationController::delete" type="service_closure" id=".service_locator.APN3E1U"/>
         <argument key="App\Controller\ConsultationController::edit" type="service_closure" id=".service_locator.dKSU_jY"/>
         <argument key="App\Controller\ConsultationController::index" type="service_closure" id=".service_locator.NpEkuJn"/>
         <argument key="App\Controller\ConsultationController::new" type="service_closure" id=".service_locator.f9Tu_kp"/>
@@ -7714,7 +7732,7 @@
         <argument key="App\Kernel::registerContainerConfiguration" type="service_closure" id=".service_locator.y4_Zrx."/>
         <argument key="kernel::loadRoutes" type="service_closure" id=".service_locator.y4_Zrx."/>
         <argument key="kernel::registerContainerConfiguration" type="service_closure" id=".service_locator.y4_Zrx."/>
-        <argument key="App\Controller\ConsultationController:delete" type="service_closure" id=".service_locator.dKSU_jY"/>
+        <argument key="App\Controller\ConsultationController:delete" type="service_closure" id=".service_locator.APN3E1U"/>
         <argument key="App\Controller\ConsultationController:edit" type="service_closure" id=".service_locator.dKSU_jY"/>
         <argument key="App\Controller\ConsultationController:index" type="service_closure" id=".service_locator.NpEkuJn"/>
         <argument key="App\Controller\ConsultationController:new" type="service_closure" id=".service_locator.f9Tu_kp"/>
@@ -8377,6 +8395,12 @@
       <argument type="service" id="service_container"/>
       <factory service=".service_locator.O2p6Lk7" method="withContext"/>
     </service>
+    <service id=".service_locator.O2p6Lk7.App\Controller\RadiologyController" class="Symfony\Component\DependencyInjection\ServiceLocator">
+      <tag name="container.service_locator_context" id="App\Controller\RadiologyController"/>
+      <argument>App\Controller\RadiologyController</argument>
+      <argument type="service" id="service_container"/>
+      <factory service=".service_locator.O2p6Lk7" method="withContext"/>
+    </service>
     <service id=".service_locator.O2p6Lk7.App\Controller\SuiviController" class="Symfony\Component\DependencyInjection\ServiceLocator">
       <tag name="container.service_locator_context" id="App\Controller\SuiviController"/>
       <argument>App\Controller\SuiviController</argument>
@@ -8559,6 +8583,7 @@
           <argument>App\Kernel</argument>
           <argument>App\Controller\ConsultationController</argument>
           <argument>App\Controller\PageController</argument>
+          <argument>App\Controller\RadiologyController</argument>
           <argument>App\Controller\SuiviController</argument>
           <argument>Doctrine\Bundle\DoctrineBundle\Controller\ProfilerController</argument>
         </argument>
@@ -8763,6 +8788,9 @@
     </service>
     <service id=".errored..service_locator.dKSU_jY.App\Entity\Consultation" class="App\Entity\Consultation">
       <tag name="container.error" message="Cannot autowire service &quot;.service_locator.dKSU_jY&quot;: it needs an instance of &quot;App\Entity\Consultation&quot; but this type has been excluded in &quot;config/services.yaml&quot;."/>
+    </service>
+    <service id=".errored..service_locator.APN3E1U.App\Entity\Consultation" class="App\Entity\Consultation">
+      <tag name="container.error" message="Cannot autowire service &quot;.service_locator.APN3E1U&quot;: it needs an instance of &quot;App\Entity\Consultation&quot; but this type has been excluded in &quot;config/services.yaml&quot;."/>
     </service>
     <service id=".errored..service_locator.Fg93DDd.App\Entity\Suivi" class="App\Entity\Suivi">
       <tag name="container.error" message="Cannot autowire service &quot;.service_locator.Fg93DDd&quot;: it needs an instance of &quot;App\Entity\Suivi&quot; but this type has been excluded in &quot;config/services.yaml&quot;."/>
@@ -9964,7 +9992,7 @@
     <service id="Symfony\UX\Turbo\Broadcaster\BroadcasterInterface" alias="turbo.broadcaster.action_renderer"/>
     <service id="container.env_var_processors_locator" alias=".service_locator.w7.f4fT" public="true"/>
     <service id="twig.loader.filesystem" alias="twig.loader.native_filesystem"/>
-    <service id="argument_resolver.controller_locator" alias=".service_locator.lRzV.gs"/>
+    <service id="argument_resolver.controller_locator" alias=".service_locator.RB3ZYQN"/>
     <service id="doctrine.id_generator_locator" alias=".service_locator.KLVvNIq"/>
     <service id="twig.loader" alias="twig.loader.native_filesystem"/>
     <service id=".Psr\Log\LoggerInterface $request.logger" alias="monolog.logger.request"/>
@@ -10005,7 +10033,7 @@
     <service id=".service_locator.bJ.4HC5" alias=".service_locator.w7.f4fT"/>
     <service id=".service_locator.8IbU9zc" alias=".service_locator.NjUBG3v"/>
     <service id=".service_locator.oGltwy6" alias=".service_locator.p3X5T9U"/>
-    <service id=".service_locator.uQiWJ1m" alias=".service_locator.lRzV.gs"/>
+    <service id=".service_locator.PL36BOO" alias=".service_locator.RB3ZYQN"/>
     <service id=".service_locator.BFrsqsn" alias=".service_locator.F9PKc.7"/>
     <service id=".service_locator.QuTPASE" alias=".service_locator.6x2EhWY"/>
     <service id=".service_locator.XtmiKbi" alias=".service_locator.MfxSDRP"/>
@@ -10034,6 +10062,7 @@
     <service id=".service_locator.9v0OofP" alias=".service_locator.NpEkuJn"/>
     <service id=".service_locator.XKqbPFG" alias=".service_locator.f9Tu_kp"/>
     <service id=".service_locator.CwW3Xb_" alias=".service_locator.dKSU_jY"/>
+    <service id=".service_locator.xhUq5E4" alias=".service_locator.APN3E1U"/>
     <service id=".service_locator.SPFAmCQ" alias=".service_locator.NjUBG3v"/>
     <service id=".service_locator.9e2t_lq" alias=".service_locator.CsMkqUa"/>
     <service id=".service_locator.CqlcWM2" alias=".service_locator.p3X5T9U"/>

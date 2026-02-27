@@ -122,28 +122,42 @@ class __TwigTemplate_eee7c5a1e54a8582bf76b1ecab732008 extends Template
             font-size: 11px;
             color: #374151;
         }
+        .organ-block {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-top: 8px;
+        }
+        .organ-photo {
+            width: 120px;
+            height: 90px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            background: #f3f4f6;
+        }
     </style>
 </head>
 <body>
     ";
-        // line 81
-        if ((($tmp = (isset($context["logo_data_uri"]) || array_key_exists("logo_data_uri", $context) ? $context["logo_data_uri"] : (function () { throw new RuntimeError('Variable "logo_data_uri" does not exist.', 81, $this->source); })())) && $tmp instanceof Markup ? (string) $tmp : $tmp)) {
-            // line 82
+        // line 95
+        if ((($tmp = (isset($context["logo_data_uri"]) || array_key_exists("logo_data_uri", $context) ? $context["logo_data_uri"] : (function () { throw new RuntimeError('Variable "logo_data_uri" does not exist.', 95, $this->source); })())) && $tmp instanceof Markup ? (string) $tmp : $tmp)) {
+            // line 96
             yield "        <div class=\"logo-wrap\">
             <img class=\"logo\" src=\"";
-            // line 83
-            yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape((isset($context["logo_data_uri"]) || array_key_exists("logo_data_uri", $context) ? $context["logo_data_uri"] : (function () { throw new RuntimeError('Variable "logo_data_uri" does not exist.', 83, $this->source); })()), "html", null, true);
+            // line 97
+            yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape((isset($context["logo_data_uri"]) || array_key_exists("logo_data_uri", $context) ? $context["logo_data_uri"] : (function () { throw new RuntimeError('Variable "logo_data_uri" does not exist.', 97, $this->source); })()), "html", null, true);
             yield "\" alt=\"PawTech logo\">
         </div>
     ";
         }
-        // line 86
+        // line 100
         yield "
     <div class=\"header\">
         <h1>PawTech - Consultation Detail Report</h1>
         <p>Generated on: ";
-        // line 89
-        yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape((isset($context["generated_at"]) || array_key_exists("generated_at", $context) ? $context["generated_at"] : (function () { throw new RuntimeError('Variable "generated_at" does not exist.', 89, $this->source); })()), "html", null, true);
+        // line 103
+        yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape((isset($context["generated_at"]) || array_key_exists("generated_at", $context) ? $context["generated_at"] : (function () { throw new RuntimeError('Variable "generated_at" does not exist.', 103, $this->source); })()), "html", null, true);
         yield "</p>
     </div>
 
@@ -151,24 +165,24 @@ class __TwigTemplate_eee7c5a1e54a8582bf76b1ecab732008 extends Template
         <div class=\"card-title\">Consultation Information</div>
         <div class=\"card-body\">
             <div class=\"row\"><span class=\"label\">ID:</span> <span class=\"value\">#";
-        // line 95
-        yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape(CoreExtension::getAttribute($this->env, $this->source, (isset($context["consultation"]) || array_key_exists("consultation", $context) ? $context["consultation"] : (function () { throw new RuntimeError('Variable "consultation" does not exist.', 95, $this->source); })()), "id", [], "any", false, false, false, 95), "html", null, true);
+        // line 109
+        yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape(CoreExtension::getAttribute($this->env, $this->source, (isset($context["consultation"]) || array_key_exists("consultation", $context) ? $context["consultation"] : (function () { throw new RuntimeError('Variable "consultation" does not exist.', 109, $this->source); })()), "id", [], "any", false, false, false, 109), "html", null, true);
         yield "</span></div>
             <div class=\"row\"><span class=\"label\">Date:</span> <span class=\"value\">";
-        // line 96
-        yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape((isset($context["consultation_date"]) || array_key_exists("consultation_date", $context) ? $context["consultation_date"] : (function () { throw new RuntimeError('Variable "consultation_date" does not exist.', 96, $this->source); })()), "html", null, true);
+        // line 110
+        yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape((isset($context["consultation_date"]) || array_key_exists("consultation_date", $context) ? $context["consultation_date"] : (function () { throw new RuntimeError('Variable "consultation_date" does not exist.', 110, $this->source); })()), "html", null, true);
         yield "</span></div>
             <div class=\"row\"><span class=\"label\">Type:</span> <span class=\"value\">";
-        // line 97
-        yield ((CoreExtension::getAttribute($this->env, $this->source, (isset($context["consultation"]) || array_key_exists("consultation", $context) ? $context["consultation"] : (function () { throw new RuntimeError('Variable "consultation" does not exist.', 97, $this->source); })()), "type", [], "any", false, false, false, 97)) ? ($this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape(CoreExtension::getAttribute($this->env, $this->source, (isset($context["consultation"]) || array_key_exists("consultation", $context) ? $context["consultation"] : (function () { throw new RuntimeError('Variable "consultation" does not exist.', 97, $this->source); })()), "type", [], "any", false, false, false, 97), "html", null, true)) : ("N/A"));
+        // line 111
+        yield ((CoreExtension::getAttribute($this->env, $this->source, (isset($context["consultation"]) || array_key_exists("consultation", $context) ? $context["consultation"] : (function () { throw new RuntimeError('Variable "consultation" does not exist.', 111, $this->source); })()), "type", [], "any", false, false, false, 111)) ? ($this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape(CoreExtension::getAttribute($this->env, $this->source, (isset($context["consultation"]) || array_key_exists("consultation", $context) ? $context["consultation"] : (function () { throw new RuntimeError('Variable "consultation" does not exist.', 111, $this->source); })()), "type", [], "any", false, false, false, 111), "html", null, true)) : ("N/A"));
         yield "</span></div>
             <div class=\"row\"><span class=\"label\">Dog:</span> <span class=\"value\">";
-        // line 98
-        yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape((isset($context["dog_name"]) || array_key_exists("dog_name", $context) ? $context["dog_name"] : (function () { throw new RuntimeError('Variable "dog_name" does not exist.', 98, $this->source); })()), "html", null, true);
+        // line 112
+        yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape((isset($context["dog_name"]) || array_key_exists("dog_name", $context) ? $context["dog_name"] : (function () { throw new RuntimeError('Variable "dog_name" does not exist.', 112, $this->source); })()), "html", null, true);
         yield "</span></div>
             <div class=\"row\"><span class=\"label\">Veterinarian:</span> <span class=\"value\">";
-        // line 99
-        yield (((($tmp = CoreExtension::getAttribute($this->env, $this->source, (isset($context["consultation"]) || array_key_exists("consultation", $context) ? $context["consultation"] : (function () { throw new RuntimeError('Variable "consultation" does not exist.', 99, $this->source); })()), "user", [], "any", false, false, false, 99)) && $tmp instanceof Markup ? (string) $tmp : $tmp)) ? ($this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape(CoreExtension::getAttribute($this->env, $this->source, CoreExtension::getAttribute($this->env, $this->source, (isset($context["consultation"]) || array_key_exists("consultation", $context) ? $context["consultation"] : (function () { throw new RuntimeError('Variable "consultation" does not exist.', 99, $this->source); })()), "user", [], "any", false, false, false, 99), "fullName", [], "any", false, false, false, 99), "html", null, true)) : ("N/A"));
+        // line 113
+        yield (((($tmp = CoreExtension::getAttribute($this->env, $this->source, (isset($context["consultation"]) || array_key_exists("consultation", $context) ? $context["consultation"] : (function () { throw new RuntimeError('Variable "consultation" does not exist.', 113, $this->source); })()), "user", [], "any", false, false, false, 113)) && $tmp instanceof Markup ? (string) $tmp : $tmp)) ? ($this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape(CoreExtension::getAttribute($this->env, $this->source, CoreExtension::getAttribute($this->env, $this->source, (isset($context["consultation"]) || array_key_exists("consultation", $context) ? $context["consultation"] : (function () { throw new RuntimeError('Variable "consultation" does not exist.', 113, $this->source); })()), "user", [], "any", false, false, false, 113), "fullName", [], "any", false, false, false, 113), "html", null, true)) : ("N/A"));
         yield "</span></div>
         </div>
     </div>
@@ -177,12 +191,12 @@ class __TwigTemplate_eee7c5a1e54a8582bf76b1ecab732008 extends Template
         <div class=\"card-title\">Diagnostic & Treatment</div>
         <div class=\"card-body\">
             <div class=\"row\"><span class=\"label\">Diagnostic:</span> <span class=\"value\">";
-        // line 106
-        yield ((CoreExtension::getAttribute($this->env, $this->source, (isset($context["consultation"]) || array_key_exists("consultation", $context) ? $context["consultation"] : (function () { throw new RuntimeError('Variable "consultation" does not exist.', 106, $this->source); })()), "diagnostic", [], "any", false, false, false, 106)) ? ($this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape(CoreExtension::getAttribute($this->env, $this->source, (isset($context["consultation"]) || array_key_exists("consultation", $context) ? $context["consultation"] : (function () { throw new RuntimeError('Variable "consultation" does not exist.', 106, $this->source); })()), "diagnostic", [], "any", false, false, false, 106), "html", null, true)) : ("N/A"));
+        // line 120
+        yield ((CoreExtension::getAttribute($this->env, $this->source, (isset($context["consultation"]) || array_key_exists("consultation", $context) ? $context["consultation"] : (function () { throw new RuntimeError('Variable "consultation" does not exist.', 120, $this->source); })()), "diagnostic", [], "any", false, false, false, 120)) ? ($this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape(CoreExtension::getAttribute($this->env, $this->source, (isset($context["consultation"]) || array_key_exists("consultation", $context) ? $context["consultation"] : (function () { throw new RuntimeError('Variable "consultation" does not exist.', 120, $this->source); })()), "diagnostic", [], "any", false, false, false, 120), "html", null, true)) : ("N/A"));
         yield "</span></div>
             <div class=\"row\"><span class=\"label\">Treatment:</span> <span class=\"value\">";
-        // line 107
-        yield ((CoreExtension::getAttribute($this->env, $this->source, (isset($context["consultation"]) || array_key_exists("consultation", $context) ? $context["consultation"] : (function () { throw new RuntimeError('Variable "consultation" does not exist.', 107, $this->source); })()), "traitement", [], "any", false, false, false, 107)) ? ($this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape(CoreExtension::getAttribute($this->env, $this->source, (isset($context["consultation"]) || array_key_exists("consultation", $context) ? $context["consultation"] : (function () { throw new RuntimeError('Variable "consultation" does not exist.', 107, $this->source); })()), "traitement", [], "any", false, false, false, 107), "html", null, true)) : ("N/A"));
+        // line 121
+        yield ((CoreExtension::getAttribute($this->env, $this->source, (isset($context["consultation"]) || array_key_exists("consultation", $context) ? $context["consultation"] : (function () { throw new RuntimeError('Variable "consultation" does not exist.', 121, $this->source); })()), "traitement", [], "any", false, false, false, 121)) ? ($this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape(CoreExtension::getAttribute($this->env, $this->source, (isset($context["consultation"]) || array_key_exists("consultation", $context) ? $context["consultation"] : (function () { throw new RuntimeError('Variable "consultation" does not exist.', 121, $this->source); })()), "traitement", [], "any", false, false, false, 121), "html", null, true)) : ("N/A"));
         yield "</span></div>
         </div>
     </div>
@@ -191,28 +205,28 @@ class __TwigTemplate_eee7c5a1e54a8582bf76b1ecab732008 extends Template
         <div class=\"card-title\">Follow-up Information</div>
         <div class=\"card-body\">
             <div class=\"row\"><span class=\"label\">Follow-up ID:</span> <span class=\"value\">#";
-        // line 114
-        yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape(CoreExtension::getAttribute($this->env, $this->source, (isset($context["suivi"]) || array_key_exists("suivi", $context) ? $context["suivi"] : (function () { throw new RuntimeError('Variable "suivi" does not exist.', 114, $this->source); })()), "id", [], "any", false, false, false, 114), "html", null, true);
+        // line 128
+        yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape(CoreExtension::getAttribute($this->env, $this->source, (isset($context["suivi"]) || array_key_exists("suivi", $context) ? $context["suivi"] : (function () { throw new RuntimeError('Variable "suivi" does not exist.', 128, $this->source); })()), "id", [], "any", false, false, false, 128), "html", null, true);
         yield "</span></div>
             <div class=\"row\"><span class=\"label\">Status (Etat):</span> <span class=\"value\">";
-        // line 115
-        yield ((CoreExtension::getAttribute($this->env, $this->source, (isset($context["suivi"]) || array_key_exists("suivi", $context) ? $context["suivi"] : (function () { throw new RuntimeError('Variable "suivi" does not exist.', 115, $this->source); })()), "etat", [], "any", false, false, false, 115)) ? ($this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape(CoreExtension::getAttribute($this->env, $this->source, (isset($context["suivi"]) || array_key_exists("suivi", $context) ? $context["suivi"] : (function () { throw new RuntimeError('Variable "suivi" does not exist.', 115, $this->source); })()), "etat", [], "any", false, false, false, 115), "html", null, true)) : ("N/A"));
+        // line 129
+        yield ((CoreExtension::getAttribute($this->env, $this->source, (isset($context["suivi"]) || array_key_exists("suivi", $context) ? $context["suivi"] : (function () { throw new RuntimeError('Variable "suivi" does not exist.', 129, $this->source); })()), "etat", [], "any", false, false, false, 129)) ? ($this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape(CoreExtension::getAttribute($this->env, $this->source, (isset($context["suivi"]) || array_key_exists("suivi", $context) ? $context["suivi"] : (function () { throw new RuntimeError('Variable "suivi" does not exist.', 129, $this->source); })()), "etat", [], "any", false, false, false, 129), "html", null, true)) : ("N/A"));
         yield "</span></div>
             <div class=\"row\"><span class=\"label\">Type:</span> <span class=\"value\">";
-        // line 116
-        yield ((CoreExtension::getAttribute($this->env, $this->source, (isset($context["suivi"]) || array_key_exists("suivi", $context) ? $context["suivi"] : (function () { throw new RuntimeError('Variable "suivi" does not exist.', 116, $this->source); })()), "type", [], "any", false, false, false, 116)) ? ($this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape(CoreExtension::getAttribute($this->env, $this->source, (isset($context["suivi"]) || array_key_exists("suivi", $context) ? $context["suivi"] : (function () { throw new RuntimeError('Variable "suivi" does not exist.', 116, $this->source); })()), "type", [], "any", false, false, false, 116), "html", null, true)) : ("N/A"));
+        // line 130
+        yield ((CoreExtension::getAttribute($this->env, $this->source, (isset($context["suivi"]) || array_key_exists("suivi", $context) ? $context["suivi"] : (function () { throw new RuntimeError('Variable "suivi" does not exist.', 130, $this->source); })()), "type", [], "any", false, false, false, 130)) ? ($this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape(CoreExtension::getAttribute($this->env, $this->source, (isset($context["suivi"]) || array_key_exists("suivi", $context) ? $context["suivi"] : (function () { throw new RuntimeError('Variable "suivi" does not exist.', 130, $this->source); })()), "type", [], "any", false, false, false, 130), "html", null, true)) : ("N/A"));
         yield "</span></div>
             <div class=\"row\"><span class=\"label\">Next Visit:</span> <span class=\"value\">";
-        // line 117
-        yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape((isset($context["next_visit"]) || array_key_exists("next_visit", $context) ? $context["next_visit"] : (function () { throw new RuntimeError('Variable "next_visit" does not exist.', 117, $this->source); })()), "html", null, true);
+        // line 131
+        yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape((isset($context["next_visit"]) || array_key_exists("next_visit", $context) ? $context["next_visit"] : (function () { throw new RuntimeError('Variable "next_visit" does not exist.', 131, $this->source); })()), "html", null, true);
         yield "</span></div>
             <div class=\"row\"><span class=\"label\">Emergency Level:</span> <span class=\"value\">";
-        // line 118
-        yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape(CoreExtension::getAttribute($this->env, $this->source, (isset($context["suivi"]) || array_key_exists("suivi", $context) ? $context["suivi"] : (function () { throw new RuntimeError('Variable "suivi" does not exist.', 118, $this->source); })()), "emergencyLevelDisplay", [], "any", false, false, false, 118), "html", null, true);
+        // line 132
+        yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape(CoreExtension::getAttribute($this->env, $this->source, (isset($context["suivi"]) || array_key_exists("suivi", $context) ? $context["suivi"] : (function () { throw new RuntimeError('Variable "suivi" does not exist.', 132, $this->source); })()), "emergencyLevelDisplay", [], "any", false, false, false, 132), "html", null, true);
         yield "</span></div>
             <div class=\"row\"><span class=\"label\">Affected Parts:</span> <span class=\"value\">";
-        // line 119
-        yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape((isset($context["affected_parts_text"]) || array_key_exists("affected_parts_text", $context) ? $context["affected_parts_text"] : (function () { throw new RuntimeError('Variable "affected_parts_text" does not exist.', 119, $this->source); })()), "html", null, true);
+        // line 133
+        yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape((isset($context["affected_parts_text"]) || array_key_exists("affected_parts_text", $context) ? $context["affected_parts_text"] : (function () { throw new RuntimeError('Variable "affected_parts_text" does not exist.', 133, $this->source); })()), "html", null, true);
         yield "</span></div>
         </div>
     </div>
@@ -220,22 +234,38 @@ class __TwigTemplate_eee7c5a1e54a8582bf76b1ecab732008 extends Template
     <div class=\"card\">
         <div class=\"card-title\">AI-Powered Analysis</div>
         <div class=\"card-body\">
-            <div class=\"row\"><span class=\"label\">Symptoms:</span> <span class=\"value\">";
-        // line 126
-        yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape((isset($context["symptoms"]) || array_key_exists("symptoms", $context) ? $context["symptoms"] : (function () { throw new RuntimeError('Variable "symptoms" does not exist.', 126, $this->source); })()), "html", null, true);
+            <div class=\"row\"><span class=\"label\">Main Organ:</span> <span class=\"value\">";
+        // line 140
+        yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape((isset($context["organ_name"]) || array_key_exists("organ_name", $context) ? $context["organ_name"] : (function () { throw new RuntimeError('Variable "organ_name" does not exist.', 140, $this->source); })()), "html", null, true);
+        yield "</span></div>
+            ";
+        // line 141
+        if ((($tmp = (isset($context["organ_image_data_uri"]) || array_key_exists("organ_image_data_uri", $context) ? $context["organ_image_data_uri"] : (function () { throw new RuntimeError('Variable "organ_image_data_uri" does not exist.', 141, $this->source); })())) && $tmp instanceof Markup ? (string) $tmp : $tmp)) {
+            // line 142
+            yield "                <div class=\"organ-block\">
+                    <img class=\"organ-photo\" src=\"";
+            // line 143
+            yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape((isset($context["organ_image_data_uri"]) || array_key_exists("organ_image_data_uri", $context) ? $context["organ_image_data_uri"] : (function () { throw new RuntimeError('Variable "organ_image_data_uri" does not exist.', 143, $this->source); })()), "html", null, true);
+            yield "\" alt=\"Organ image\">
+                </div>
+            ";
+        }
+        // line 146
+        yield "            <div class=\"row\"><span class=\"label\">Symptoms:</span> <span class=\"value\">";
+        yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape((isset($context["symptoms"]) || array_key_exists("symptoms", $context) ? $context["symptoms"] : (function () { throw new RuntimeError('Variable "symptoms" does not exist.', 146, $this->source); })()), "html", null, true);
         yield "</span></div>
             <div class=\"row\"><span class=\"label\">Predicted Condition:</span> <span class=\"value\">";
-        // line 127
-        yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape((isset($context["predicted_condition"]) || array_key_exists("predicted_condition", $context) ? $context["predicted_condition"] : (function () { throw new RuntimeError('Variable "predicted_condition" does not exist.', 127, $this->source); })()), "html", null, true);
+        // line 147
+        yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape((isset($context["predicted_condition"]) || array_key_exists("predicted_condition", $context) ? $context["predicted_condition"] : (function () { throw new RuntimeError('Variable "predicted_condition" does not exist.', 147, $this->source); })()), "html", null, true);
         yield "</span></div>
             <div class=\"row\"><span class=\"label\">Predicted Emergency:</span> <span class=\"value\">";
-        // line 128
-        yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape((isset($context["predicted_emergency"]) || array_key_exists("predicted_emergency", $context) ? $context["predicted_emergency"] : (function () { throw new RuntimeError('Variable "predicted_emergency" does not exist.', 128, $this->source); })()), "html", null, true);
+        // line 148
+        yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape((isset($context["predicted_emergency"]) || array_key_exists("predicted_emergency", $context) ? $context["predicted_emergency"] : (function () { throw new RuntimeError('Variable "predicted_emergency" does not exist.', 148, $this->source); })()), "html", null, true);
         yield "</span></div>
             <div class=\"row\"><span class=\"label\">Medical Analysis Report:</span></div>
             <div class=\"pre\">";
-        // line 130
-        yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape((isset($context["analysis_report"]) || array_key_exists("analysis_report", $context) ? $context["analysis_report"] : (function () { throw new RuntimeError('Variable "analysis_report" does not exist.', 130, $this->source); })()), "html", null, true);
+        // line 150
+        yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape((isset($context["analysis_report"]) || array_key_exists("analysis_report", $context) ? $context["analysis_report"] : (function () { throw new RuntimeError('Variable "analysis_report" does not exist.', 150, $this->source); })()), "html", null, true);
         yield "</div>
         </div>
     </div>
@@ -272,7 +302,7 @@ class __TwigTemplate_eee7c5a1e54a8582bf76b1ecab732008 extends Template
      */
     public function getDebugInfo(): array
     {
-        return array (  238 => 130,  233 => 128,  229 => 127,  225 => 126,  215 => 119,  211 => 118,  207 => 117,  203 => 116,  199 => 115,  195 => 114,  185 => 107,  181 => 106,  171 => 99,  167 => 98,  163 => 97,  159 => 96,  155 => 95,  146 => 89,  141 => 86,  135 => 83,  132 => 82,  130 => 81,  48 => 1,);
+        return array (  268 => 150,  263 => 148,  259 => 147,  254 => 146,  248 => 143,  245 => 142,  243 => 141,  239 => 140,  229 => 133,  225 => 132,  221 => 131,  217 => 130,  213 => 129,  209 => 128,  199 => 121,  195 => 120,  185 => 113,  181 => 112,  177 => 111,  173 => 110,  169 => 109,  160 => 103,  155 => 100,  149 => 97,  146 => 96,  144 => 95,  48 => 1,);
     }
 
     public function getSourceContext(): Source
@@ -354,6 +384,20 @@ class __TwigTemplate_eee7c5a1e54a8582bf76b1ecab732008 extends Template
             font-size: 11px;
             color: #374151;
         }
+        .organ-block {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-top: 8px;
+        }
+        .organ-photo {
+            width: 120px;
+            height: 90px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            background: #f3f4f6;
+        }
     </style>
 </head>
 <body>
@@ -402,6 +446,12 @@ class __TwigTemplate_eee7c5a1e54a8582bf76b1ecab732008 extends Template
     <div class=\"card\">
         <div class=\"card-title\">AI-Powered Analysis</div>
         <div class=\"card-body\">
+            <div class=\"row\"><span class=\"label\">Main Organ:</span> <span class=\"value\">{{ organ_name }}</span></div>
+            {% if organ_image_data_uri %}
+                <div class=\"organ-block\">
+                    <img class=\"organ-photo\" src=\"{{ organ_image_data_uri }}\" alt=\"Organ image\">
+                </div>
+            {% endif %}
             <div class=\"row\"><span class=\"label\">Symptoms:</span> <span class=\"value\">{{ symptoms }}</span></div>
             <div class=\"row\"><span class=\"label\">Predicted Condition:</span> <span class=\"value\">{{ predicted_condition }}</span></div>
             <div class=\"row\"><span class=\"label\">Predicted Emergency:</span> <span class=\"value\">{{ predicted_emergency }}</span></div>

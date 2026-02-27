@@ -325,6 +325,7 @@ class __TwigTemplate_6982625e1d6493c073fd5c37a71ab8f4 extends Template
                 
                 <!-- Embedded 3D Dog Anatomy Model from Sketchfab -->
                 <div class=\"relative bg-gradient-to-b from-blue-50 to-white rounded-lg p-2\" id=\"anatomy-container\">
+                    <div id=\"affected-organ-overlay\" class=\"hidden absolute top-3 left-3 z-20 px-3 py-1.5 rounded-full border text-xs font-semibold shadow-sm\"></div>
                     <div id=\"anatomy-loading\" class=\"absolute inset-0 flex items-center justify-center bg-white rounded-lg z-10\">
                         <div class=\"text-center\">
                             <div class=\"animate-spin rounded-full h-12 w-12 border-b-2 border-paw-orange mx-auto mb-4\"></div>
@@ -359,16 +360,16 @@ class __TwigTemplate_6982625e1d6493c073fd5c37a71ab8f4 extends Template
                     <div class=\"grid grid-cols-4 gap-3\" id=\"organ-buttons-container\">
                         <!-- 1. Brain -->
                         <div class=\"organ-btn relative flex flex-col items-center p-2 ";
-        // line 172
-        if (((isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 172, $this->source); })()) && (CoreExtension::getAttribute($this->env, $this->source, (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 172, $this->source); })()), "number", [], "any", false, false, false, 172) == 1))) {
+        // line 173
+        if (((isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 173, $this->source); })()) && (CoreExtension::getAttribute($this->env, $this->source, (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 173, $this->source); })()), "number", [], "any", false, false, false, 173) == 1))) {
             yield "bg-green-50 ring-2 ring-green-500";
         } else {
             yield "bg-white";
         }
         yield " rounded-lg border border-gray-200 transition-all\" data-number=\"1\">
                             <span class=\"absolute -top-2 -right-2 w-6 h-6 ";
-        // line 173
-        if (((isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 173, $this->source); })()) && (CoreExtension::getAttribute($this->env, $this->source, (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 173, $this->source); })()), "number", [], "any", false, false, false, 173) == 1))) {
+        // line 174
+        if (((isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 174, $this->source); })()) && (CoreExtension::getAttribute($this->env, $this->source, (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 174, $this->source); })()), "number", [], "any", false, false, false, 174) == 1))) {
             yield "bg-green-600";
         } else {
             yield "bg-gray-400";
@@ -379,16 +380,16 @@ class __TwigTemplate_6982625e1d6493c073fd5c37a71ab8f4 extends Template
                         
                         <!-- 2. Lungs -->
                         <div class=\"organ-btn relative flex flex-col items-center p-2 ";
-        // line 178
-        if (((isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 178, $this->source); })()) && (CoreExtension::getAttribute($this->env, $this->source, (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 178, $this->source); })()), "number", [], "any", false, false, false, 178) == 2))) {
+        // line 179
+        if (((isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 179, $this->source); })()) && (CoreExtension::getAttribute($this->env, $this->source, (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 179, $this->source); })()), "number", [], "any", false, false, false, 179) == 2))) {
             yield "bg-green-50 ring-2 ring-green-500";
         } else {
             yield "bg-white";
         }
         yield " rounded-lg border border-gray-200 transition-all\" data-number=\"2\">
                             <span class=\"absolute -top-2 -right-2 w-6 h-6 ";
-        // line 179
-        if (((isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 179, $this->source); })()) && (CoreExtension::getAttribute($this->env, $this->source, (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 179, $this->source); })()), "number", [], "any", false, false, false, 179) == 2))) {
+        // line 180
+        if (((isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 180, $this->source); })()) && (CoreExtension::getAttribute($this->env, $this->source, (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 180, $this->source); })()), "number", [], "any", false, false, false, 180) == 2))) {
             yield "bg-green-600";
         } else {
             yield "bg-gray-400";
@@ -399,16 +400,16 @@ class __TwigTemplate_6982625e1d6493c073fd5c37a71ab8f4 extends Template
                         
                         <!-- 3. Heart -->
                         <div class=\"organ-btn relative flex flex-col items-center p-2 ";
-        // line 184
-        if (((isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 184, $this->source); })()) && (CoreExtension::getAttribute($this->env, $this->source, (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 184, $this->source); })()), "number", [], "any", false, false, false, 184) == 3))) {
+        // line 185
+        if (((isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 185, $this->source); })()) && (CoreExtension::getAttribute($this->env, $this->source, (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 185, $this->source); })()), "number", [], "any", false, false, false, 185) == 3))) {
             yield "bg-green-50 ring-2 ring-green-500";
         } else {
             yield "bg-white";
         }
         yield " rounded-lg border border-gray-200 transition-all\" data-number=\"3\">
                             <span class=\"absolute -top-2 -right-2 w-6 h-6 ";
-        // line 185
-        if (((isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 185, $this->source); })()) && (CoreExtension::getAttribute($this->env, $this->source, (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 185, $this->source); })()), "number", [], "any", false, false, false, 185) == 3))) {
+        // line 186
+        if (((isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 186, $this->source); })()) && (CoreExtension::getAttribute($this->env, $this->source, (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 186, $this->source); })()), "number", [], "any", false, false, false, 186) == 3))) {
             yield "bg-green-600";
         } else {
             yield "bg-gray-400";
@@ -419,16 +420,16 @@ class __TwigTemplate_6982625e1d6493c073fd5c37a71ab8f4 extends Template
                         
                         <!-- 4. Liver -->
                         <div class=\"organ-btn relative flex flex-col items-center p-2 ";
-        // line 190
-        if (((isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 190, $this->source); })()) && (CoreExtension::getAttribute($this->env, $this->source, (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 190, $this->source); })()), "number", [], "any", false, false, false, 190) == 4))) {
+        // line 191
+        if (((isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 191, $this->source); })()) && (CoreExtension::getAttribute($this->env, $this->source, (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 191, $this->source); })()), "number", [], "any", false, false, false, 191) == 4))) {
             yield "bg-green-50 ring-2 ring-green-500";
         } else {
             yield "bg-white";
         }
         yield " rounded-lg border border-gray-200 transition-all\" data-number=\"4\">
                             <span class=\"absolute -top-2 -right-2 w-6 h-6 ";
-        // line 191
-        if (((isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 191, $this->source); })()) && (CoreExtension::getAttribute($this->env, $this->source, (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 191, $this->source); })()), "number", [], "any", false, false, false, 191) == 4))) {
+        // line 192
+        if (((isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 192, $this->source); })()) && (CoreExtension::getAttribute($this->env, $this->source, (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 192, $this->source); })()), "number", [], "any", false, false, false, 192) == 4))) {
             yield "bg-green-600";
         } else {
             yield "bg-gray-400";
@@ -439,16 +440,16 @@ class __TwigTemplate_6982625e1d6493c073fd5c37a71ab8f4 extends Template
                         
                         <!-- 5. Stomach -->
                         <div class=\"organ-btn relative flex flex-col items-center p-2 ";
-        // line 196
-        if (((isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 196, $this->source); })()) && (CoreExtension::getAttribute($this->env, $this->source, (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 196, $this->source); })()), "number", [], "any", false, false, false, 196) == 5))) {
+        // line 197
+        if (((isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 197, $this->source); })()) && (CoreExtension::getAttribute($this->env, $this->source, (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 197, $this->source); })()), "number", [], "any", false, false, false, 197) == 5))) {
             yield "bg-green-50 ring-2 ring-green-500";
         } else {
             yield "bg-white";
         }
         yield " rounded-lg border border-gray-200 transition-all\" data-number=\"5\">
                             <span class=\"absolute -top-2 -right-2 w-6 h-6 ";
-        // line 197
-        if (((isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 197, $this->source); })()) && (CoreExtension::getAttribute($this->env, $this->source, (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 197, $this->source); })()), "number", [], "any", false, false, false, 197) == 5))) {
+        // line 198
+        if (((isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 198, $this->source); })()) && (CoreExtension::getAttribute($this->env, $this->source, (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 198, $this->source); })()), "number", [], "any", false, false, false, 198) == 5))) {
             yield "bg-green-600";
         } else {
             yield "bg-gray-400";
@@ -459,16 +460,16 @@ class __TwigTemplate_6982625e1d6493c073fd5c37a71ab8f4 extends Template
                         
                         <!-- 6. Guts -->
                         <div class=\"organ-btn relative flex flex-col items-center p-2 ";
-        // line 202
-        if (((isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 202, $this->source); })()) && (CoreExtension::getAttribute($this->env, $this->source, (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 202, $this->source); })()), "number", [], "any", false, false, false, 202) == 6))) {
+        // line 203
+        if (((isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 203, $this->source); })()) && (CoreExtension::getAttribute($this->env, $this->source, (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 203, $this->source); })()), "number", [], "any", false, false, false, 203) == 6))) {
             yield "bg-green-50 ring-2 ring-green-500";
         } else {
             yield "bg-white";
         }
         yield " rounded-lg border border-gray-200 transition-all\" data-number=\"6\">
                             <span class=\"absolute -top-2 -right-2 w-6 h-6 ";
-        // line 203
-        if (((isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 203, $this->source); })()) && (CoreExtension::getAttribute($this->env, $this->source, (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 203, $this->source); })()), "number", [], "any", false, false, false, 203) == 6))) {
+        // line 204
+        if (((isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 204, $this->source); })()) && (CoreExtension::getAttribute($this->env, $this->source, (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 204, $this->source); })()), "number", [], "any", false, false, false, 204) == 6))) {
             yield "bg-green-600";
         } else {
             yield "bg-gray-400";
@@ -479,16 +480,16 @@ class __TwigTemplate_6982625e1d6493c073fd5c37a71ab8f4 extends Template
                         
                         <!-- 7. Kidney -->
                         <div class=\"organ-btn relative flex flex-col items-center p-2 ";
-        // line 208
-        if (((isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 208, $this->source); })()) && (CoreExtension::getAttribute($this->env, $this->source, (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 208, $this->source); })()), "number", [], "any", false, false, false, 208) == 7))) {
+        // line 209
+        if (((isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 209, $this->source); })()) && (CoreExtension::getAttribute($this->env, $this->source, (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 209, $this->source); })()), "number", [], "any", false, false, false, 209) == 7))) {
             yield "bg-green-50 ring-2 ring-green-500";
         } else {
             yield "bg-white";
         }
         yield " rounded-lg border border-gray-200 transition-all\" data-number=\"7\">
                             <span class=\"absolute -top-2 -right-2 w-6 h-6 ";
-        // line 209
-        if (((isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 209, $this->source); })()) && (CoreExtension::getAttribute($this->env, $this->source, (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 209, $this->source); })()), "number", [], "any", false, false, false, 209) == 7))) {
+        // line 210
+        if (((isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 210, $this->source); })()) && (CoreExtension::getAttribute($this->env, $this->source, (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 210, $this->source); })()), "number", [], "any", false, false, false, 210) == 7))) {
             yield "bg-green-600";
         } else {
             yield "bg-gray-400";
@@ -499,16 +500,16 @@ class __TwigTemplate_6982625e1d6493c073fd5c37a71ab8f4 extends Template
                         
                         <!-- 8. Urinary bladder -->
                         <div class=\"organ-btn relative flex flex-col items-center p-2 ";
-        // line 214
-        if (((isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 214, $this->source); })()) && (CoreExtension::getAttribute($this->env, $this->source, (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 214, $this->source); })()), "number", [], "any", false, false, false, 214) == 8))) {
+        // line 215
+        if (((isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 215, $this->source); })()) && (CoreExtension::getAttribute($this->env, $this->source, (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 215, $this->source); })()), "number", [], "any", false, false, false, 215) == 8))) {
             yield "bg-green-50 ring-2 ring-green-500";
         } else {
             yield "bg-white";
         }
         yield " rounded-lg border border-gray-200 transition-all\" data-number=\"8\">
                             <span class=\"absolute -top-2 -right-2 w-6 h-6 ";
-        // line 215
-        if (((isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 215, $this->source); })()) && (CoreExtension::getAttribute($this->env, $this->source, (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 215, $this->source); })()), "number", [], "any", false, false, false, 215) == 8))) {
+        // line 216
+        if (((isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 216, $this->source); })()) && (CoreExtension::getAttribute($this->env, $this->source, (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 216, $this->source); })()), "number", [], "any", false, false, false, 216) == 8))) {
             yield "bg-green-600";
         } else {
             yield "bg-gray-400";
@@ -526,8 +527,8 @@ class __TwigTemplate_6982625e1d6493c073fd5c37a71ab8f4 extends Template
                 
                 <!-- Selected Organ Display -->
                 <div id=\"selected-organ-display\" class=\"mb-3 p-3 ";
-        // line 227
-        if ((($tmp = (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 227, $this->source); })())) && $tmp instanceof Markup ? (string) $tmp : $tmp)) {
+        // line 228
+        if ((($tmp = (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 228, $this->source); })())) && $tmp instanceof Markup ? (string) $tmp : $tmp)) {
             yield "bg-paw-orange bg-opacity-10 border-paw-orange";
         } else {
             yield "bg-gray-100 border-gray-300";
@@ -536,36 +537,36 @@ class __TwigTemplate_6982625e1d6493c073fd5c37a71ab8f4 extends Template
                     <div class=\"flex items-center justify-between\">
                         <div>
                             <span class=\"text-sm font-medium ";
-        // line 230
-        if ((($tmp = (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 230, $this->source); })())) && $tmp instanceof Markup ? (string) $tmp : $tmp)) {
-            yield "text-paw-orange";
-        } else {
-            yield "text-gray-600";
-        }
-        yield "\">Organ for analysis:</span>
-                            <span class=\"ml-2 font-bold ";
         // line 231
         if ((($tmp = (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 231, $this->source); })())) && $tmp instanceof Markup ? (string) $tmp : $tmp)) {
             yield "text-paw-orange";
         } else {
             yield "text-gray-600";
         }
+        yield "\">Organ for analysis:</span>
+                            <span class=\"ml-2 font-bold ";
+        // line 232
+        if ((($tmp = (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 232, $this->source); })())) && $tmp instanceof Markup ? (string) $tmp : $tmp)) {
+            yield "text-paw-orange";
+        } else {
+            yield "text-gray-600";
+        }
         yield "\">
                                 ";
-        // line 232
-        yield (((($tmp = (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 232, $this->source); })())) && $tmp instanceof Markup ? (string) $tmp : $tmp)) ? ($this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape(CoreExtension::getAttribute($this->env, $this->source, (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 232, $this->source); })()), "name", [], "any", false, false, false, 232), "html", null, true)) : ("None detected"));
+        // line 233
+        yield (((($tmp = (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 233, $this->source); })())) && $tmp instanceof Markup ? (string) $tmp : $tmp)) ? ($this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape(CoreExtension::getAttribute($this->env, $this->source, (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 233, $this->source); })()), "name", [], "any", false, false, false, 233), "html", null, true)) : ("None detected"));
         yield "
                             </span>
                             ";
-        // line 234
-        if ((($tmp = (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 234, $this->source); })())) && $tmp instanceof Markup ? (string) $tmp : $tmp)) {
-            // line 235
+        // line 235
+        if ((($tmp = (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 235, $this->source); })())) && $tmp instanceof Markup ? (string) $tmp : $tmp)) {
+            // line 236
             yield "                                <span class=\"ml-1 bg-paw-orange text-white px-2 py-0.5 rounded-full text-xs\">#";
-            yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape(CoreExtension::getAttribute($this->env, $this->source, (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 235, $this->source); })()), "number", [], "any", false, false, false, 235), "html", null, true);
+            yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape(CoreExtension::getAttribute($this->env, $this->source, (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 236, $this->source); })()), "number", [], "any", false, false, false, 236), "html", null, true);
             yield "</span>
                             ";
         }
-        // line 237
+        // line 238
         yield "                        </div>
                     </div>
                 </div>
@@ -579,8 +580,8 @@ class __TwigTemplate_6982625e1d6493c073fd5c37a71ab8f4 extends Template
                         rows=\"4\"
                         placeholder=\"Click 'Run  Analysis' to see common symptoms for this organ...\"
                     >";
-        // line 249
-        yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape((isset($context["saved_symptoms"]) || array_key_exists("saved_symptoms", $context) ? $context["saved_symptoms"] : (function () { throw new RuntimeError('Variable "saved_symptoms" does not exist.', 249, $this->source); })()), "html", null, true);
+        // line 250
+        yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape((isset($context["saved_symptoms"]) || array_key_exists("saved_symptoms", $context) ? $context["saved_symptoms"] : (function () { throw new RuntimeError('Variable "saved_symptoms" does not exist.', 250, $this->source); })()), "html", null, true);
         yield "</textarea>
                 </div>
                 
@@ -593,11 +594,11 @@ class __TwigTemplate_6982625e1d6493c073fd5c37a71ab8f4 extends Template
                     onclick=\"runKnnAnalysis()\"
                     class=\"w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-paw-orange text-white rounded-lg hover:bg-paw-orange-hover font-medium\"
                     ";
-        // line 260
-        if ((($tmp =  !(isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 260, $this->source); })())) && $tmp instanceof Markup ? (string) $tmp : $tmp)) {
+        // line 261
+        if ((($tmp =  !(isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 261, $this->source); })())) && $tmp instanceof Markup ? (string) $tmp : $tmp)) {
             yield "disabled style=\"opacity:50%; cursor:not-allowed;\"";
         }
-        // line 261
+        // line 262
         yield "                >
                     <svg class=\"w-5 h-5\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">
                         <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9.75 17L9 20l-1-3m1 3h6m-6 0H6m3-3V5a3 3 0 013-3h0a3 3 0 013 3v12m-6 0h6\"/>
@@ -607,8 +608,8 @@ class __TwigTemplate_6982625e1d6493c073fd5c37a71ab8f4 extends Template
 
                 <!-- Analysis Result -->
                 <div id=\"analysis-result\" class=\"mt-4 ";
-        // line 269
-        if ((($tmp = (isset($context["has_saved_analysis"]) || array_key_exists("has_saved_analysis", $context) ? $context["has_saved_analysis"] : (function () { throw new RuntimeError('Variable "has_saved_analysis" does not exist.', 269, $this->source); })())) && $tmp instanceof Markup ? (string) $tmp : $tmp)) {
+        // line 270
+        if ((($tmp = (isset($context["has_saved_analysis"]) || array_key_exists("has_saved_analysis", $context) ? $context["has_saved_analysis"] : (function () { throw new RuntimeError('Variable "has_saved_analysis" does not exist.', 270, $this->source); })())) && $tmp instanceof Markup ? (string) $tmp : $tmp)) {
         } else {
             yield "hidden";
         }
@@ -616,45 +617,45 @@ class __TwigTemplate_6982625e1d6493c073fd5c37a71ab8f4 extends Template
                     <!-- Emergency Level Badge -->
                     <div id=\"emergency-badge\" class=\"mb-4 p-4 rounded-lg border-2 text-center
                         ";
-        // line 272
-        if ((CoreExtension::getAttribute($this->env, $this->source, (isset($context["suivi"]) || array_key_exists("suivi", $context) ? $context["suivi"] : (function () { throw new RuntimeError('Variable "suivi" does not exist.', 272, $this->source); })()), "emergencyLevel", [], "any", false, false, false, 272) == "critical")) {
+        // line 273
+        if ((CoreExtension::getAttribute($this->env, $this->source, (isset($context["suivi"]) || array_key_exists("suivi", $context) ? $context["suivi"] : (function () { throw new RuntimeError('Variable "suivi" does not exist.', 273, $this->source); })()), "emergencyLevel", [], "any", false, false, false, 273) == "critical")) {
             yield "bg-red-100 border-red-300
                         ";
-        } elseif ((CoreExtension::getAttribute($this->env, $this->source,         // line 273
-(isset($context["suivi"]) || array_key_exists("suivi", $context) ? $context["suivi"] : (function () { throw new RuntimeError('Variable "suivi" does not exist.', 273, $this->source); })()), "emergencyLevel", [], "any", false, false, false, 273) == "high")) {
+        } elseif ((CoreExtension::getAttribute($this->env, $this->source,         // line 274
+(isset($context["suivi"]) || array_key_exists("suivi", $context) ? $context["suivi"] : (function () { throw new RuntimeError('Variable "suivi" does not exist.', 274, $this->source); })()), "emergencyLevel", [], "any", false, false, false, 274) == "high")) {
             yield "bg-orange-100 border-orange-300
                         ";
-        } elseif ((CoreExtension::getAttribute($this->env, $this->source,         // line 274
-(isset($context["suivi"]) || array_key_exists("suivi", $context) ? $context["suivi"] : (function () { throw new RuntimeError('Variable "suivi" does not exist.', 274, $this->source); })()), "emergencyLevel", [], "any", false, false, false, 274) == "medium")) {
+        } elseif ((CoreExtension::getAttribute($this->env, $this->source,         // line 275
+(isset($context["suivi"]) || array_key_exists("suivi", $context) ? $context["suivi"] : (function () { throw new RuntimeError('Variable "suivi" does not exist.', 275, $this->source); })()), "emergencyLevel", [], "any", false, false, false, 275) == "medium")) {
             yield "bg-yellow-100 border-yellow-300
                         ";
         } else {
-            // line 275
+            // line 276
             yield "bg-green-100 border-green-300";
         }
         yield "\">
                         <span id=\"emergency-level\" class=\"text-lg font-bold
                             ";
-        // line 277
-        if ((CoreExtension::getAttribute($this->env, $this->source, (isset($context["suivi"]) || array_key_exists("suivi", $context) ? $context["suivi"] : (function () { throw new RuntimeError('Variable "suivi" does not exist.', 277, $this->source); })()), "emergencyLevel", [], "any", false, false, false, 277) == "critical")) {
+        // line 278
+        if ((CoreExtension::getAttribute($this->env, $this->source, (isset($context["suivi"]) || array_key_exists("suivi", $context) ? $context["suivi"] : (function () { throw new RuntimeError('Variable "suivi" does not exist.', 278, $this->source); })()), "emergencyLevel", [], "any", false, false, false, 278) == "critical")) {
             yield "text-red-800
                             ";
-        } elseif ((CoreExtension::getAttribute($this->env, $this->source,         // line 278
-(isset($context["suivi"]) || array_key_exists("suivi", $context) ? $context["suivi"] : (function () { throw new RuntimeError('Variable "suivi" does not exist.', 278, $this->source); })()), "emergencyLevel", [], "any", false, false, false, 278) == "high")) {
+        } elseif ((CoreExtension::getAttribute($this->env, $this->source,         // line 279
+(isset($context["suivi"]) || array_key_exists("suivi", $context) ? $context["suivi"] : (function () { throw new RuntimeError('Variable "suivi" does not exist.', 279, $this->source); })()), "emergencyLevel", [], "any", false, false, false, 279) == "high")) {
             yield "text-orange-800
                             ";
-        } elseif ((CoreExtension::getAttribute($this->env, $this->source,         // line 279
-(isset($context["suivi"]) || array_key_exists("suivi", $context) ? $context["suivi"] : (function () { throw new RuntimeError('Variable "suivi" does not exist.', 279, $this->source); })()), "emergencyLevel", [], "any", false, false, false, 279) == "medium")) {
+        } elseif ((CoreExtension::getAttribute($this->env, $this->source,         // line 280
+(isset($context["suivi"]) || array_key_exists("suivi", $context) ? $context["suivi"] : (function () { throw new RuntimeError('Variable "suivi" does not exist.', 280, $this->source); })()), "emergencyLevel", [], "any", false, false, false, 280) == "medium")) {
             yield "text-yellow-800
                             ";
         } else {
-            // line 280
+            // line 281
             yield "text-green-800";
         }
         yield "\">
                             ";
-        // line 281
-        yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape(CoreExtension::getAttribute($this->env, $this->source, (isset($context["suivi"]) || array_key_exists("suivi", $context) ? $context["suivi"] : (function () { throw new RuntimeError('Variable "suivi" does not exist.', 281, $this->source); })()), "emergencyLevelDisplay", [], "any", false, false, false, 281), "html", null, true);
+        // line 282
+        yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape(CoreExtension::getAttribute($this->env, $this->source, (isset($context["suivi"]) || array_key_exists("suivi", $context) ? $context["suivi"] : (function () { throw new RuntimeError('Variable "suivi" does not exist.', 282, $this->source); })()), "emergencyLevelDisplay", [], "any", false, false, false, 282), "html", null, true);
         yield "
                         </span>
                     </div>
@@ -663,24 +664,27 @@ class __TwigTemplate_6982625e1d6493c073fd5c37a71ab8f4 extends Template
                     <div class=\"bg-gray-50 rounded-lg p-4\">
                         <h3 class=\"text-sm font-semibold text-gray-700 mb-2\">Medical Analysis Report</h3>
                         <pre id=\"report-content\" class=\"text-sm text-gray-700 whitespace-pre-wrap font-mono overflow-auto max-h-96\">";
-        // line 288
-        if ((($tmp = (isset($context["has_saved_analysis"]) || array_key_exists("has_saved_analysis", $context) ? $context["has_saved_analysis"] : (function () { throw new RuntimeError('Variable "has_saved_analysis" does not exist.', 288, $this->source); })())) && $tmp instanceof Markup ? (string) $tmp : $tmp)) {
+        // line 289
+        if ((($tmp = (isset($context["has_saved_analysis"]) || array_key_exists("has_saved_analysis", $context) ? $context["has_saved_analysis"] : (function () { throw new RuntimeError('Variable "has_saved_analysis" does not exist.', 289, $this->source); })())) && $tmp instanceof Markup ? (string) $tmp : $tmp)) {
             yield "Analyzing: ";
-            yield (((($tmp = (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 288, $this->source); })())) && $tmp instanceof Markup ? (string) $tmp : $tmp)) ? ($this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape(CoreExtension::getAttribute($this->env, $this->source, (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 288, $this->source); })()), "name", [], "any", false, false, false, 288), "html", null, true)) : ("Unknown"));
-            if ((($tmp = (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 288, $this->source); })())) && $tmp instanceof Markup ? (string) $tmp : $tmp)) {
+            yield (((($tmp = (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 289, $this->source); })())) && $tmp instanceof Markup ? (string) $tmp : $tmp)) ? ($this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape(CoreExtension::getAttribute($this->env, $this->source, (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 289, $this->source); })()), "name", [], "any", false, false, false, 289), "html", null, true)) : ("Unknown"));
+            if ((($tmp = (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 289, $this->source); })())) && $tmp instanceof Markup ? (string) $tmp : $tmp)) {
                 yield " (#";
-                yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape(CoreExtension::getAttribute($this->env, $this->source, (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 288, $this->source); })()), "number", [], "any", false, false, false, 288), "html", null, true);
+                yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape(CoreExtension::getAttribute($this->env, $this->source, (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 289, $this->source); })()), "number", [], "any", false, false, false, 289), "html", null, true);
                 yield ")";
             }
-            // line 289
+            // line 290
             yield "
 ";
-            // line 290
-            yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape((isset($context["saved_analysis_report"]) || array_key_exists("saved_analysis_report", $context) ? $context["saved_analysis_report"] : (function () { throw new RuntimeError('Variable "saved_analysis_report" does not exist.', 290, $this->source); })()), "html", null, true);
+            // line 291
+            yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape((isset($context["saved_analysis_report"]) || array_key_exists("saved_analysis_report", $context) ? $context["saved_analysis_report"] : (function () { throw new RuntimeError('Variable "saved_analysis_report" does not exist.', 291, $this->source); })()), "html", null, true);
         }
         yield "</pre>
                     </div>
                 </div>
+
+                <div id=\"affected-organ-panel\" class=\"mt-3 hidden p-3 rounded-lg border text-sm font-semibold\"></div>
+                <div id=\"sketchfab-debug\" class=\"mt-2 p-2 text-xs rounded border border-gray-200 bg-gray-50 text-gray-600 hidden\"></div>
             </div>
         </div>
     </div>
@@ -691,12 +695,12 @@ class __TwigTemplate_6982625e1d6493c073fd5c37a71ab8f4 extends Template
     (function() {
         console.log(\"=== DÉBOGAGE DÉTECTION ORGANE ===\");
         console.log(\"detected_organ (depuis Twig):\", ";
-        // line 302
-        yield (((($tmp = (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 302, $this->source); })())) && $tmp instanceof Markup ? (string) $tmp : $tmp)) ? (json_encode((isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 302, $this->source); })()))) : ("null"));
+        // line 306
+        yield (((($tmp = (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 306, $this->source); })())) && $tmp instanceof Markup ? (string) $tmp : $tmp)) ? (json_encode((isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 306, $this->source); })()))) : ("null"));
         yield ");
         console.log(\"Diagnostic text:\", ";
-        // line 303
-        yield json_encode(CoreExtension::getAttribute($this->env, $this->source, (isset($context["consultation"]) || array_key_exists("consultation", $context) ? $context["consultation"] : (function () { throw new RuntimeError('Variable "consultation" does not exist.', 303, $this->source); })()), "diagnostic", [], "any", false, false, false, 303));
+        // line 307
+        yield json_encode(CoreExtension::getAttribute($this->env, $this->source, (isset($context["consultation"]) || array_key_exists("consultation", $context) ? $context["consultation"] : (function () { throw new RuntimeError('Variable "consultation" does not exist.', 307, $this->source); })()), "diagnostic", [], "any", false, false, false, 307));
         yield ");
         console.log(\"==================================\");
     })();
@@ -711,7 +715,7 @@ class __TwigTemplate_6982625e1d6493c073fd5c37a71ab8f4 extends Template
         yield from [];
     }
 
-    // line 309
+    // line 313
     /**
      * @return iterable<null|scalar|\Stringable>
      */
@@ -724,18 +728,35 @@ class __TwigTemplate_6982625e1d6493c073fd5c37a71ab8f4 extends Template
         $__internal_6f47bbe9983af81f1e7450e9a3e3768f = $this->extensions["Symfony\\Bridge\\Twig\\Extension\\ProfilerExtension"];
         $__internal_6f47bbe9983af81f1e7450e9a3e3768f->enter($__internal_6f47bbe9983af81f1e7450e9a3e3768f_prof = new \Twig\Profiler\Profile($this->getTemplateName(), "block", "javascripts"));
 
-        // line 310
+        // line 314
         yield from $this->yieldParentBlock("javascripts", $context, $blocks);
         yield "
+<script src=\"https://static.sketchfab.com/api/sketchfab-viewer-1.12.1.js\"></script>
 <script>
 const suiviId = ";
-        // line 312
-        yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape(CoreExtension::getAttribute($this->env, $this->source, (isset($context["suivi"]) || array_key_exists("suivi", $context) ? $context["suivi"] : (function () { throw new RuntimeError('Variable "suivi" does not exist.', 312, $this->source); })()), "id", [], "any", false, false, false, 312), "html", null, true);
+        // line 317
+        yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape(CoreExtension::getAttribute($this->env, $this->source, (isset($context["suivi"]) || array_key_exists("suivi", $context) ? $context["suivi"] : (function () { throw new RuntimeError('Variable "suivi" does not exist.', 317, $this->source); })()), "id", [], "any", false, false, false, 317), "html", null, true);
         yield ";
 const detectedOrgan = ";
-        // line 313
-        yield (((($tmp = (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 313, $this->source); })())) && $tmp instanceof Markup ? (string) $tmp : $tmp)) ? (json_encode((isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 313, $this->source); })()))) : ("null"));
+        // line 318
+        yield (((($tmp = (isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 318, $this->source); })())) && $tmp instanceof Markup ? (string) $tmp : $tmp)) ? (json_encode((isset($context["detected_organ"]) || array_key_exists("detected_organ", $context) ? $context["detected_organ"] : (function () { throw new RuntimeError('Variable "detected_organ" does not exist.', 318, $this->source); })()))) : ("null"));
         yield ";
+const savedEmergencyLevel = ";
+        // line 319
+        yield json_encode(((CoreExtension::getAttribute($this->env, $this->source, (isset($context["suivi"]) || array_key_exists("suivi", $context) ? $context["suivi"] : (function () { throw new RuntimeError('Variable "suivi" does not exist.', 319, $this->source); })()), "emergencyLevel", [], "any", false, false, false, 319)) ? (CoreExtension::getAttribute($this->env, $this->source, (isset($context["suivi"]) || array_key_exists("suivi", $context) ? $context["suivi"] : (function () { throw new RuntimeError('Variable "suivi" does not exist.', 319, $this->source); })()), "emergencyLevel", [], "any", false, false, false, 319)) : ("low")));
+        yield ";
+const sketchfabModelUid = '7587ebe24ee2464f982154ed610f7e56';
+let sketchfabApi = null;
+let sketchfabReady = false;
+let tintedMaterialIds = [];
+let originalMaterials = {};
+
+function setSketchfabDebug(message) {
+    const box = document.getElementById('sketchfab-debug');
+    if (!box) return;
+    box.textContent = message;
+    box.classList.remove('hidden');
+}
 
 // Hide loading spinner when iframe loads
 function hideLoading() {
@@ -745,10 +766,257 @@ function hideLoading() {
     }
 }
 
+function getSeverityUi(level) {
+    const l = (level || 'low').toLowerCase();
+    if (l === 'critical') {
+        return {
+            ring: 'ring-2 ring-red-600',
+            bg: 'bg-red-50 border-red-300 text-red-800',
+            button: 'bg-red-50 ring-2 ring-red-500',
+            badge: 'Affected organ: CRITICAL'
+        };
+    }
+    if (l === 'high') {
+        return {
+            ring: 'ring-2 ring-orange-500',
+            bg: 'bg-orange-50 border-orange-300 text-orange-800',
+            button: 'bg-orange-50 ring-2 ring-orange-500',
+            badge: 'Affected organ: HIGH RISK'
+        };
+    }
+    if (l === 'medium') {
+        return {
+            ring: 'ring-2 ring-yellow-500',
+            bg: 'bg-yellow-50 border-yellow-300 text-yellow-800',
+            button: 'bg-yellow-50 ring-2 ring-yellow-500',
+            badge: 'Affected organ: MEDIUM RISK'
+        };
+    }
+    return {
+        ring: 'ring-2 ring-green-500',
+        bg: 'bg-green-50 border-green-300 text-green-800',
+        button: 'bg-green-50 ring-2 ring-green-500',
+        badge: 'Affected organ: LOW RISK'
+    };
+}
+
+function getSeverityColor(level) {
+    const l = (level || 'low').toLowerCase();
+    if (l === 'critical') return [0.86, 0.12, 0.12];
+    if (l === 'high') return [0.96, 0.39, 0.05];
+    if (l === 'medium') return [0.92, 0.68, 0.15];
+    return [0.21, 0.65, 0.33];
+}
+
+function getOrganMaterialKeywords(organName) {
+    const key = (organName || '').toLowerCase();
+    const map = {
+        brain: ['brain', 'cerebr', 'head'],
+        lungs: ['lung', 'lungs', 'pulmo', 'respir'],
+        heart: ['heart', 'cardiac'],
+        liver: ['liver', 'hepatic'],
+        stomach: ['stomach', 'gastric', 'gastro'],
+        guts: ['gut', 'intestin', 'bowel'],
+        kidney: ['kidney', 'renal'],
+        bladder: ['bladder', 'urinary', 'vessie']
+    };
+    return map[key] || [key];
+}
+
+function tintMaterial(material, rgb) {
+    const m = JSON.parse(JSON.stringify(material));
+    if (!m.channels) {
+        return m;
+    }
+    if (m.channels.AlbedoPBR && m.channels.AlbedoPBR.color) {
+        m.channels.AlbedoPBR.color = rgb;
+    }
+    if (m.channels.DiffuseColor && m.channels.DiffuseColor.color) {
+        m.channels.DiffuseColor.color = rgb;
+    }
+    if (m.channels.BaseColor && m.channels.BaseColor.color) {
+        m.channels.BaseColor.color = rgb;
+    }
+    return m;
+}
+
+function restorePreviousTintedMaterials() {
+    if (!sketchfabApi || !sketchfabReady || tintedMaterialIds.length === 0) {
+        return;
+    }
+    tintedMaterialIds.forEach((id) => {
+        const original = originalMaterials[id];
+        if (original) {
+            sketchfabApi.setMaterial(original);
+        }
+    });
+    tintedMaterialIds = [];
+}
+
+function apply3DOrganColor(level) {
+    if (!sketchfabApi || !sketchfabReady) {
+        setSketchfabDebug('Sketchfab API not ready yet.');
+        return;
+    }
+    const activeOrgan = getActiveOrgan();
+    if (!activeOrgan || !activeOrgan.name) {
+        return;
+    }
+    const keywords = getOrganMaterialKeywords(activeOrgan.name);
+    const color = getSeverityColor(level);
+
+    sketchfabApi.getMaterialList(function (err, materials) {
+        if (err || !Array.isArray(materials)) {
+            setSketchfabDebug('Unable to read material list from Sketchfab.');
+            return;
+        }
+
+        restorePreviousTintedMaterials();
+
+        const targetMaterials = materials.filter((mat) => {
+            const name = String(mat.name || '').toLowerCase();
+            return keywords.some((kw) => name.includes(kw));
+        });
+
+        if (targetMaterials.length === 0) {
+            // Fallback: color first materials to prove 3D material update works.
+            targetMaterials.push(...materials.slice(0, Math.min(2, materials.length)));
+            setSketchfabDebug(`No organ material matched for \"\${activeOrgan.name}\". Fallback tint on first \${targetMaterials.length} material(s).`);
+        } else {
+            setSketchfabDebug(`Tinting \${targetMaterials.length} material(s) for organ \"\${activeOrgan.name}\".`);
+        }
+
+        targetMaterials.forEach((mat) => {
+            const id = String(mat.id || '');
+            if (!id) {
+                return;
+            }
+            if (!originalMaterials[id]) {
+                originalMaterials[id] = JSON.parse(JSON.stringify(mat));
+            }
+            const tinted = tintMaterial(mat, color);
+            sketchfabApi.setMaterial(tinted);
+            tintedMaterialIds.push(id);
+        });
+    });
+}
+
+function initSketchfabViewerApi() {
+    const iframe = document.getElementById('anatomy-iframe');
+    if (!iframe || typeof Sketchfab === 'undefined') {
+        setSketchfabDebug('Sketchfab API script not loaded.');
+        return;
+    }
+
+    let client = null;
+    try {
+        client = new Sketchfab('1.12.1', iframe);
+    } catch (e) {
+        try {
+            client = new Sketchfab(iframe);
+        } catch (e2) {
+            setSketchfabDebug('Failed to initialize Sketchfab client.');
+            return;
+        }
+    }
+
+    client.init(sketchfabModelUid, {
+        autostart: 1,
+        ui_infos: 0,
+        ui_controls: 1,
+        success: function (api) {
+            sketchfabApi = api;
+            api.start();
+            api.addEventListener('viewerready', function () {
+                sketchfabReady = true;
+                setSketchfabDebug('Sketchfab viewer ready.');
+                hideLoading();
+                apply3DOrganColor(savedEmergencyLevel);
+            });
+        },
+        error: function () {
+            setSketchfabDebug('Sketchfab API init error. Model may still display without API control.');
+        }
+    });
+}
+
+function getActiveOrgan() {
+    if (detectedOrgan && detectedOrgan.number) {
+        return detectedOrgan;
+    }
+    const selected = document.querySelector('#organ-buttons-container .organ-btn.ring-2');
+    if (!selected) {
+        return null;
+    }
+    const number = parseInt(selected.getAttribute('data-number') || '0', 10);
+    const nameEl = selected.querySelector('span.text-xs');
+    return {
+        number: number || 0,
+        name: nameEl ? nameEl.textContent.trim() : 'Unknown',
+        id: ''
+    };
+}
+
+function highlightAffectedOrgan(level) {
+    const activeOrgan = getActiveOrgan();
+    if (!activeOrgan || !activeOrgan.number) {
+        return;
+    }
+
+    const ui = getSeverityUi(level);
+    const container = document.getElementById('anatomy-container');
+    if (container) {
+        container.classList.remove('ring-2', 'ring-red-600', 'ring-orange-500', 'ring-yellow-500', 'ring-green-500');
+        container.classList.add('transition-all', 'duration-300');
+        ui.ring.split(' ').forEach(c => container.classList.add(c));
+    }
+
+    const overlay = document.getElementById('affected-organ-overlay');
+    if (overlay) {
+        overlay.className = `absolute top-3 left-3 z-20 px-3 py-1.5 rounded-full border text-xs font-semibold shadow-sm \${ui.bg}`;
+        overlay.textContent = `\${ui.badge} - \${activeOrgan.name}`;
+        overlay.classList.remove('hidden');
+    }
+
+    const panel = document.getElementById('affected-organ-panel');
+    if (panel) {
+        panel.className = `mt-3 p-3 rounded-lg border text-sm font-semibold \${ui.bg}`;
+        panel.textContent = `\${ui.badge}: \${activeOrgan.name} (#\${activeOrgan.number})`;
+        panel.classList.remove('hidden');
+    }
+
+    document.querySelectorAll('#organ-buttons-container .organ-btn').forEach((el) => {
+        el.classList.remove('bg-green-50', 'bg-red-50', 'bg-orange-50', 'bg-yellow-50', 'ring-2', 'ring-green-500', 'ring-red-500', 'ring-orange-500', 'ring-yellow-500');
+    });
+
+    const selected = document.querySelector(`#organ-buttons-container .organ-btn[data-number=\"\${activeOrgan.number}\"]`);
+    if (selected) {
+        ui.button.split(' ').forEach(c => selected.classList.add(c));
+        const badge = selected.querySelector('span.absolute');
+        if (badge) {
+            badge.classList.remove('bg-gray-400', 'bg-green-600');
+            if ((level || '').toLowerCase() === 'critical') {
+                badge.classList.add('bg-red-600');
+            } else if ((level || '').toLowerCase() === 'high') {
+                badge.classList.add('bg-orange-600');
+            } else if ((level || '').toLowerCase() === 'medium') {
+                badge.classList.add('bg-yellow-600');
+            } else {
+                badge.classList.add('bg-green-600');
+            }
+        }
+    }
+}
+
 // Auto-hide loading after 3 seconds
 setTimeout(function() {
     hideLoading();
 }, 3000);
+
+document.addEventListener('DOMContentLoaded', function () {
+    initSketchfabViewerApi();
+    highlightAffectedOrgan(savedEmergencyLevel);
+});
 
 // Fonction pour afficher les messages d'erreur
 function showError(message) {
@@ -840,7 +1108,7 @@ async function runAnalysis(mode, buttonId) {
     };
     
     fetch('";
-        // line 417
+        // line 682
         yield $this->extensions['Symfony\Bridge\Twig\Extension\RoutingExtension']->getPath("app_suivi_ai_analyze");
         yield "', {
         method: 'POST',
@@ -890,6 +1158,8 @@ async function runAnalysis(mode, buttonId) {
             emergencyBadge.className = `mb-4 p-4 rounded-lg border-2 text-center \${colors.bg} \${colors.border}`;
             emergencyLevel.className = `text-lg font-bold \${colors.text}`;
             emergencyLevel.textContent = data.emergency_display || 'Unknown';
+            highlightAffectedOrgan(data.emergency_level || 'low');
+            apply3DOrganColor(data.emergency_level || 'low');
             
             // Set report content
             reportContent.textContent = report;
@@ -971,7 +1241,7 @@ document.head.appendChild(style);
      */
     public function getDebugInfo(): array
     {
-        return array (  844 => 417,  737 => 313,  733 => 312,  728 => 310,  715 => 309,  699 => 303,  695 => 302,  679 => 290,  676 => 289,  667 => 288,  657 => 281,  652 => 280,  647 => 279,  643 => 278,  639 => 277,  633 => 275,  628 => 274,  624 => 273,  620 => 272,  611 => 269,  601 => 261,  597 => 260,  583 => 249,  569 => 237,  563 => 235,  561 => 234,  556 => 232,  548 => 231,  540 => 230,  530 => 227,  511 => 215,  503 => 214,  491 => 209,  483 => 208,  471 => 203,  463 => 202,  451 => 197,  443 => 196,  431 => 191,  423 => 190,  411 => 185,  403 => 184,  391 => 179,  383 => 178,  371 => 173,  363 => 172,  315 => 126,  308 => 122,  304 => 121,  300 => 119,  298 => 118,  293 => 116,  286 => 112,  278 => 107,  273 => 106,  268 => 105,  264 => 104,  260 => 103,  247 => 92,  241 => 89,  232 => 88,  230 => 87,  225 => 85,  217 => 84,  214 => 83,  210 => 81,  206 => 79,  204 => 78,  196 => 77,  186 => 74,  177 => 72,  169 => 67,  162 => 63,  148 => 52,  141 => 48,  134 => 44,  127 => 40,  120 => 36,  99 => 18,  90 => 12,  84 => 9,  77 => 4,  64 => 3,  41 => 1,);
+        return array (  1112 => 682,  746 => 319,  742 => 318,  738 => 317,  732 => 314,  719 => 313,  703 => 307,  699 => 306,  680 => 291,  677 => 290,  668 => 289,  658 => 282,  653 => 281,  648 => 280,  644 => 279,  640 => 278,  634 => 276,  629 => 275,  625 => 274,  621 => 273,  612 => 270,  602 => 262,  598 => 261,  584 => 250,  570 => 238,  564 => 236,  562 => 235,  557 => 233,  549 => 232,  541 => 231,  531 => 228,  512 => 216,  504 => 215,  492 => 210,  484 => 209,  472 => 204,  464 => 203,  452 => 198,  444 => 197,  432 => 192,  424 => 191,  412 => 186,  404 => 185,  392 => 180,  384 => 179,  372 => 174,  364 => 173,  315 => 126,  308 => 122,  304 => 121,  300 => 119,  298 => 118,  293 => 116,  286 => 112,  278 => 107,  273 => 106,  268 => 105,  264 => 104,  260 => 103,  247 => 92,  241 => 89,  232 => 88,  230 => 87,  225 => 85,  217 => 84,  214 => 83,  210 => 81,  206 => 79,  204 => 78,  196 => 77,  186 => 74,  177 => 72,  169 => 67,  162 => 63,  148 => 52,  141 => 48,  134 => 44,  127 => 40,  120 => 36,  99 => 18,  90 => 12,  84 => 9,  77 => 4,  64 => 3,  41 => 1,);
     }
 
     public function getSourceContext(): Source
@@ -1114,6 +1384,7 @@ document.head.appendChild(style);
                 
                 <!-- Embedded 3D Dog Anatomy Model from Sketchfab -->
                 <div class=\"relative bg-gradient-to-b from-blue-50 to-white rounded-lg p-2\" id=\"anatomy-container\">
+                    <div id=\"affected-organ-overlay\" class=\"hidden absolute top-3 left-3 z-20 px-3 py-1.5 rounded-full border text-xs font-semibold shadow-sm\"></div>
                     <div id=\"anatomy-loading\" class=\"absolute inset-0 flex items-center justify-center bg-white rounded-lg z-10\">
                         <div class=\"text-center\">
                             <div class=\"animate-spin rounded-full h-12 w-12 border-b-2 border-paw-orange mx-auto mb-4\"></div>
@@ -1268,6 +1539,9 @@ document.head.appendChild(style);
 {{ saved_analysis_report }}{% endif %}</pre>
                     </div>
                 </div>
+
+                <div id=\"affected-organ-panel\" class=\"mt-3 hidden p-3 rounded-lg border text-sm font-semibold\"></div>
+                <div id=\"sketchfab-debug\" class=\"mt-2 p-2 text-xs rounded border border-gray-200 bg-gray-50 text-gray-600 hidden\"></div>
             </div>
         </div>
     </div>
@@ -1286,9 +1560,23 @@ document.head.appendChild(style);
 
 {% block javascripts %}
 {{ parent() }}
+<script src=\"https://static.sketchfab.com/api/sketchfab-viewer-1.12.1.js\"></script>
 <script>
 const suiviId = {{ suivi.id }};
 const detectedOrgan = {{ detected_organ ? detected_organ|json_encode|raw : 'null' }};
+const savedEmergencyLevel = {{ (suivi.emergencyLevel ?: 'low')|json_encode|raw }};
+const sketchfabModelUid = '7587ebe24ee2464f982154ed610f7e56';
+let sketchfabApi = null;
+let sketchfabReady = false;
+let tintedMaterialIds = [];
+let originalMaterials = {};
+
+function setSketchfabDebug(message) {
+    const box = document.getElementById('sketchfab-debug');
+    if (!box) return;
+    box.textContent = message;
+    box.classList.remove('hidden');
+}
 
 // Hide loading spinner when iframe loads
 function hideLoading() {
@@ -1298,10 +1586,257 @@ function hideLoading() {
     }
 }
 
+function getSeverityUi(level) {
+    const l = (level || 'low').toLowerCase();
+    if (l === 'critical') {
+        return {
+            ring: 'ring-2 ring-red-600',
+            bg: 'bg-red-50 border-red-300 text-red-800',
+            button: 'bg-red-50 ring-2 ring-red-500',
+            badge: 'Affected organ: CRITICAL'
+        };
+    }
+    if (l === 'high') {
+        return {
+            ring: 'ring-2 ring-orange-500',
+            bg: 'bg-orange-50 border-orange-300 text-orange-800',
+            button: 'bg-orange-50 ring-2 ring-orange-500',
+            badge: 'Affected organ: HIGH RISK'
+        };
+    }
+    if (l === 'medium') {
+        return {
+            ring: 'ring-2 ring-yellow-500',
+            bg: 'bg-yellow-50 border-yellow-300 text-yellow-800',
+            button: 'bg-yellow-50 ring-2 ring-yellow-500',
+            badge: 'Affected organ: MEDIUM RISK'
+        };
+    }
+    return {
+        ring: 'ring-2 ring-green-500',
+        bg: 'bg-green-50 border-green-300 text-green-800',
+        button: 'bg-green-50 ring-2 ring-green-500',
+        badge: 'Affected organ: LOW RISK'
+    };
+}
+
+function getSeverityColor(level) {
+    const l = (level || 'low').toLowerCase();
+    if (l === 'critical') return [0.86, 0.12, 0.12];
+    if (l === 'high') return [0.96, 0.39, 0.05];
+    if (l === 'medium') return [0.92, 0.68, 0.15];
+    return [0.21, 0.65, 0.33];
+}
+
+function getOrganMaterialKeywords(organName) {
+    const key = (organName || '').toLowerCase();
+    const map = {
+        brain: ['brain', 'cerebr', 'head'],
+        lungs: ['lung', 'lungs', 'pulmo', 'respir'],
+        heart: ['heart', 'cardiac'],
+        liver: ['liver', 'hepatic'],
+        stomach: ['stomach', 'gastric', 'gastro'],
+        guts: ['gut', 'intestin', 'bowel'],
+        kidney: ['kidney', 'renal'],
+        bladder: ['bladder', 'urinary', 'vessie']
+    };
+    return map[key] || [key];
+}
+
+function tintMaterial(material, rgb) {
+    const m = JSON.parse(JSON.stringify(material));
+    if (!m.channels) {
+        return m;
+    }
+    if (m.channels.AlbedoPBR && m.channels.AlbedoPBR.color) {
+        m.channels.AlbedoPBR.color = rgb;
+    }
+    if (m.channels.DiffuseColor && m.channels.DiffuseColor.color) {
+        m.channels.DiffuseColor.color = rgb;
+    }
+    if (m.channels.BaseColor && m.channels.BaseColor.color) {
+        m.channels.BaseColor.color = rgb;
+    }
+    return m;
+}
+
+function restorePreviousTintedMaterials() {
+    if (!sketchfabApi || !sketchfabReady || tintedMaterialIds.length === 0) {
+        return;
+    }
+    tintedMaterialIds.forEach((id) => {
+        const original = originalMaterials[id];
+        if (original) {
+            sketchfabApi.setMaterial(original);
+        }
+    });
+    tintedMaterialIds = [];
+}
+
+function apply3DOrganColor(level) {
+    if (!sketchfabApi || !sketchfabReady) {
+        setSketchfabDebug('Sketchfab API not ready yet.');
+        return;
+    }
+    const activeOrgan = getActiveOrgan();
+    if (!activeOrgan || !activeOrgan.name) {
+        return;
+    }
+    const keywords = getOrganMaterialKeywords(activeOrgan.name);
+    const color = getSeverityColor(level);
+
+    sketchfabApi.getMaterialList(function (err, materials) {
+        if (err || !Array.isArray(materials)) {
+            setSketchfabDebug('Unable to read material list from Sketchfab.');
+            return;
+        }
+
+        restorePreviousTintedMaterials();
+
+        const targetMaterials = materials.filter((mat) => {
+            const name = String(mat.name || '').toLowerCase();
+            return keywords.some((kw) => name.includes(kw));
+        });
+
+        if (targetMaterials.length === 0) {
+            // Fallback: color first materials to prove 3D material update works.
+            targetMaterials.push(...materials.slice(0, Math.min(2, materials.length)));
+            setSketchfabDebug(`No organ material matched for \"\${activeOrgan.name}\". Fallback tint on first \${targetMaterials.length} material(s).`);
+        } else {
+            setSketchfabDebug(`Tinting \${targetMaterials.length} material(s) for organ \"\${activeOrgan.name}\".`);
+        }
+
+        targetMaterials.forEach((mat) => {
+            const id = String(mat.id || '');
+            if (!id) {
+                return;
+            }
+            if (!originalMaterials[id]) {
+                originalMaterials[id] = JSON.parse(JSON.stringify(mat));
+            }
+            const tinted = tintMaterial(mat, color);
+            sketchfabApi.setMaterial(tinted);
+            tintedMaterialIds.push(id);
+        });
+    });
+}
+
+function initSketchfabViewerApi() {
+    const iframe = document.getElementById('anatomy-iframe');
+    if (!iframe || typeof Sketchfab === 'undefined') {
+        setSketchfabDebug('Sketchfab API script not loaded.');
+        return;
+    }
+
+    let client = null;
+    try {
+        client = new Sketchfab('1.12.1', iframe);
+    } catch (e) {
+        try {
+            client = new Sketchfab(iframe);
+        } catch (e2) {
+            setSketchfabDebug('Failed to initialize Sketchfab client.');
+            return;
+        }
+    }
+
+    client.init(sketchfabModelUid, {
+        autostart: 1,
+        ui_infos: 0,
+        ui_controls: 1,
+        success: function (api) {
+            sketchfabApi = api;
+            api.start();
+            api.addEventListener('viewerready', function () {
+                sketchfabReady = true;
+                setSketchfabDebug('Sketchfab viewer ready.');
+                hideLoading();
+                apply3DOrganColor(savedEmergencyLevel);
+            });
+        },
+        error: function () {
+            setSketchfabDebug('Sketchfab API init error. Model may still display without API control.');
+        }
+    });
+}
+
+function getActiveOrgan() {
+    if (detectedOrgan && detectedOrgan.number) {
+        return detectedOrgan;
+    }
+    const selected = document.querySelector('#organ-buttons-container .organ-btn.ring-2');
+    if (!selected) {
+        return null;
+    }
+    const number = parseInt(selected.getAttribute('data-number') || '0', 10);
+    const nameEl = selected.querySelector('span.text-xs');
+    return {
+        number: number || 0,
+        name: nameEl ? nameEl.textContent.trim() : 'Unknown',
+        id: ''
+    };
+}
+
+function highlightAffectedOrgan(level) {
+    const activeOrgan = getActiveOrgan();
+    if (!activeOrgan || !activeOrgan.number) {
+        return;
+    }
+
+    const ui = getSeverityUi(level);
+    const container = document.getElementById('anatomy-container');
+    if (container) {
+        container.classList.remove('ring-2', 'ring-red-600', 'ring-orange-500', 'ring-yellow-500', 'ring-green-500');
+        container.classList.add('transition-all', 'duration-300');
+        ui.ring.split(' ').forEach(c => container.classList.add(c));
+    }
+
+    const overlay = document.getElementById('affected-organ-overlay');
+    if (overlay) {
+        overlay.className = `absolute top-3 left-3 z-20 px-3 py-1.5 rounded-full border text-xs font-semibold shadow-sm \${ui.bg}`;
+        overlay.textContent = `\${ui.badge} - \${activeOrgan.name}`;
+        overlay.classList.remove('hidden');
+    }
+
+    const panel = document.getElementById('affected-organ-panel');
+    if (panel) {
+        panel.className = `mt-3 p-3 rounded-lg border text-sm font-semibold \${ui.bg}`;
+        panel.textContent = `\${ui.badge}: \${activeOrgan.name} (#\${activeOrgan.number})`;
+        panel.classList.remove('hidden');
+    }
+
+    document.querySelectorAll('#organ-buttons-container .organ-btn').forEach((el) => {
+        el.classList.remove('bg-green-50', 'bg-red-50', 'bg-orange-50', 'bg-yellow-50', 'ring-2', 'ring-green-500', 'ring-red-500', 'ring-orange-500', 'ring-yellow-500');
+    });
+
+    const selected = document.querySelector(`#organ-buttons-container .organ-btn[data-number=\"\${activeOrgan.number}\"]`);
+    if (selected) {
+        ui.button.split(' ').forEach(c => selected.classList.add(c));
+        const badge = selected.querySelector('span.absolute');
+        if (badge) {
+            badge.classList.remove('bg-gray-400', 'bg-green-600');
+            if ((level || '').toLowerCase() === 'critical') {
+                badge.classList.add('bg-red-600');
+            } else if ((level || '').toLowerCase() === 'high') {
+                badge.classList.add('bg-orange-600');
+            } else if ((level || '').toLowerCase() === 'medium') {
+                badge.classList.add('bg-yellow-600');
+            } else {
+                badge.classList.add('bg-green-600');
+            }
+        }
+    }
+}
+
 // Auto-hide loading after 3 seconds
 setTimeout(function() {
     hideLoading();
 }, 3000);
+
+document.addEventListener('DOMContentLoaded', function () {
+    initSketchfabViewerApi();
+    highlightAffectedOrgan(savedEmergencyLevel);
+});
 
 // Fonction pour afficher les messages d'erreur
 function showError(message) {
@@ -1440,6 +1975,8 @@ async function runAnalysis(mode, buttonId) {
             emergencyBadge.className = `mb-4 p-4 rounded-lg border-2 text-center \${colors.bg} \${colors.border}`;
             emergencyLevel.className = `text-lg font-bold \${colors.text}`;
             emergencyLevel.textContent = data.emergency_display || 'Unknown';
+            highlightAffectedOrgan(data.emergency_level || 'low');
+            apply3DOrganColor(data.emergency_level || 'low');
             
             // Set report content
             reportContent.textContent = report;

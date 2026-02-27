@@ -136,6 +136,7 @@
                 
                 <!-- Embedded 3D Dog Anatomy Model from Sketchfab -->
                 <div class="relative bg-gradient-to-b from-blue-50 to-white rounded-lg p-2" id="anatomy-container">
+                    <div id="affected-organ-overlay" class="hidden absolute top-3 left-3 z-20 px-3 py-1.5 rounded-full border text-xs font-semibold shadow-sm"></div>
                     <div id="anatomy-loading" class="absolute inset-0 flex items-center justify-center bg-white rounded-lg z-10">
                         <div class="text-center">
                             <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-paw-orange mx-auto mb-4"></div>
@@ -290,6 +291,9 @@
 {{ saved_analysis_report }}{% endif %}</pre>
                     </div>
                 </div>
+
+                <div id="affected-organ-panel" class="mt-3 hidden p-3 rounded-lg border text-sm font-semibold"></div>
+                <div id="sketchfab-debug" class="mt-2 p-2 text-xs rounded border border-gray-200 bg-gray-50 text-gray-600 hidden"></div>
             </div>
         </div>
     </div>
@@ -308,9 +312,23 @@
 
 {% block javascripts %}
 {{ parent() }}
+<script src="https://static.sketchfab.com/api/sketchfab-viewer-1.12.1.js"></script>
 <script>
 const suiviId = {{ suivi.id }};
 const detectedOrgan = {{ detected_organ ? detected_organ|json_encode|raw : 'null' }};
+const savedEmergencyLevel = {{ (suivi.emergencyLevel ?: 'low')|json_encode|raw }};
+const sketchfabModelUid = '7587ebe24ee2464f982154ed610f7e56';
+let sketchfabApi = null;
+let sketchfabReady = false;
+let tintedMaterialIds = [];
+let originalMaterials = {};
+
+function setSketchfabDebug(message) {
+    const box = document.getElementById('sketchfab-debug');
+    if (!box) return;
+    box.textContent = message;
+    box.classList.remove('hidden');
+}
 
 // Hide loading spinner when iframe loads
 function hideLoading() {
@@ -320,10 +338,257 @@ function hideLoading() {
     }
 }
 
+function getSeverityUi(level) {
+    const l = (level || 'low').toLowerCase();
+    if (l === 'critical') {
+        return {
+            ring: 'ring-2 ring-red-600',
+            bg: 'bg-red-50 border-red-300 text-red-800',
+            button: 'bg-red-50 ring-2 ring-red-500',
+            badge: 'Affected organ: CRITICAL'
+        };
+    }
+    if (l === 'high') {
+        return {
+            ring: 'ring-2 ring-orange-500',
+            bg: 'bg-orange-50 border-orange-300 text-orange-800',
+            button: 'bg-orange-50 ring-2 ring-orange-500',
+            badge: 'Affected organ: HIGH RISK'
+        };
+    }
+    if (l === 'medium') {
+        return {
+            ring: 'ring-2 ring-yellow-500',
+            bg: 'bg-yellow-50 border-yellow-300 text-yellow-800',
+            button: 'bg-yellow-50 ring-2 ring-yellow-500',
+            badge: 'Affected organ: MEDIUM RISK'
+        };
+    }
+    return {
+        ring: 'ring-2 ring-green-500',
+        bg: 'bg-green-50 border-green-300 text-green-800',
+        button: 'bg-green-50 ring-2 ring-green-500',
+        badge: 'Affected organ: LOW RISK'
+    };
+}
+
+function getSeverityColor(level) {
+    const l = (level || 'low').toLowerCase();
+    if (l === 'critical') return [0.86, 0.12, 0.12];
+    if (l === 'high') return [0.96, 0.39, 0.05];
+    if (l === 'medium') return [0.92, 0.68, 0.15];
+    return [0.21, 0.65, 0.33];
+}
+
+function getOrganMaterialKeywords(organName) {
+    const key = (organName || '').toLowerCase();
+    const map = {
+        brain: ['brain', 'cerebr', 'head'],
+        lungs: ['lung', 'lungs', 'pulmo', 'respir'],
+        heart: ['heart', 'cardiac'],
+        liver: ['liver', 'hepatic'],
+        stomach: ['stomach', 'gastric', 'gastro'],
+        guts: ['gut', 'intestin', 'bowel'],
+        kidney: ['kidney', 'renal'],
+        bladder: ['bladder', 'urinary', 'vessie']
+    };
+    return map[key] || [key];
+}
+
+function tintMaterial(material, rgb) {
+    const m = JSON.parse(JSON.stringify(material));
+    if (!m.channels) {
+        return m;
+    }
+    if (m.channels.AlbedoPBR && m.channels.AlbedoPBR.color) {
+        m.channels.AlbedoPBR.color = rgb;
+    }
+    if (m.channels.DiffuseColor && m.channels.DiffuseColor.color) {
+        m.channels.DiffuseColor.color = rgb;
+    }
+    if (m.channels.BaseColor && m.channels.BaseColor.color) {
+        m.channels.BaseColor.color = rgb;
+    }
+    return m;
+}
+
+function restorePreviousTintedMaterials() {
+    if (!sketchfabApi || !sketchfabReady || tintedMaterialIds.length === 0) {
+        return;
+    }
+    tintedMaterialIds.forEach((id) => {
+        const original = originalMaterials[id];
+        if (original) {
+            sketchfabApi.setMaterial(original);
+        }
+    });
+    tintedMaterialIds = [];
+}
+
+function apply3DOrganColor(level) {
+    if (!sketchfabApi || !sketchfabReady) {
+        setSketchfabDebug('Sketchfab API not ready yet.');
+        return;
+    }
+    const activeOrgan = getActiveOrgan();
+    if (!activeOrgan || !activeOrgan.name) {
+        return;
+    }
+    const keywords = getOrganMaterialKeywords(activeOrgan.name);
+    const color = getSeverityColor(level);
+
+    sketchfabApi.getMaterialList(function (err, materials) {
+        if (err || !Array.isArray(materials)) {
+            setSketchfabDebug('Unable to read material list from Sketchfab.');
+            return;
+        }
+
+        restorePreviousTintedMaterials();
+
+        const targetMaterials = materials.filter((mat) => {
+            const name = String(mat.name || '').toLowerCase();
+            return keywords.some((kw) => name.includes(kw));
+        });
+
+        if (targetMaterials.length === 0) {
+            // Fallback: color first materials to prove 3D material update works.
+            targetMaterials.push(...materials.slice(0, Math.min(2, materials.length)));
+            setSketchfabDebug(`No organ material matched for "${activeOrgan.name}". Fallback tint on first ${targetMaterials.length} material(s).`);
+        } else {
+            setSketchfabDebug(`Tinting ${targetMaterials.length} material(s) for organ "${activeOrgan.name}".`);
+        }
+
+        targetMaterials.forEach((mat) => {
+            const id = String(mat.id || '');
+            if (!id) {
+                return;
+            }
+            if (!originalMaterials[id]) {
+                originalMaterials[id] = JSON.parse(JSON.stringify(mat));
+            }
+            const tinted = tintMaterial(mat, color);
+            sketchfabApi.setMaterial(tinted);
+            tintedMaterialIds.push(id);
+        });
+    });
+}
+
+function initSketchfabViewerApi() {
+    const iframe = document.getElementById('anatomy-iframe');
+    if (!iframe || typeof Sketchfab === 'undefined') {
+        setSketchfabDebug('Sketchfab API script not loaded.');
+        return;
+    }
+
+    let client = null;
+    try {
+        client = new Sketchfab('1.12.1', iframe);
+    } catch (e) {
+        try {
+            client = new Sketchfab(iframe);
+        } catch (e2) {
+            setSketchfabDebug('Failed to initialize Sketchfab client.');
+            return;
+        }
+    }
+
+    client.init(sketchfabModelUid, {
+        autostart: 1,
+        ui_infos: 0,
+        ui_controls: 1,
+        success: function (api) {
+            sketchfabApi = api;
+            api.start();
+            api.addEventListener('viewerready', function () {
+                sketchfabReady = true;
+                setSketchfabDebug('Sketchfab viewer ready.');
+                hideLoading();
+                apply3DOrganColor(savedEmergencyLevel);
+            });
+        },
+        error: function () {
+            setSketchfabDebug('Sketchfab API init error. Model may still display without API control.');
+        }
+    });
+}
+
+function getActiveOrgan() {
+    if (detectedOrgan && detectedOrgan.number) {
+        return detectedOrgan;
+    }
+    const selected = document.querySelector('#organ-buttons-container .organ-btn.ring-2');
+    if (!selected) {
+        return null;
+    }
+    const number = parseInt(selected.getAttribute('data-number') || '0', 10);
+    const nameEl = selected.querySelector('span.text-xs');
+    return {
+        number: number || 0,
+        name: nameEl ? nameEl.textContent.trim() : 'Unknown',
+        id: ''
+    };
+}
+
+function highlightAffectedOrgan(level) {
+    const activeOrgan = getActiveOrgan();
+    if (!activeOrgan || !activeOrgan.number) {
+        return;
+    }
+
+    const ui = getSeverityUi(level);
+    const container = document.getElementById('anatomy-container');
+    if (container) {
+        container.classList.remove('ring-2', 'ring-red-600', 'ring-orange-500', 'ring-yellow-500', 'ring-green-500');
+        container.classList.add('transition-all', 'duration-300');
+        ui.ring.split(' ').forEach(c => container.classList.add(c));
+    }
+
+    const overlay = document.getElementById('affected-organ-overlay');
+    if (overlay) {
+        overlay.className = `absolute top-3 left-3 z-20 px-3 py-1.5 rounded-full border text-xs font-semibold shadow-sm ${ui.bg}`;
+        overlay.textContent = `${ui.badge} - ${activeOrgan.name}`;
+        overlay.classList.remove('hidden');
+    }
+
+    const panel = document.getElementById('affected-organ-panel');
+    if (panel) {
+        panel.className = `mt-3 p-3 rounded-lg border text-sm font-semibold ${ui.bg}`;
+        panel.textContent = `${ui.badge}: ${activeOrgan.name} (#${activeOrgan.number})`;
+        panel.classList.remove('hidden');
+    }
+
+    document.querySelectorAll('#organ-buttons-container .organ-btn').forEach((el) => {
+        el.classList.remove('bg-green-50', 'bg-red-50', 'bg-orange-50', 'bg-yellow-50', 'ring-2', 'ring-green-500', 'ring-red-500', 'ring-orange-500', 'ring-yellow-500');
+    });
+
+    const selected = document.querySelector(`#organ-buttons-container .organ-btn[data-number="${activeOrgan.number}"]`);
+    if (selected) {
+        ui.button.split(' ').forEach(c => selected.classList.add(c));
+        const badge = selected.querySelector('span.absolute');
+        if (badge) {
+            badge.classList.remove('bg-gray-400', 'bg-green-600');
+            if ((level || '').toLowerCase() === 'critical') {
+                badge.classList.add('bg-red-600');
+            } else if ((level || '').toLowerCase() === 'high') {
+                badge.classList.add('bg-orange-600');
+            } else if ((level || '').toLowerCase() === 'medium') {
+                badge.classList.add('bg-yellow-600');
+            } else {
+                badge.classList.add('bg-green-600');
+            }
+        }
+    }
+}
+
 // Auto-hide loading after 3 seconds
 setTimeout(function() {
     hideLoading();
 }, 3000);
+
+document.addEventListener('DOMContentLoaded', function () {
+    initSketchfabViewerApi();
+    highlightAffectedOrgan(savedEmergencyLevel);
+});
 
 // Fonction pour afficher les messages d'erreur
 function showError(message) {
@@ -462,6 +727,8 @@ async function runAnalysis(mode, buttonId) {
             emergencyBadge.className = `mb-4 p-4 rounded-lg border-2 text-center ${colors.bg} ${colors.border}`;
             emergencyLevel.className = `text-lg font-bold ${colors.text}`;
             emergencyLevel.textContent = data.emergency_display || 'Unknown';
+            highlightAffectedOrgan(data.emergency_level || 'low');
+            apply3DOrganColor(data.emergency_level || 'low');
             
             // Set report content
             reportContent.textContent = report;

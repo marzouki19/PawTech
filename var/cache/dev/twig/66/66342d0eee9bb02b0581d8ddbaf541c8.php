@@ -372,9 +372,12 @@ $context["consultation"], "type", [], "any", false, false, false, 85) == "Alert"
 
         \$.ajax({
             url: `/consultation/delete/\${consultationId}`,
-            type: 'DELETE',
+            type: 'POST',
             headers: {
                 'X-CSRF-Token': csrfToken
+            },
+            data: {
+                _token: csrfToken
             },
             dataType: 'json',
             success: function(response) {
@@ -876,9 +879,12 @@ $context["consultation"], "type", [], "any", false, false, false, 85) == "Alert"
 
         \$.ajax({
             url: `/consultation/delete/\${consultationId}`,
-            type: 'DELETE',
+            type: 'POST',
             headers: {
                 'X-CSRF-Token': csrfToken
+            },
+            data: {
+                _token: csrfToken
             },
             dataType: 'json',
             success: function(response) {
@@ -1145,6 +1151,7 @@ $context["consultation"], "type", [], "any", false, false, false, 85) == "Alert"
     });
 });
 </script>
-{% endblock %}", "consultation/index.html.twig", "C:\\Users\\nourw\\Documents\\PawTech-for-nour\\PawTech-for-nour\\templates\\consultation\\index.html.twig");
+{% endblock %}
+", "consultation/index.html.twig", "C:\\Users\\nourw\\Documents\\PawTech-for-nour\\PawTech-for-nour\\templates\\consultation\\index.html.twig");
     }
 }

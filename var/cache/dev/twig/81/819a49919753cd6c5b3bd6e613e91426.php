@@ -55,8 +55,12 @@ class __TwigTemplate_432d7a90ff9bba53cdbd01282f208e1b extends Template
 <head>
     <meta charset=\"UTF-8\">
     <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
-    <title>";
+    <meta name=\"csrf-token\" content=\"";
         // line 6
+        yield $this->env->getRuntime('Twig\Runtime\EscaperRuntime')->escape($this->env->getRuntime('Symfony\Component\Form\FormRenderer')->renderCsrfToken("app"), "html", null, true);
+        yield "\">
+    <title>";
+        // line 7
         yield from $this->unwrap()->yieldBlock('title', $context, $blocks);
         yield "</title>
     <link rel=\"icon\" href=\"data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐾</text></svg>\">
@@ -77,18 +81,18 @@ class __TwigTemplate_432d7a90ff9bba53cdbd01282f208e1b extends Template
         }
     </script>
     ";
-        // line 24
-        yield from $this->unwrap()->yieldBlock('stylesheets', $context, $blocks);
         // line 25
+        yield from $this->unwrap()->yieldBlock('stylesheets', $context, $blocks);
+        // line 26
         yield "    ";
         yield from $this->unwrap()->yieldBlock('javascripts', $context, $blocks);
-        // line 28
+        // line 29
         yield "</head>
 <body class=\"bg-gray-100 antialiased\">
     ";
-        // line 30
-        yield from $this->unwrap()->yieldBlock('body', $context, $blocks);
         // line 31
+        yield from $this->unwrap()->yieldBlock('body', $context, $blocks);
+        // line 32
         yield "</body>
 </html>
 ";
@@ -101,7 +105,7 @@ class __TwigTemplate_432d7a90ff9bba53cdbd01282f208e1b extends Template
         yield from [];
     }
 
-    // line 6
+    // line 7
     /**
      * @return iterable<null|scalar|\Stringable>
      */
@@ -124,7 +128,7 @@ class __TwigTemplate_432d7a90ff9bba53cdbd01282f208e1b extends Template
         yield from [];
     }
 
-    // line 24
+    // line 25
     /**
      * @return iterable<null|scalar|\Stringable>
      */
@@ -146,7 +150,7 @@ class __TwigTemplate_432d7a90ff9bba53cdbd01282f208e1b extends Template
         yield from [];
     }
 
-    // line 25
+    // line 26
     /**
      * @return iterable<null|scalar|\Stringable>
      */
@@ -159,10 +163,10 @@ class __TwigTemplate_432d7a90ff9bba53cdbd01282f208e1b extends Template
         $__internal_6f47bbe9983af81f1e7450e9a3e3768f = $this->extensions["Symfony\\Bridge\\Twig\\Extension\\ProfilerExtension"];
         $__internal_6f47bbe9983af81f1e7450e9a3e3768f->enter($__internal_6f47bbe9983af81f1e7450e9a3e3768f_prof = new \Twig\Profiler\Profile($this->getTemplateName(), "block", "javascripts"));
 
-        // line 26
+        // line 27
         yield "        ";
         yield from $this->unwrap()->yieldBlock('importmap', $context, $blocks);
-        // line 27
+        // line 28
         yield "    ";
         
         $__internal_6f47bbe9983af81f1e7450e9a3e3768f->leave($__internal_6f47bbe9983af81f1e7450e9a3e3768f_prof);
@@ -173,7 +177,7 @@ class __TwigTemplate_432d7a90ff9bba53cdbd01282f208e1b extends Template
         yield from [];
     }
 
-    // line 26
+    // line 27
     /**
      * @return iterable<null|scalar|\Stringable>
      */
@@ -196,7 +200,7 @@ class __TwigTemplate_432d7a90ff9bba53cdbd01282f208e1b extends Template
         yield from [];
     }
 
-    // line 30
+    // line 31
     /**
      * @return iterable<null|scalar|\Stringable>
      */
@@ -229,9 +233,17 @@ class __TwigTemplate_432d7a90ff9bba53cdbd01282f208e1b extends Template
     /**
      * @codeCoverageIgnore
      */
+    public function isTraitable(): bool
+    {
+        return false;
+    }
+
+    /**
+     * @codeCoverageIgnore
+     */
     public function getDebugInfo(): array
     {
-        return array (  200 => 30,  177 => 26,  166 => 27,  163 => 26,  150 => 25,  128 => 24,  105 => 6,  92 => 31,  90 => 30,  86 => 28,  83 => 25,  81 => 24,  60 => 6,  53 => 1,);
+        return array (  204 => 31,  181 => 27,  170 => 28,  167 => 27,  154 => 26,  132 => 25,  109 => 7,  96 => 32,  94 => 31,  90 => 29,  87 => 26,  85 => 25,  64 => 7,  60 => 6,  53 => 1,);
     }
 
     public function getSourceContext(): Source
@@ -241,6 +253,7 @@ class __TwigTemplate_432d7a90ff9bba53cdbd01282f208e1b extends Template
 <head>
     <meta charset=\"UTF-8\">
     <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
+    <meta name=\"csrf-token\" content=\"{{ csrf_token('app') }}\">
     <title>{% block title %}PawTech{% endblock %}</title>
     <link rel=\"icon\" href=\"data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐾</text></svg>\">
     <script src=\"https://cdn.tailwindcss.com\"></script>

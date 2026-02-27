@@ -240,9 +240,12 @@ $(document).ready(function() {
 
         $.ajax({
             url: `/suivi/delete/${suiviId}`,
-            type: 'DELETE',
+            type: 'POST',
             headers: {
                 'X-CSRF-Token': csrfToken
+            },
+            data: {
+                _token: csrfToken
             },
             dataType: 'json',
             success: function(response) {

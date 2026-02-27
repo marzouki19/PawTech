@@ -476,9 +476,12 @@ $context["suivi"], "emergencyLevel", [], "any", false, false, false, 124) == "lo
 
         \$.ajax({
             url: `/suivi/delete/\${suiviId}`,
-            type: 'DELETE',
+            type: 'POST',
             headers: {
                 'X-CSRF-Token': csrfToken
+            },
+            data: {
+                _token: csrfToken
             },
             dataType: 'json',
             success: function(response) {
@@ -1091,9 +1094,12 @@ $context["suivi"], "emergencyLevel", [], "any", false, false, false, 124) == "lo
 
         \$.ajax({
             url: `/suivi/delete/\${suiviId}`,
-            type: 'DELETE',
+            type: 'POST',
             headers: {
                 'X-CSRF-Token': csrfToken
+            },
+            data: {
+                _token: csrfToken
             },
             dataType: 'json',
             success: function(response) {
@@ -1428,6 +1434,7 @@ $context["suivi"], "emergencyLevel", [], "any", false, false, false, 124) == "lo
     });
 });
 </script>
-{% endblock %}", "suivi/index.html.twig", "C:\\Users\\nourw\\Documents\\PawTech-for-nour\\PawTech-for-nour\\templates\\suivi\\index.html.twig");
+{% endblock %}
+", "suivi/index.html.twig", "C:\\Users\\nourw\\Documents\\PawTech-for-nour\\PawTech-for-nour\\templates\\suivi\\index.html.twig");
     }
 }

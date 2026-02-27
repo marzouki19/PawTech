@@ -1,0 +1,6 @@
+image_path;organ_label;severity_label
+public/uploads/radiology/coeru.png;heart;medium
+public/uploads/radiology/oeil.png;eye;medium
+public/uploads/radiology/pied.png;paw;medium
+public/uploads/radiology/otrille.png;ear;low
+public/uploads/radiology/cc.png;heart;medium
