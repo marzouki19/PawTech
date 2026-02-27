@@ -1,5 +1,0 @@
-image_path;organ_label;severity_label
-public/uploads/radiology/oeil.png;eyes;high
-public/uploads/radiology/coeru.png;heart;critical
-public/uploads/radiology/otrille.png;ears;hight
-public/uploads/radiology/pied.png;hand;medium
