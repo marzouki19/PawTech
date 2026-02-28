@@ -6,6 +6,7 @@ use App\Entity\Evenement;
 use App\Form\EvenementType;
 use App\Repository\EvenementRepository;
 use App\Service\DonorNotificationService;
+use App\Service\WeatherApiService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -17,10 +18,12 @@ use Symfony\Component\Routing\Attribute\Route;
 final class EvenementController extends AbstractController
 {
     private DonorNotificationService $donorNotificationService;
+    private WeatherApiService $weatherApiService;
 
-    public function __construct(DonorNotificationService $donorNotificationService)
+    public function __construct(DonorNotificationService $donorNotificationService, WeatherApiService $weatherApiService)
     {
         $this->donorNotificationService = $donorNotificationService;
+        $this->weatherApiService = $weatherApiService;
     }
     #[Route('', name: 'app_evenement_index', methods: ['GET'])]
     public function index(Request $request, EvenementRepository $evenementRepository): Response
@@ -125,9 +128,15 @@ final class EvenementController extends AbstractController
     #[Route('/{id}', name: 'app_evenement_show', methods: ['GET'])]
     public function show(Evenement $evenement): Response
     {
+        $weather = $this->weatherApiService->getWeatherForCity(
+            $evenement->getVille() ?? '',
+            $evenement->getDateDebut()
+        );
+
         return $this->render('evenement/show.html.twig', [
             'evenement' => $evenement,
             'active' => 'evenement',
+            'weather' => $weather,
         ]);
     }
 

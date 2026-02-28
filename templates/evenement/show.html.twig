@@ -86,6 +86,32 @@
         {% endif %}
     </div>
 
+    {# Weather Card - OpenWeatherMap API (forecast 5 days max) #}
+    {% if weather %}
+    <div class="bg-white rounded-xl border border-gray-200 p-6">
+        {% if weather.unavailable is defined and weather.unavailable %}
+        <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/></svg>
+            Météo à {{ evenement.ville }}
+        </h2>
+        <p class="text-gray-600">Prévision non disponible pour cette date (disponible uniquement pour les 5 prochains jours).</p>
+        {% else %}
+        <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/></svg>
+            Météo prévue à {{ evenement.ville }}
+        </h2>
+        <div class="flex items-center gap-4">
+            <img src="https://openweathermap.org/img/wn/{{ weather.icon }}@2x.png" alt="{{ weather.description }}" class="w-16 h-16">
+            <div>
+                <p class="text-2xl font-bold text-gray-900">{{ weather.temp }}°C</p>
+                <p class="text-gray-600 capitalize">{{ weather.description }}</p>
+                <p class="text-sm text-gray-500 mt-1">Humidité {{ weather.humidity }}% · Vent {{ weather.wind_speed }} m/s</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
     {# Participants Section #}
     <div class="bg-white rounded-xl border border-gray-200 p-6">
         <h2 class="text-xl font-bold text-gray-800 mb-4">Participants ({{ evenement.participations|length }})</h2>

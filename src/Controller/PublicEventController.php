@@ -6,13 +6,13 @@ use App\Entity\Evenement;
 use App\Entity\Participation;
 use App\Entity\User;
 use App\Repository\EvenementRepository;
+use App\Service\WeatherApiService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -22,6 +22,11 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 #[Route('/events')]
 final class PublicEventController extends AbstractController
 {
+    public function __construct(
+        private readonly WeatherApiService $weatherApiService
+    ) {
+    }
+
     #[Route('', name: 'app_events')]
     public function index(Request $request, EvenementRepository $evenementRepository): Response
     {
@@ -208,17 +213,22 @@ final class PublicEventController extends AbstractController
             }
         }
 
+        $weather = $this->weatherApiService->getWeatherForCity(
+            $evenement->getVille() ?? '',
+            $evenement->getDateDebut()
+        );
+
         return $this->render('pages/event_detail.html.twig', [
             'event' => $evenement,
             'errors' => $errors,
             'formData' => $formData,
             'eventPassed' => $eventPassed,
+            'weather' => $weather,
         ]);
     }
 
     /**
      * Event Recommendation Endpoint - Uses KNN Algorithm via Python API
-     * Part of "Métier Avancé" - AI-powered event recommendations
      */
     #[Route('/recommend', name: 'app_event_recommend', methods: ['POST'])]
     public function recommendEvents(
@@ -226,27 +236,10 @@ final class PublicEventController extends AbstractController
         EvenementRepository $evenementRepository,
         HttpClientInterface $httpClient
     ): JsonResponse {
-        $jsonResponse = static function (array $data, int $status = Response::HTTP_OK): JsonResponse {
-            $response = new JsonResponse(null, $status);
-            $response->setEncodingOptions(
-                $response->getEncodingOptions() | JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNICODE
-            );
-            $response->setData($data);
-
-            return $response;
-        };
-
-        $clean = static function (?string $value): string {
-            $value = $value ?? '';
-            $cleaned = @iconv('UTF-8', 'UTF-8//IGNORE', $value);
-
-            return $cleaned !== false ? $cleaned : $value;
-        };
-
         $payload = json_decode($request->getContent(), true);
         
         if (!is_array($payload)) {
-            return $jsonResponse([
+            return new JsonResponse([
                 'ok' => false,
                 'message' => 'Invalid JSON payload'
             ], Response::HTTP_BAD_REQUEST);
@@ -258,7 +251,7 @@ final class PublicEventController extends AbstractController
         $events = $evenementRepository->findActiveWithFilters(null, null, null);
         
         if (empty($events)) {
-            return $jsonResponse([
+            return new JsonResponse([
                 'ok' => true,
                 'recommendations' => [],
                 'events' => [],
@@ -291,20 +284,10 @@ final class PublicEventController extends AbstractController
             ]);
 
             $statusCode = $apiResponse->getStatusCode();
-            $rawContent = $apiResponse->getContent(false);
-            $apiData = json_decode($rawContent, true);
-
-            if (!is_array($apiData)) {
-                return $jsonResponse([
-                    'ok' => false,
-                    'message' => 'Recommendation API returned invalid JSON: ' . json_last_error_msg(),
-                    'status_code' => $statusCode,
-                    'api_response' => substr($rawContent, 0, 500),
-                ], Response::HTTP_BAD_GATEWAY);
-            }
+            $apiData = $apiResponse->toArray(false);
 
             if ($statusCode >= 400 || !($apiData['ok'] ?? false)) {
-                return $jsonResponse([
+                return new JsonResponse([
                     'ok' => false,
                     'message' => 'Recommendation API error',
                     'api_response' => $apiData,
@@ -321,14 +304,14 @@ final class PublicEventController extends AbstractController
                     if ($event->getId() === (int)$id) {
                         $recommendedEvents[] = [
                             'id' => $event->getId(),
-                            'titre' => $clean($event->getTitre()),
-                            'type' => $clean($event->getType()),
-                            'ville' => $clean($event->getVille()),
-                            'lieu' => $clean($event->getLieu()),
+                            'titre' => $event->getTitre(),
+                            'type' => $event->getType(),
+                            'ville' => $event->getVille(),
+                            'lieu' => $event->getLieu(),
                             'date_debut' => $event->getDateDebut()->format('M d, Y'),
                             'date_debut_raw' => $event->getDateDebut()->format('Y-m-d'),
-                            'description' => substr($clean($event->getDescription()), 0, 100) . '...',
-                            'image' => $clean($event->getImage()),
+                            'description' => substr($event->getDescription() ?? '', 0, 100) . '...',
+                            'image' => $event->getImage(),
                             'capacite_max' => $event->getCapaciteMax(),
                             'current_participants' => $event->getParticipations()->count(),
                             'score' => $scores[$index] ?? 0,
@@ -338,7 +321,7 @@ final class PublicEventController extends AbstractController
                 }
             }
 
-            return $jsonResponse([
+            return new JsonResponse([
                 'ok' => true,
                 'recommendations' => $recommendedIds,
                 'events' => $recommendedEvents,
@@ -346,16 +329,10 @@ final class PublicEventController extends AbstractController
                 'scores' => $scores,
             ]);
 
-        } catch (TransportExceptionInterface $e) {
-            return $jsonResponse([
+        } catch (\Throwable $e) {
+            return new JsonResponse([
                 'ok' => false,
                 'message' => 'Failed to connect to recommendation API. Make sure the Python server is running.',
-                'error' => $e->getMessage(),
-            ], Response::HTTP_BAD_GATEWAY);
-        } catch (\Throwable $e) {
-            return $jsonResponse([
-                'ok' => false,
-                'message' => 'Recommendation API request failed: ' . $e->getMessage(),
                 'error' => $e->getMessage(),
             ], Response::HTTP_BAD_GATEWAY);
         }

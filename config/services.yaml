@@ -53,6 +53,10 @@ services:
         arguments:
             $mailerFrom: '%mailer_from%'
 
+    App\Service\WeatherApiService:
+        arguments:
+            $apiKey: '%env(OPENWEATHERMAP_API_KEY)%'
+
     App\Service\StreamTranscoderService:
         arguments:
             $streamsDirectory: '%streams.directory%'
