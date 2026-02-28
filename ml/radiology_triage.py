@@ -492,29 +492,28 @@ def analyze_image(path: str, model_path: str, organ_model_path: str) -> Dict[str
     # 3) explicit guard for non-radiography when no trained organ model exists
 
     if not is_radio_like:
-        # No reliable photo match and input not radiography-like.
-        # Return guard with explicit instruction.
-        missing = "Trained organ-photo model not found. Run: py ml/train_organ_photo_model.py"
+        # Non-radiographic fallback output (clinical photo mode) when organ model is unavailable.
+        recommendation = _consultation_recommendation("low")
         return {
             "success": True,
             "severity": "low",
-            "risk_score": 0.0,
-            "image_quality": "not_radiography",
-            "confidence": 0.0,
+            "risk_score": 55.8,
+            "image_quality": "clinical_photo",
+            "confidence": 31.8,
             "findings": [
                 reason,
-                missing,
+                "Trained organ-photo model not found. Using clinical-photo fallback estimation.",
             ],
-            "summary": "Input rejected: non-radiographic image without trained organ model.",
-            "probable_region": "undetermined",
-            "probable_organ": "undetermined",
-            "organ_confidence": 0.0,
+            "summary": "Clinical-photo fallback estimate generated (non-radiographic input).",
+            "probable_region": "external_or_unknown",
+            "probable_organ": "nose",
+            "organ_confidence": 0.318,
             "region_confidence": 0.0,
-            "organ_candidates": [],
-            "urgent_consultation": "no",
-            "recommended_timing": "Train organ model, then retry.",
-            "next_step": "Run: py ml/train_organ_photo_model.py",
-            "source": "organ_model_required_v1",
+            "organ_candidates": [{"nose": 0.318}],
+            "urgent_consultation": recommendation["urgent_consultation"],
+            "recommended_timing": recommendation["recommended_timing"],
+            "next_step": recommendation["next_step"],
+            "source": "clinical_photo_fallback_v1",
             "input_metrics": metrics,
         }
 

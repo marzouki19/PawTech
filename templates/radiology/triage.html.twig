@@ -80,7 +80,23 @@
 
             <div class="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
                 <h2 class="text-lg font-semibold text-slate-900 mb-4">AI Triage Result</h2>
+                {% set is_non_radiography = analysis.image_quality == 'not_radiography' %}
                 <div class="space-y-3">
+                    {% if is_non_radiography %}
+                        <div class="p-3 rounded-xl border bg-amber-50 border-amber-300 text-amber-900">
+                            <span class="font-semibold">Status:</span>
+                            Unsupported input type (non-radiographic image)
+                        </div>
+                        <div><span class="text-slate-500">Input type:</span> <span class="font-semibold">Clinical photo / non-radiographic image</span></div>
+                        <div class="p-2 rounded border border-red-200 bg-red-50 text-red-700 text-sm">
+                            This image is not a radiograph. Upload an X-ray image, or train the organ-photo model before retrying.
+                        </div>
+                        <div><span class="text-slate-500">Recommended timing:</span> <span class="font-semibold">{{ analysis.recommended_timing }}</span></div>
+                        <div>
+                            <span class="text-slate-500">Next step:</span>
+                            <span class="font-semibold"><code>{{ analysis.next_step }}</code></span>
+                        </div>
+                    {% else %}
                     <div class="p-3 rounded-xl border
                         {% if analysis.severity == 'critical' %}bg-red-50 border-red-300 text-red-800
                         {% elseif analysis.severity == 'high' %}bg-orange-50 border-orange-300 text-orange-800
@@ -92,46 +108,53 @@
                     <div class="grid grid-cols-2 gap-3">
                         <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
                             <div class="text-xs text-slate-500 uppercase">Risk Score</div>
-                            <div class="text-xl font-bold text-slate-900">{{ analysis.risk_score }}/100</div>
+                            <div class="text-xl font-bold text-slate-900">{{ is_non_radiography ? 'N/A' : (analysis.risk_score ~ '/100') }}</div>
                         </div>
                         <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
                             <div class="text-xs text-slate-500 uppercase">Confidence</div>
-                            <div class="text-xl font-bold text-slate-900">{{ analysis.confidence }}%</div>
+                            <div class="text-xl font-bold text-slate-900">{{ is_non_radiography ? 'N/A' : (analysis.confidence ~ '%') }}</div>
                         </div>
                     </div>
-                    <div>
-                        <div class="flex justify-between text-xs text-slate-500 mb-1"><span>Risk Progress</span><span>{{ analysis.risk_score }}/100</span></div>
-                        <div class="w-full h-2 rounded-full bg-slate-200 overflow-hidden">
-                            <div class="h-full bg-orange-500" style="width: {{ analysis.risk_score }}%"></div>
+                    {% if not is_non_radiography %}
+                        <div>
+                            <div class="flex justify-between text-xs text-slate-500 mb-1"><span>Risk Progress</span><span>{{ analysis.risk_score }}/100</span></div>
+                            <div class="w-full h-2 rounded-full bg-slate-200 overflow-hidden">
+                                <div class="h-full bg-orange-500" style="width: {{ analysis.risk_score }}%"></div>
+                            </div>
                         </div>
-                    </div>
-                    <div>
-                        <div class="flex justify-between text-xs text-slate-500 mb-1"><span>Model Confidence</span><span>{{ analysis.confidence }}%</span></div>
-                        <div class="w-full h-2 rounded-full bg-slate-200 overflow-hidden">
-                            <div class="h-full bg-emerald-500" style="width: {{ analysis.confidence }}%"></div>
+                        <div>
+                            <div class="flex justify-between text-xs text-slate-500 mb-1"><span>Model Confidence</span><span>{{ analysis.confidence }}%</span></div>
+                            <div class="w-full h-2 rounded-full bg-slate-200 overflow-hidden">
+                                <div class="h-full bg-emerald-500" style="width: {{ analysis.confidence }}%"></div>
+                            </div>
                         </div>
-                    </div>
+                    {% endif %}
                     <div><span class="text-slate-500">Image quality:</span> <span class="font-semibold">{{ analysis.image_quality }}</span></div>
                     <div><span class="text-slate-500">Probable region:</span> <span class="font-semibold uppercase">{{ analysis.probable_region }}</span></div>
                     <div>
                         <span class="text-slate-500">Probable organ:</span>
-                        <span class="font-semibold uppercase {% if analysis.probable_organ == 'undetermined' %}text-red-700{% endif %}">{{ analysis.probable_organ }}</span>
+                        <span class="font-semibold uppercase {% if analysis.probable_organ in ['undetermined', 'n/a'] %}text-red-700{% endif %}">{{ analysis.probable_organ }}</span>
                     </div>
-                    <div><span class="text-slate-500">Region confidence:</span> <span class="font-semibold">{{ (analysis.region_confidence * 100)|round(1) }}%</span></div>
-                    <div><span class="text-slate-500">Organ confidence:</span> <span class="font-semibold">{{ (analysis.organ_confidence * 100)|round(1) }}%</span></div>
-                    {% if analysis.probable_organ == 'undetermined' %}
+                    <div><span class="text-slate-500">Region confidence:</span> <span class="font-semibold">{{ is_non_radiography ? 'N/A' : ((analysis.region_confidence * 100)|round(1) ~ '%') }}</span></div>
+                    <div><span class="text-slate-500">Organ confidence:</span> <span class="font-semibold">{{ is_non_radiography ? 'N/A' : ((analysis.organ_confidence * 100)|round(1) ~ '%') }}</span></div>
+                    {% if analysis.probable_organ in ['undetermined', 'n/a'] %}
                         <div class="p-2 rounded border border-red-200 bg-red-50 text-red-700 text-sm">
-                            Organ could not be localized reliably from this image. Please rely on veterinary radiology validation.
+                            {% if analysis.image_quality == 'not_radiography' %}
+                                Unsupported input type: this image is not radiographic. Upload a radiograph, or train the organ-photo model and retry.
+                            {% else %}
+                                Organ could not be localized reliably from this image. Please rely on veterinary radiology validation.
+                            {% endif %}
                         </div>
                     {% endif %}
                     <div>
                         <span class="text-slate-500">Urgent consultation:</span>
                         <span class="font-semibold uppercase {% if analysis.urgent_consultation == 'yes' %}text-red-700{% else %}text-green-700{% endif %}">
-                            {{ analysis.urgent_consultation }}
+                            {{ analysis.urgent_consultation == 'yes' ? 'Yes' : 'No' }}
                         </span>
                     </div>
                     <div><span class="text-slate-500">Recommended timing:</span> <span class="font-semibold">{{ analysis.recommended_timing }}</span></div>
                     <div><span class="text-slate-500">Next step:</span> <span class="font-semibold">{{ analysis.next_step }}</span></div>
+                    {% endif %}
                 </div>
             </div>
         </div>

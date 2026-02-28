@@ -3,6 +3,9 @@
 {% block title %}Home - PawTech{% endblock %}
 
 {% block body %}
+    {% set dogs = dogs|default([]) %}
+    {% set events = events|default([]) %}
+
     <section class="relative overflow-hidden">
         <div class="absolute inset-0">
             <div class="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-orange-200/70"></div>
