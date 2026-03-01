@@ -30,12 +30,16 @@ final class EvenementController extends AbstractController
         $statut = $request->query->get('statut', '');
         $sort = $request->query->get('sort', 'dateDebut_DESC');
 
-        // Use repository method for search/filter/sort
+        $search = is_string($q) && $q !== '' ? $q : null;
+        $typeFilter = is_string($type) && $type !== '' ? $type : null;
+        $statutFilter = is_string($statut) && $statut !== '' ? $statut : null;
+        $sortStr = is_string($sort) ? $sort : 'dateDebut_DESC';
+
         $evenements = $evenementRepository->findWithAdminFilters(
-            $q ?: null,
-            $type ?: null,
-            $statut ?: null,
-            $sort
+            $search,
+            $typeFilter,
+            $statutFilter,
+            $sortStr
         );
 
         return $this->render('evenement/index.html.twig', [
@@ -52,21 +56,27 @@ final class EvenementController extends AbstractController
         $statut = $request->query->get('statut', '');
         $sort = $request->query->get('sort', 'dateDebut_DESC');
 
+        $search = is_string($q) && $q !== '' ? $q : null;
+        $typeFilter = is_string($type) && $type !== '' ? $type : null;
+        $statutFilter = is_string($statut) && $statut !== '' ? $statut : null;
+        $sortStr = is_string($sort) ? $sort : 'dateDebut_DESC';
+
         $evenements = $evenementRepository->findWithAdminFilters(
-            $q ?: null,
-            $type ?: null,
-            $statut ?: null,
-            $sort
+            $search,
+            $typeFilter,
+            $statutFilter,
+            $sortStr
         );
 
         $data = [];
         foreach ($evenements as $e) {
+            $dateDebut = $e->getDateDebut();
             $data[] = [
                 'id' => $e->getId(),
                 'titre' => $e->getTitre(),
                 'type' => $e->getType(),
-                'dateDebut' => $e->getDateDebut()->format('d/m/Y'),
-                'heureDebut' => $e->getDateDebut()->format('H:i'),
+                'dateDebut' => $dateDebut !== null ? $dateDebut->format('d/m/Y') : '',
+                'heureDebut' => $dateDebut !== null ? $dateDebut->format('H:i') : '',
                 'ville' => $e->getVille(),
                 'capaciteMax' => $e->getCapaciteMax(),
                 'statut' => $e->getStatut(),
@@ -89,11 +99,11 @@ final class EvenementController extends AbstractController
             // Handle image upload
             $imageFile = $form->get('imageFile')->getData();
             if ($imageFile) {
-                $newFilename = uniqid() . '.' . $imageFile->guessExtension();
-                $imageFile->move(
-                    $this->getParameter('kernel.project_dir') . '/public/uploads/events',
-                    $newFilename
-                );
+                $ext = $imageFile->guessExtension();
+                $newFilename = uniqid() . '.' . ($ext ?? 'bin');
+                $projectDir = $this->getParameter('kernel.project_dir');
+                assert(is_string($projectDir));
+                $imageFile->move($projectDir . '/public/uploads/events', $newFilename);
                 $evenement->setImage($newFilename);
             }
 
@@ -142,18 +152,21 @@ final class EvenementController extends AbstractController
             $imageFile = $form->get('imageFile')->getData();
             if ($imageFile) {
                 // Delete old image  if exists
-                if ($evenement->getImage()) {
-                    $oldImagePath = $this->getParameter('kernel.project_dir') . '/public/uploads/events/' . $evenement->getImage();
+                $currentImage = $evenement->getImage();
+                if ($currentImage !== null && $currentImage !== '') {
+                    $projectDir = $this->getParameter('kernel.project_dir');
+                    assert(is_string($projectDir));
+                    $oldImagePath = $projectDir . '/public/uploads/events/' . $currentImage;
                     if (file_exists($oldImagePath)) {
                         unlink($oldImagePath);
                     }
                 }
                 
-                $newFilename = uniqid() . '.' . $imageFile->guessExtension();
-                $imageFile->move(
-                    $this->getParameter('kernel.project_dir') . '/public/uploads/events',
-                    $newFilename
-                );
+                $ext = $imageFile->guessExtension();
+                $newFilename = uniqid() . '.' . ($ext ?? 'bin');
+                $projectDir = $this->getParameter('kernel.project_dir');
+                assert(is_string($projectDir));
+                $imageFile->move($projectDir . '/public/uploads/events', $newFilename);
                 $evenement->setImage($newFilename);
             }
 

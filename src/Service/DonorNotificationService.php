@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Entity\Evenement;
+use App\Entity\User;
 use App\Repository\UserRepository;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
@@ -26,10 +27,13 @@ class DonorNotificationService
         $this->mailerFrom = $mailerFrom;
     }
 
+    /**
+     * @return array{event: string, emails_sent: int, high_potential: int, medium_potential: int, recipients: array<int, array<string, mixed>>}
+     */
     public function notifyPotentialDonors(Evenement $event): array
     {
         $results = [
-            'event' => $event->getTitre(),
+            'event' => $event->getTitre() ?? '',
             'emails_sent' => 0,
             'high_potential' => 0,
             'medium_potential' => 0,
@@ -82,7 +86,10 @@ class DonorNotificationService
         return $results;
     }
 
-    private function sendDonationEventEmail($user, Evenement $event, array $prediction): void
+    /**
+     * @param array<string, mixed> $prediction
+     */
+    private function sendDonationEventEmail(User $user, Evenement $event, array $prediction): void
     {
         $category = $prediction['category'];
         $score = $prediction['propensity_score'];
@@ -154,9 +161,14 @@ class DonorNotificationService
 </html>
 HTML;
 
+        $userEmail = $user->getEmail();
+        if ($userEmail === null || $userEmail === '') {
+            return;
+        }
+
         $email = (new Email())
             ->from($this->mailerFrom)
-            ->to($user->getEmail())
+            ->to($userEmail)
             ->subject($subject)
             ->html($html);
 

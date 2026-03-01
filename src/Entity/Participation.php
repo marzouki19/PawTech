@@ -23,7 +23,7 @@ class Participation
     #[ORM\Column(length: 50)]
     #[Assert\NotBlank(message: 'The status is required')]
     #[Assert\Choice(choices: self::STATUTS, message: 'Invalid status')]
-    private ?string $statut = 'EN_ATTENTE';
+    private string $statut = 'EN_ATTENTE';
 
     #[ORM\ManyToOne(inversedBy: 'participations')]
     #[Assert\NotNull(message: 'The participant is required')]

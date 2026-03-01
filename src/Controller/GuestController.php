@@ -22,11 +22,14 @@ final class GuestController extends AbstractController
         $role = $request->query->get('role', '');
         $sort = $request->query->get('sort', 'nom_asc');
 
-        // Use repository method for search/filter/sort
+        $search = is_string($q) && $q !== '' ? $q : null;
+        $roleFilter = is_string($role) && $role !== '' ? $role : null;
+        $sortStr = is_string($sort) ? $sort : 'nom_asc';
+
         $guests = $guestRepository->findWithAdminFilters(
-            $q ?: null,
-            $role ?: null,
-            $sort
+            $search,
+            $roleFilter,
+            $sortStr
         );
 
         return $this->render('guest/index.html.twig', [
@@ -45,25 +48,30 @@ final class GuestController extends AbstractController
         $role = $request->query->get('role', '');
         $sort = $request->query->get('sort', 'nom_asc');
 
+        $search = is_string($q) && $q !== '' ? $q : null;
+        $roleFilter = is_string($role) && $role !== '' ? $role : null;
+        $sortStr = is_string($sort) ? $sort : 'nom_asc';
+
         $guests = $guestRepository->findWithAdminFilters(
-            $q ?: null,
-            $role ?: null,
-            $sort
+            $search,
+            $roleFilter,
+            $sortStr
         );
 
         $data = [];
         foreach ($guests as $g) {
+            $evenement = $g->getEvenement();
             $data[] = [
                 'id' => $g->getId(),
                 'fullName' => $g->getFullName(),
                 'email' => $g->getEmail(),
                 'organisation' => $g->getOrganisation(),
                 'role' => $g->getRole(),
-                'evenementId' => $g->getEvenement()->getId(),
-                'evenementTitre' => $g->getEvenement()->getTitre(),
+                'evenementId' => $evenement?->getId(),
+                'evenementTitre' => $evenement?->getTitre(),
                 'showUrl' => $this->generateUrl('app_guest_show', ['id' => $g->getId()]),
                 'editUrl' => $this->generateUrl('app_guest_edit', ['id' => $g->getId()]),
-                'evenementUrl' => $this->generateUrl('app_evenement_show', ['id' => $g->getEvenement()->getId()]),
+                'evenementUrl' => $this->generateUrl('app_evenement_show', ['id' => $evenement?->getId() ?? 0]),
             ];
         }
 

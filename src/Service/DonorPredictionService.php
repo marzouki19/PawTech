@@ -20,6 +20,9 @@ class DonorPredictionService
         $this->participationRepository = $participationRepository;
     }
 
+    /**
+     * @return array<string, int|float|mixed>
+     */
     public function getUserStats(User $user): array
     {
         $participations = $this->participationRepository->findBy(['user' => $user]);
@@ -92,6 +95,9 @@ class DonorPredictionService
         return $stats;
     }
 
+    /**
+     * @return array<string, mixed>|null
+     */
     public function predictForUser(User $user): ?array
     {
         try {
@@ -122,6 +128,10 @@ class DonorPredictionService
         }
     }
 
+    /**
+     * @param User[] $users
+     * @return array<int, array<string, mixed>>
+     */
     public function predictForAllUsers(array $users): array
     {
         $results = [];
@@ -138,6 +148,9 @@ class DonorPredictionService
         return $results;
     }
 
+    /**
+     * @return array<string, mixed>|null
+     */
     public function getModelInfo(): ?array
     {
         try {

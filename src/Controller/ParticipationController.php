@@ -23,11 +23,14 @@ final class ParticipationController extends AbstractController
         $statut = $request->query->get('statut', '');
         $sort = $request->query->get('sort', 'dateParticipation_desc');
 
-        // Use repository method for search/filter/sort
+        $search = is_string($q) && $q !== '' ? $q : null;
+        $statutFilter = is_string($statut) && $statut !== '' ? $statut : null;
+        $sortStr = is_string($sort) ? $sort : 'dateParticipation_desc';
+
         $participations = $participationRepository->findWithAdminFilters(
-            $q ?: null,
-            $statut ?: null,
-            $sort
+            $search,
+            $statutFilter,
+            $sortStr
         );
 
         return $this->render('participation/index.html.twig', [
@@ -46,26 +49,33 @@ final class ParticipationController extends AbstractController
         $statut = $request->query->get('statut', '');
         $sort = $request->query->get('sort', 'dateParticipation_desc');
 
+        $search = is_string($q) && $q !== '' ? $q : null;
+        $statutFilter = is_string($statut) && $statut !== '' ? $statut : null;
+        $sortStr = is_string($sort) ? $sort : 'dateParticipation_desc';
+
         $participations = $participationRepository->findWithAdminFilters(
-            $q ?: null,
-            $statut ?: null,
-            $sort
+            $search,
+            $statutFilter,
+            $sortStr
         );
 
         $data = [];
         foreach ($participations as $p) {
+            $user = $p->getUser();
+            $evenement = $p->getEvenement();
+            $dateParticipation = $p->getDateParticipation();
             $data[] = [
                 'id' => $p->getId(),
-                'userFullName' => $p->getUser()->getFullName(),
-                'userEmail' => $p->getUser()->getEmail(),
-                'evenementId' => $p->getEvenement()->getId(),
-                'evenementTitre' => $p->getEvenement()->getTitre(),
-                'evenementVille' => $p->getEvenement()->getVille(),
-                'dateParticipation' => $p->getDateParticipation()->format('d/m/Y'),
+                'userFullName' => $user?->getFullName() ?? '',
+                'userEmail' => $user?->getEmail() ?? '',
+                'evenementId' => $evenement?->getId(),
+                'evenementTitre' => $evenement?->getTitre(),
+                'evenementVille' => $evenement?->getVille(),
+                'dateParticipation' => $dateParticipation !== null ? $dateParticipation->format('d/m/Y') : '',
                 'statut' => $p->getStatut(),
                 'showUrl' => $this->generateUrl('app_participation_show', ['id' => $p->getId()]),
                 'editUrl' => $this->generateUrl('app_participation_edit', ['id' => $p->getId()]),
-                'evenementUrl' => $this->generateUrl('app_evenement_show', ['id' => $p->getEvenement()->getId()]),
+                'evenementUrl' => $this->generateUrl('app_evenement_show', ['id' => $evenement?->getId() ?? 0]),
                 'confirmUrl' => $this->generateUrl('app_participation_confirm', ['id' => $p->getId()]),
                 'cancelUrl' => $this->generateUrl('app_participation_cancel', ['id' => $p->getId()]),
             ];

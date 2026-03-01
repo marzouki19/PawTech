@@ -32,6 +32,9 @@ class EmailService
         try {
             $user = $participation->getUser();
             $event = $participation->getEvenement();
+            if ($user === null || $event === null) {
+                return null;
+            }
             
             // QR code content - clean ticket format
             $participantName = $user->getPrenom() . ' ' . $user->getNom();
@@ -132,6 +135,9 @@ Status: CONFIRMED
     {
         $user = $participation->getUser();
         $event = $participation->getEvenement();
+        if ($user === null || $event === null) {
+            return '';
+        }
 
         $userName = $user->getPrenom() ?? 'Participant';
         $eventTitle = $event->getTitre();
@@ -248,6 +254,9 @@ HTML;
     {
         $user = $participation->getUser();
         $event = $participation->getEvenement();
+        if ($user === null || $event === null) {
+            return '';
+        }
 
         $userName = $user->getPrenom() ?? 'Participant';
         $eventTitle = $event->getTitre();

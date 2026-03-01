@@ -28,8 +28,12 @@ final class PublicEventController extends AbstractController
         $ville = $request->query->get('ville', '');
         $q = $request->query->get('q', '');
 
+        $typeFilter = is_string($type) && $type !== '' ? $type : null;
+        $villeFilter = is_string($ville) && $ville !== '' ? $ville : null;
+        $search = is_string($q) && $q !== '' ? $q : null;
+
         return $this->render('pages/events.html.twig', [
-            'events' => $evenementRepository->findActiveWithFilters($type ?: null, $ville ?: null, $q ?: null),
+            'events' => $evenementRepository->findActiveWithFilters($typeFilter, $villeFilter, $search),
             'villes' => $evenementRepository->findActiveCities(),
             'currentType' => $type,
             'currentVille' => $ville,
@@ -47,10 +51,14 @@ final class PublicEventController extends AbstractController
         $ville = $request->query->get('ville', '');
         $q = $request->query->get('q', '');
 
+        $typeFilter = is_string($type) && $type !== '' ? $type : null;
+        $villeFilter = is_string($ville) && $ville !== '' ? $ville : null;
+        $search = is_string($q) && $q !== '' ? $q : null;
+
         $events = $evenementRepository->findActiveWithFilters(
-            $type ?: null, 
-            $ville ?: null, 
-            $q ?: null
+            $typeFilter,
+            $villeFilter,
+            $search
         );
 
         // Default images by type
@@ -64,13 +72,14 @@ final class PublicEventController extends AbstractController
 
         $eventsData = [];
         foreach ($events as $event) {
+            $dateDebut = $event->getDateDebut();
             $eventsData[] = [
                 'id' => $event->getId(),
                 'titre' => $event->getTitre(),
                 'type' => $event->getType(),
                 'ville' => $event->getVille(),
                 'lieu' => $event->getLieu(),
-                'date_debut' => $event->getDateDebut()->format('M d, Y'),
+                'date_debut' => $dateDebut !== null ? $dateDebut->format('M d, Y') : '',
                 'description' => substr($event->getDescription() ?? '', 0, 100) . '...',
                 'image' => $event->getImage() ?: ($typeImages[$event->getType()] ?? $defaultImage),
                 'url' => $this->generateUrl('app_event_detail', ['id' => $event->getId()]),
@@ -116,10 +125,10 @@ final class PublicEventController extends AbstractController
             }
 
             // Get form data
-            $formData['prenom'] = trim($request->request->get('prenom', ''));
-            $formData['nom'] = trim($request->request->get('nom', ''));
-            $formData['email'] = trim($request->request->get('email', ''));
-            $formData['telephone'] = trim($request->request->get('telephone', ''));
+            $formData['prenom'] = trim((string) ($request->request->get('prenom', '') ?? ''));
+            $formData['nom'] = trim((string) ($request->request->get('nom', '') ?? ''));
+            $formData['email'] = trim((string) ($request->request->get('email', '') ?? ''));
+            $formData['telephone'] = trim((string) ($request->request->get('telephone', '') ?? ''));
 
             // PHP Validation
             if (empty($formData['prenom'])) {
@@ -250,11 +259,12 @@ final class PublicEventController extends AbstractController
         // Prepare events data for the Python API
         $eventsData = [];
         foreach ($events as $event) {
+            $dateDebut = $event->getDateDebut();
             $eventsData[] = [
                 'id' => $event->getId(),
                 'type' => $event->getType(),
                 'ville' => $event->getVille(),
-                'date_debut' => $event->getDateDebut()->format('Y-m-d'),
+                'date_debut' => $dateDebut !== null ? $dateDebut->format('Y-m-d') : '',
                 'capacite_max' => $event->getCapaciteMax(),
                 'current_participants' => $event->getParticipations()->count(),
             ];
@@ -290,14 +300,15 @@ final class PublicEventController extends AbstractController
             foreach ($recommendedIds as $index => $id) {
                 foreach ($events as $event) {
                     if ($event->getId() === (int)$id) {
+                        $eventDateDebut = $event->getDateDebut();
                         $recommendedEvents[] = [
                             'id' => $event->getId(),
                             'titre' => $event->getTitre(),
                             'type' => $event->getType(),
                             'ville' => $event->getVille(),
                             'lieu' => $event->getLieu(),
-                            'date_debut' => $event->getDateDebut()->format('M d, Y'),
-                            'date_debut_raw' => $event->getDateDebut()->format('Y-m-d'),
+                            'date_debut' => $eventDateDebut !== null ? $eventDateDebut->format('M d, Y') : '',
+                            'date_debut_raw' => $eventDateDebut !== null ? $eventDateDebut->format('Y-m-d') : '',
                             'description' => substr($event->getDescription() ?? '', 0, 100) . '...',
                             'image' => $event->getImage(),
                             'capacite_max' => $event->getCapaciteMax(),
