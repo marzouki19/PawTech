@@ -391,6 +391,11 @@ class CommandeController extends AbstractController
     {
         if ($this->isCsrfTokenValid('delete' . $commande->getId(), (string) $request->request->get('_token'))) {
             try {
+                // Delete related order lines first to avoid orphan records when DB constraints are not enforced.
+                $em->createQuery('DELETE FROM App\Entity\LigneCommande l WHERE l.commande = :commande')
+                    ->setParameter('commande', $commande)
+                    ->execute();
+
                 $em->remove($commande);
                 $em->flush();
                 $this->addFlash('success', 'Order deleted successfully.');

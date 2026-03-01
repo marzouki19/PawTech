@@ -115,7 +115,7 @@ final class EvenementController extends AbstractController
             }
 
             $this->addFlash('success', 'Événement créé avec succès.');
-            return $this->redirectToRoute('app_evenement_index', [], Response::HTTP_SEE_OTHER);
+            return $this->redirectToRoute('app_evenement_show', ['id' => $evenement->getId()], Response::HTTP_SEE_OTHER);
         }
 
         return $this->render('evenement/new.html.twig', [

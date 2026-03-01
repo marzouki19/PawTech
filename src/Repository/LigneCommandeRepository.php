@@ -2,6 +2,7 @@
 
 namespace App\Repository;
 
+use App\Entity\Produit;
 use App\Entity\LigneCommande;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -36,5 +37,21 @@ class LigneCommandeRepository extends ServiceEntityRepository
         }
 
         return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * Return order lines for a product, excluding orphan lines linked to missing orders.
+     *
+     * @return LigneCommande[]
+     */
+    public function findByProductWithExistingOrder(Produit $product): array
+    {
+        return $this->createQueryBuilder('l')
+            ->innerJoin('l.commande', 'c')
+            ->where('l.produit = :product')
+            ->setParameter('product', $product)
+            ->orderBy('l.id', 'DESC')
+            ->getQuery()
+            ->getResult();
     }
 }

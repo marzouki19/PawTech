@@ -22,17 +22,17 @@ class WeatherApiService
     /**
      * Get weather for a city. If eventDate is within 5 days, returns forecast; otherwise returns unavailable.
      *
-     * @return array{temp: float, description: string, icon: string, humidity: int, wind_speed: float}|array{unavailable: true, reason: string}|null
+     * @return array{temp: float, description: string, icon: string, humidity: int, wind_speed: float}|array{unavailable: true, reason: string}
      */
-    public function getWeatherForCity(string $city, ?\DateTimeInterface $eventDate = null): array|null
+    public function getWeatherForCity(string $city, ?\DateTimeInterface $eventDate = null): array
     {
         if (!$this->apiKey || trim($this->apiKey) === '') {
-            return null;
+            return ['unavailable' => true, 'reason' => 'api_key_missing'];
         }
 
         $city = trim($city);
         if ($city === '') {
-            return null;
+            return ['unavailable' => true, 'reason' => 'city_missing'];
         }
 
         $now = new \DateTimeImmutable('today');
@@ -49,19 +49,22 @@ class WeatherApiService
 
         try {
             if ($eventDate === null) {
-                return $this->fetchCurrentWeather($city);
+                $currentWeather = $this->fetchCurrentWeather($city);
+                return $currentWeather ?? ['unavailable' => true, 'reason' => 'no_data'];
             }
 
             $eventDateTime = \DateTimeImmutable::createFromInterface($eventDate);
             $daysDiff = (int) $now->diff($eventDateTime)->days;
 
             if ($daysDiff === 0) {
-                return $this->fetchCurrentWeather($city);
+                $currentWeather = $this->fetchCurrentWeather($city);
+                return $currentWeather ?? ['unavailable' => true, 'reason' => 'no_data'];
             }
 
-            return $this->fetchForecastForDate($city, $eventDateTime);
+            $forecastWeather = $this->fetchForecastForDate($city, $eventDateTime);
+            return $forecastWeather ?? ['unavailable' => true, 'reason' => 'no_data'];
         } catch (\Throwable) {
-            return null;
+            return ['unavailable' => true, 'reason' => 'api_error'];
         }
     }
 

@@ -4,8 +4,8 @@ namespace App\Service;
 
 use App\Entity\DemandForecast;
 use App\Entity\Produit;
-use App\Entity\LigneCommande;
 use App\Repository\DemandForecastRepository;
+use App\Repository\LigneCommandeRepository;
 use App\Repository\ProduitRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -14,15 +14,18 @@ class DemandForecastService
     private EntityManagerInterface $em;
     private DemandForecastRepository $forecastRepo;
     private ProduitRepository $produitRepo;
+    private LigneCommandeRepository $ligneCommandeRepo;
 
     public function __construct(
         EntityManagerInterface $em,
         DemandForecastRepository $forecastRepo,
-        ProduitRepository $produitRepo
+        ProduitRepository $produitRepo,
+        LigneCommandeRepository $ligneCommandeRepo
     ) {
         $this->em = $em;
         $this->forecastRepo = $forecastRepo;
         $this->produitRepo = $produitRepo;
+        $this->ligneCommandeRepo = $ligneCommandeRepo;
     }
 
     /**
@@ -82,8 +85,8 @@ class DemandForecastService
      */
     private function getHistoricalSales(Produit $product): int
     {
-        // Get all order lines for this product
-        $lines = $this->em->getRepository(LigneCommande::class)->findBy(['produit' => $product]);
+        // Get all valid order lines for this product (exclude orphan lines).
+        $lines = $this->ligneCommandeRepo->findByProductWithExistingOrder($product);
         
         $total = 0;
         foreach ($lines as $line) {
@@ -101,13 +104,16 @@ class DemandForecastService
         // Get orders from last 30 days
         $recentDate = new \DateTime('-30 days');
         
-        $lines = $this->em->getRepository(LigneCommande::class)->findBy(['produit' => $product]);
+        $lines = $this->ligneCommandeRepo->findByProductWithExistingOrder($product);
         
         $recentSales = 0;
         $olderSales = 0;
         
         foreach ($lines as $line) {
-            $orderDate = $line->getCommande()->getDate();
+            $orderDate = $line->getCommande()?->getDate();
+            if (!$orderDate instanceof \DateTimeInterface) {
+                continue;
+            }
             if ($orderDate >= $recentDate) {
                 $recentSales += $line->getQuantite();
             } else {
@@ -202,13 +208,16 @@ class DemandForecastService
         $recentDate = new \DateTime('-30 days');
         $olderDate = new \DateTime('-60 days');
         
-        $lines = $this->em->getRepository(LigneCommande::class)->findBy(['produit' => $product]);
+        $lines = $this->ligneCommandeRepo->findByProductWithExistingOrder($product);
         
         $recentSales = 0;
         $olderSales = 0;
         
         foreach ($lines as $line) {
-            $orderDate = $line->getCommande()->getDate();
+            $orderDate = $line->getCommande()?->getDate();
+            if (!$orderDate instanceof \DateTimeInterface) {
+                continue;
+            }
             if ($orderDate >= $recentDate) {
                 $recentSales += $line->getQuantite();
             } elseif ($orderDate >= $olderDate) {
