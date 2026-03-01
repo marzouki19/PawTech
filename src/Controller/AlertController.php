@@ -7,6 +7,7 @@ use App\Form\AlertType;
 use App\Repository\AlertRepository;
 use App\Repository\ObservationStationRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -16,10 +17,41 @@ use Symfony\Component\Routing\Attribute\Route;
 final class AlertController extends AbstractController
 {
     #[Route('', name: 'app_admin_alerts', methods: ['GET'])]
-    public function index(AlertRepository $alertRepository, ObservationStationRepository $stationRepository): Response
+    public function index(
+        Request $request,
+        AlertRepository $alertRepository,
+        ObservationStationRepository $stationRepository
+    ): Response
     {
+        $type = trim((string) $request->query->get('type', ''));
+        $statut = trim((string) $request->query->get('statut', ''));
+        $search = trim((string) $request->query->get('search', ''));
+
+        $queryBuilder = $alertRepository->createQueryBuilder('a')
+            ->orderBy('a.date', 'DESC');
+
+        if (in_array($type, ['TECHNICAL', 'DANGER_DOG', 'HEALTH_ALERT'], true)) {
+            $queryBuilder
+                ->andWhere('a.type = :type')
+                ->setParameter('type', $type);
+        }
+
+        if (in_array($statut, ['unread', 'read'], true)) {
+            $queryBuilder
+                ->andWhere('a.statut = :statut')
+                ->setParameter('statut', $statut);
+        }
+
+        if ($search !== '') {
+            $queryBuilder
+                ->andWhere('a.message LIKE :search')
+                ->setParameter('search', '%' . $search . '%');
+        }
+
+        $alerts = $queryBuilder->getQuery()->getResult();
+
         return $this->render('alert/index.html.twig', [
-            'alerts' => $alertRepository->findBy([], ['date' => 'DESC']),
+            'alerts' => $alerts,
             'inactive_stations' => $stationRepository->findBy(['statut' => 'inactive']),
             'active' => 'alerts',
             'page_title' => 'Alerts',
@@ -27,7 +59,11 @@ final class AlertController extends AbstractController
     }
 
     #[Route('/search', name: 'app_admin_alerts_search', methods: ['GET'])]
-    public function search(Request $request, AlertRepository $alertRepository): Response
+    public function search(
+        Request $request,
+        AlertRepository $alertRepository,
+        CsrfTokenManagerInterface $csrfTokenManager
+    ): Response
     {
         $searchValue = $request->query->get('searchValue', '');
         
@@ -50,6 +86,10 @@ final class AlertController extends AbstractController
                 'statut' => $alert->getStatut(),
                 'station_id' => $alert->getStation() ? $alert->getStation()->getId() : null,
                 'date' => $alert->getDate() ? $alert->getDate()->format('d/m/Y H:i') : '',
+                'show_url' => $this->generateUrl('app_admin_alerts_show', ['id' => $alert->getId()]),
+                'edit_url' => $this->generateUrl('app_admin_alerts_edit', ['id' => $alert->getId()]),
+                'delete_url' => $this->generateUrl('app_admin_alerts_delete', ['id' => $alert->getId()]),
+                'delete_token' => $csrfTokenManager->getToken('delete' . $alert->getId())->getValue(),
             ];
         }
         
@@ -60,9 +100,6 @@ final class AlertController extends AbstractController
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
         $alert = new Alert();
-        if (!$alert->getType()) {
-            $alert->setType('TECHNICAL');
-        }
         if (!$alert->getDate()) {
             $alert->setDate(new \DateTime());
         }
@@ -97,9 +134,6 @@ final class AlertController extends AbstractController
     #[Route('/{id}/edit', name: 'app_admin_alerts_edit', methods: ['GET', 'POST'], requirements: ['id' => '\\d+'])]
     public function edit(Request $request, Alert $alert, EntityManagerInterface $entityManager): Response
     {
-        if (!$alert->getType()) {
-            $alert->setType('TECHNICAL');
-        }
         $form = $this->createForm(AlertType::class, $alert);
         $form->handleRequest($request);
 

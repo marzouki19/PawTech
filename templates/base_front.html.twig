@@ -101,9 +101,10 @@
             {% set sessionUser = app.session.get('user') %}
             {% set activeUser = app.user ? app.user : sessionUser %}
             {% set sessionRole = sessionUser is not null and sessionUser.role is defined ? sessionUser.role : null %}
+            {% set normalizedSessionRole = sessionRole ? sessionRole|upper : '' %}
             {% set isAdmin = is_granted('ROLE_ADMIN') or sessionRole == 'ROLE_ADMIN' %}
-            {% set isVet = is_granted('ROLE_VETERINAIRE') or sessionRole == 'ROLE_VETERINAIRE' %}
-            {% set isAgent = is_granted('ROLE_AGENT') or is_granted('ROLE_AGENT_MUNICIPALE') or sessionRole == 'ROLE_AGENT' or sessionRole == 'ROLE_AGENT_MUNICIPALE' %}
+            {% set isVet = is_granted('ROLE_VETERINAIRE') or is_granted('ROLE_VETERINARIAN') or is_granted('ROLE_VETERINARY') or is_granted('ROLE_VET') or ('VETERINAIRE' in normalizedSessionRole) or ('VETERINARIAN' in normalizedSessionRole) or ('VETERINARY' in normalizedSessionRole) or ('VET' in normalizedSessionRole) %}
+            {% set isAgent = is_granted('ROLE_AGENT') or is_granted('ROLE_AGENT_MUNICIP') or is_granted('ROLE_AGENT_MUNICIPALE') or (( 'AGENT' in normalizedSessionRole ) and ( 'MUNICIP' in normalizedSessionRole )) or normalizedSessionRole == 'ROLE_AGENT' %}
             {% set isClient = is_granted('ROLE_CLIENT') or sessionRole == 'ROLE_CLIENT' %}
             {# Top info bar #}
 
@@ -162,6 +163,9 @@
                             {{ _self.link('Events', 'app_events', current) }}
                             {{ _self.link('Donation', 'app_donation', current) }}
                             {{ _self.link('Notifications', 'app_notifications', current) }}
+                            {% if isVet or isAgent %}
+                                {{ _self.link('Dashboard', 'app_admin_dashboard', current) }}
+                            {% endif %}
                             {{ _self.link('Contact Us', 'app_contact', current) }}
                             {{ _self.link('About Us', 'app_about', current) }}
                             
@@ -195,7 +199,7 @@
                                     </a>
                                 </div>
                             </span>
-                            
+
                             {# User Profile Section - MATCHES DASHBOARD STYLE #}
                             <span class="flex items-center gap-2 pl-2 border-l border-gray-200">
                                 {% if activeUser %}
@@ -298,8 +302,8 @@
                                                     </div>
                                                 </a>
                                                 
-                                                {% if isAdmin %}
-                                                    <a href="{{ path('app_dashboard') }}" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 border-t border-gray-100 mt-1">
+                                                {% if isVet or isAgent %}
+                                                    <a href="{{ path('app_admin_dashboard') }}" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 border-t border-gray-100 mt-1">
                                                         <i class="fas fa-tachometer-alt mr-3 text-green-500 w-5"></i>
                                                         <div class="flex-1">
                                                             <p class="font-medium">Dashboard</p>
@@ -401,8 +405,8 @@
                                         <span>Settings</span>
                                     </a>
                                     
-                                    {% if isAdmin %}
-                                        <a href="{{ path('app_dashboard') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 border-t border-gray-100 mt-1">
+                                    {% if isVet or isAgent %}
+                                        <a href="{{ path('app_admin_dashboard') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 border-t border-gray-100 mt-1">
                                             <i class="fas fa-tachometer-alt mr-3 text-green-500 w-4"></i>
                                             <span>Dashboard</span>
                                         </a>

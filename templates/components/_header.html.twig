@@ -1,3 +1,7 @@
+{% set header_notification_data = header_notifications() %}
+{% set unread_count = header_notification_data.unread_count %}
+{% set latest_notifications = header_notification_data.latest %}
+
 <header class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between gap-4 flex-shrink-0">
     <h1 class="text-xl font-bold text-gray-800">{{ page_title }}</h1>
         <div class="flex items-center gap-4 flex-wrap">
@@ -13,52 +17,50 @@
         
         {# Notification Button with Dropdown #}
         <div class="relative dropdown" x-data="{ open: false }">
-            <button type="button" @click="open = !open" class="relative p-2 text-gray-500 hover:bg-gray-100 rounded-lg focus:outline-none">
+            <button
+                type="button"
+                @click="open = !open"
+                class="relative p-2 text-gray-500 hover:bg-gray-100 rounded-lg focus:outline-none"
+                aria-label="Open notifications"
+            >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
                 {# Unread badge #}
-                <span class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">3</span>
+                {% if unread_count > 0 %}
+                    <span class="absolute -top-1 -right-1 min-w-[1.25rem] h-5 px-1 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center">
+                        {{ unread_count > 99 ? '99+' : unread_count }}
+                    </span>
+                {% endif %}
             </button>
             
             {# Notification Dropdown #}
-            <div x-show="open" @click.away="open = false" x-transition class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50 hidden" style="display: none;">
-                <div class="p-4 border-b border-gray-200">
+            <div x-show="open" x-cloak @click.away="open = false" x-transition class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50" style="display: none;">
+                <div class="p-4 border-b border-gray-200 flex items-center justify-between">
                     <h3 class="font-semibold text-gray-800">Notifications</h3>
+                    <span class="text-xs font-medium text-gray-500">{{ unread_count }} unread</span>
                 </div>
                 <div class="max-h-96 overflow-y-auto">
-                    {# Sample notifications - replace with actual alerts #}
-                    <a href="#" class="block p-4 hover:bg-gray-50 border-b border-gray-100">
-                        <div class="flex items-start gap-3">
-                            <div class="w-2 h-2 bg-red-500 rounded-full mt-2"></div>
-                            <div>
-                                <p class="text-sm font-medium text-gray-800">Station Inactive</p>
-                                <p class="text-xs text-gray-500">Station A1 is now inactive</p>
-                                <p class="text-xs text-gray-400 mt-1">2 hours ago</p>
+                    {% for notification in latest_notifications %}
+                        {% set is_unread = notification.statut == 'unread' %}
+                        <a href="{{ path('app_admin_alerts_show', { id: notification.id }) }}" class="block p-4 hover:bg-gray-50 border-b border-gray-100">
+                            <div class="flex items-start gap-3">
+                                <div class="w-2 h-2 {{ is_unread ? 'bg-red-500' : 'bg-gray-300' }} rounded-full mt-2"></div>
+                                <div class="min-w-0">
+                                    <p class="text-sm font-medium {{ is_unread ? 'text-gray-900' : 'text-gray-700' }}">
+                                        {{ notification.type|replace({'_': ' '})|title }}
+                                    </p>
+                                    <p class="text-xs text-gray-500 mt-0.5 truncate">{{ notification.message }}</p>
+                                    <p class="text-xs text-gray-400 mt-1">{{ notification.date ? notification.date|date('Y-m-d H:i') : '' }}</p>
+                                </div>
                             </div>
+                        </a>
+                    {% else %}
+                        <div class="px-4 py-6 text-center text-sm text-gray-500">
+                            No notifications yet.
                         </div>
-                    </a>
-                    <a href="#" class="block p-4 hover:bg-gray-50 border-b border-gray-100">
-                        <div class="flex items-start gap-3">
-                            <div class="w-2 h-2 bg-yellow-500 rounded-full mt-2"></div>
-                            <div>
-                                <p class="text-sm font-medium text-gray-800">Low Stock Alert</p>
-                                <p class="text-xs text-gray-500">Product stock is running low</p>
-                                <p class="text-xs text-gray-400 mt-1">5 hours ago</p>
-                            </div>
-                        </div>
-                    </a>
-                    <a href="#" class="block p-4 hover:bg-gray-50">
-                        <div class="flex items-start gap-3">
-                            <div class="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                            <div>
-                                <p class="text-sm font-medium text-gray-800">New Order</p>
-                                <p class="text-xs text-gray-500">New order #1234 received</p>
-                                <p class="text-xs text-gray-400 mt-1">1 day ago</p>
-                            </div>
-                        </div>
-                    </a>
+                    {% endfor %}
                 </div>
                 <div class="p-3 border-t border-gray-200">
-                    <a href="#" class="block text-center text-sm text-paw-orange hover:text-paw-orange-hover font-medium">
+                    <a href="{{ path('app_admin_alerts') }}" class="block text-center text-sm text-paw-orange hover:text-paw-orange-hover font-medium">
                         View All Notifications
                     </a>
                 </div>

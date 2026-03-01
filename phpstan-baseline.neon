@@ -1,0 +1,1351 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Parameter \#1 \$datetime of class DateTime constructor expects string, float\|int\<min, \-1\>\|int\<1, max\>\|string\|true given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminEventsController.php
+
+		-
+			message: '#^Parameter \#1 \$statut of method App\\Entity\\Evenement\:\:setStatut\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/AdminEventsController.php
+
+		-
+			message: '#^Parameter \#1 \$string of function trim expects string, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 4
+			path: src/Controller/AdminEventsController.php
+
+		-
+			message: '#^Parameter \#1 \$type of method App\\Entity\\Evenement\:\:setType\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/AdminEventsController.php
+
+		-
+			message: '#^Method App\\Controller\\AdoptionController\:\:buildAttestationText\(\) has parameter \$winner with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Controller/AdoptionController.php
+
+		-
+			message: '#^Method App\\Controller\\AdoptionController\:\:fallbackAttestation\(\) has parameter \$winner with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Controller/AdoptionController.php
+
+		-
+			message: '#^Property App\\Controller\\AssistantController\:\:\$geminiService has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Controller/AssistantController.php
+
+		-
+			message: '#^If condition is always false\.$#'
+			identifier: if.alwaysFalse
+			count: 2
+			path: src/Controller/CategorieController.php
+
+		-
+			message: '#^Parameter \#1 \$searchTerm of method App\\Repository\\CategorieRepository\:\:searchCategories\(\) expects string, float\|int\<min, \-1\>\|int\<1, max\>\|string\|true given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/CategorieController.php
+
+		-
+			message: '#^Parameter \#2 \$offset of function array_slice expects int, float\|int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/CategorieController.php
+
+		-
+			message: '#^Binary operation "/" between bool\|float\|int\|string\|null and 20 results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 1
+			path: src/Controller/CommandeController.php
+
+		-
+			message: '#^Parameter \#1 \$string of function trim expects string, float\|int\<min, \-1\>\|int\<1, max\>\|string\|true given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/CommandeController.php
+
+		-
+			message: '#^Parameter \#2 \$default of method Symfony\\Component\\HttpFoundation\\InputBag\:\:get\(\) expects bool\|float\|int\|string\|null, array given\.$#'
+			identifier: argument.type
+			count: 3
+			path: src/Controller/CommandeController.php
+
+		-
+			message: '#^Cannot call method format\(\) on DateTimeImmutable\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Controller/ConsultationController.php
+
+		-
+			message: '#^Method App\\Controller\\ConsultationController\:\:serializeConsultations\(\) has parameter \$consultations with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Controller/ConsultationController.php
+
+		-
+			message: '#^Method App\\Controller\\ConsultationController\:\:serializeConsultations\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Controller/ConsultationController.php
+
+		-
+			message: '#^Parameter \#1 \$adoptionStatus of method App\\Repository\\DogsRepository\:\:filterDogs\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/DogsController.php
+
+		-
+			message: '#^Parameter \#1 \$id of method App\\Repository\\UserRepository\:\:findById\(\) expects int, int\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/DogsController.php
+
+		-
+			message: '#^Parameter \#2 \$healthStatus of method App\\Repository\\DogsRepository\:\:filterDogs\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/DogsController.php
+
+		-
+			message: '#^Parameter \#3 \$gender of method App\\Repository\\DogsRepository\:\:filterDogs\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/DogsController.php
+
+		-
+			message: '#^Method App\\Controller\\DogsDashController\:\:extractLatestLocation\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Controller/DogsDashController.php
+
+		-
+			message: '#^Binary operation "/" between bool\|float\|int\|string\|null and 20 results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 1
+			path: src/Controller/DonationController.php
+
+		-
+			message: '#^Call to an undefined method object\:\:getDate\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: src/Controller/DonationController.php
+
+		-
+			message: '#^Call to an undefined method object\:\:getDonateur\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Controller/DonationController.php
+
+		-
+			message: '#^Call to an undefined method object\:\:getEmail\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Controller/DonationController.php
+
+		-
+			message: '#^Comparison operation "\>" between 20 and 0 is always true\.$#'
+			identifier: greater.alwaysTrue
+			count: 1
+			path: src/Controller/DonationController.php
+
+		-
+			message: '#^Parameter \#1 \$donations of method App\\Service\\DonorRetentionService\:\:calculateDonorMetrics\(\) expects array\<App\\Entity\\Donation\>, list\<object\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/DonationController.php
+
+		-
+			message: '#^Parameter \#1 \$firstResult of method Doctrine\\ORM\\QueryBuilder\:\:setFirstResult\(\) expects int\|null, float\|int\<0, max\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/DonationController.php
+
+		-
+			message: '#^Parameter \#1 \$string of function strtolower expects string, float\|int\<min, \-1\>\|int\<1, max\>\|string\|true given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/DonationController.php
+
+		-
+			message: '#^Binary operation "\." between array\|bool\|float\|int\|string\|UnitEnum\|null and ''/public/uploads…'' results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 3
+			path: src/Controller/EvenementController.php
+
+		-
+			message: '#^Cannot call method format\(\) on DateTime\|null\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: src/Controller/EvenementController.php
+
+		-
+			message: '#^Parameter \#1 \$search of method App\\Repository\\EvenementRepository\:\:findWithAdminFilters\(\) expects string\|null, float\|int\<min, \-1\>\|int\<1, max\>\|string\|true\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/EvenementController.php
+
+		-
+			message: '#^Parameter \#2 \$type of method App\\Repository\\EvenementRepository\:\:findWithAdminFilters\(\) expects string\|null, float\|int\<min, \-1\>\|int\<1, max\>\|string\|true\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/EvenementController.php
+
+		-
+			message: '#^Parameter \#3 \$statut of method App\\Repository\\EvenementRepository\:\:findWithAdminFilters\(\) expects string\|null, float\|int\<min, \-1\>\|int\<1, max\>\|string\|true\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/EvenementController.php
+
+		-
+			message: '#^Parameter \#4 \$sort of method App\\Repository\\EvenementRepository\:\:findWithAdminFilters\(\) expects string, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/EvenementController.php
+
+		-
+			message: '#^Cannot call method getId\(\) on App\\Entity\\Evenement\|null\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: src/Controller/GuestController.php
+
+		-
+			message: '#^Cannot call method getTitre\(\) on App\\Entity\\Evenement\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Controller/GuestController.php
+
+		-
+			message: '#^Parameter \#1 \$search of method App\\Repository\\GuestRepository\:\:findWithAdminFilters\(\) expects string\|null, float\|int\<min, \-1\>\|int\<1, max\>\|string\|true\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/GuestController.php
+
+		-
+			message: '#^Parameter \#2 \$role of method App\\Repository\\GuestRepository\:\:findWithAdminFilters\(\) expects string\|null, float\|int\<min, \-1\>\|int\<1, max\>\|string\|true\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/GuestController.php
+
+		-
+			message: '#^Parameter \#3 \$sort of method App\\Repository\\GuestRepository\:\:findWithAdminFilters\(\) expects string, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/GuestController.php
+
+		-
+			message: '#^Cannot call method format\(\) on DateTime\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Controller/ParticipationController.php
+
+		-
+			message: '#^Cannot call method getEmail\(\) on App\\Entity\\User\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Controller/ParticipationController.php
+
+		-
+			message: '#^Cannot call method getFullName\(\) on App\\Entity\\User\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Controller/ParticipationController.php
+
+		-
+			message: '#^Cannot call method getId\(\) on App\\Entity\\Evenement\|null\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: src/Controller/ParticipationController.php
+
+		-
+			message: '#^Cannot call method getTitre\(\) on App\\Entity\\Evenement\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Controller/ParticipationController.php
+
+		-
+			message: '#^Cannot call method getVille\(\) on App\\Entity\\Evenement\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Controller/ParticipationController.php
+
+		-
+			message: '#^Parameter \#1 \$search of method App\\Repository\\ParticipationRepository\:\:findWithAdminFilters\(\) expects string\|null, float\|int\<min, \-1\>\|int\<1, max\>\|string\|true\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/ParticipationController.php
+
+		-
+			message: '#^Parameter \#2 \$statut of method App\\Repository\\ParticipationRepository\:\:findWithAdminFilters\(\) expects string\|null, float\|int\<min, \-1\>\|int\<1, max\>\|string\|true\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/ParticipationController.php
+
+		-
+			message: '#^Parameter \#3 \$sort of method App\\Repository\\ParticipationRepository\:\:findWithAdminFilters\(\) expects string, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/ParticipationController.php
+
+		-
+			message: '#^Binary operation "\." between array\|bool\|float\|int\|string\|UnitEnum\|null and ''/public/uploads…'' results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 4
+			path: src/Controller/ProduitController.php
+
+		-
+			message: '#^Binary operation "/" between bool\|float\|int\|string\|null and 20 results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 1
+			path: src/Controller/ProduitController.php
+
+		-
+			message: '#^Call to an undefined method Symfony\\Component\\Form\\FormError\|Symfony\\Component\\Form\\FormErrorIterator\:\:getMessage\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Controller/ProduitController.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 1
+			path: src/Controller/ProduitController.php
+
+		-
+			message: '#^Method App\\Controller\\ProduitController\:\:deleteImage\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Controller/ProduitController.php
+
+		-
+			message: '#^Method App\\Controller\\ProduitController\:\:deleteImage\(\) has parameter \$imageName with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Controller/ProduitController.php
+
+		-
+			message: '#^Method App\\Controller\\ProduitController\:\:uploadImage\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Controller/ProduitController.php
+
+		-
+			message: '#^Method App\\Controller\\ProduitController\:\:uploadImage\(\) has parameter \$imageFile with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Controller/ProduitController.php
+
+		-
+			message: '#^Method App\\Controller\\ProduitController\:\:uploadImage\(\) has parameter \$oldImage with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Controller/ProduitController.php
+
+		-
+			message: '#^Parameter \#1 \$categorie of method App\\Entity\\Produit\:\:setCategorie\(\) expects App\\Entity\\Categorie\|null, object given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/ProduitController.php
+
+		-
+			message: '#^Parameter \#1 \$prixUnitaire of method App\\Entity\\LigneCommande\:\:setPrixUnitaire\(\) expects float\|string, float\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/ProduitController.php
+
+		-
+			message: '#^Parameter \#2 \$token of method Symfony\\Bundle\\FrameworkBundle\\Controller\\AbstractController\:\:isCsrfTokenValid\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/ProduitController.php
+
+		-
+			message: '#^Cannot call method format\(\) on DateTime\|null\.$#'
+			identifier: method.nonObject
+			count: 4
+			path: src/Controller/PublicEventController.php
+
+		-
+			message: '#^Parameter \#1 \$string of function trim expects string, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 4
+			path: src/Controller/PublicEventController.php
+
+		-
+			message: '#^Parameter \#1 \$type of method App\\Repository\\EvenementRepository\:\:findActiveWithFilters\(\) expects string\|null, float\|int\<min, \-1\>\|int\<1, max\>\|string\|true\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/PublicEventController.php
+
+		-
+			message: '#^Parameter \#2 \$ville of method App\\Repository\\EvenementRepository\:\:findActiveWithFilters\(\) expects string\|null, float\|int\<min, \-1\>\|int\<1, max\>\|string\|true\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/PublicEventController.php
+
+		-
+			message: '#^Parameter \#3 \$search of method App\\Repository\\EvenementRepository\:\:findActiveWithFilters\(\) expects string\|null, float\|int\<min, \-1\>\|int\<1, max\>\|string\|true\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/PublicEventController.php
+
+		-
+			message: '#^Cannot cast array\|bool\|float\|int\|string\|UnitEnum\|null to string\.$#'
+			identifier: cast.string
+			count: 3
+			path: src/Controller/RadiologyController.php
+
+		-
+			message: '#^Call to an undefined method App\\Controller\\RecommendationController\:\:getDoctrine\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Controller/RecommendationController.php
+
+		-
+			message: '#^Parameter \#1 \.\.\.\$addresses of method Symfony\\Component\\Mime\\Email\:\:to\(\) expects string\|Symfony\\Component\\Mime\\Address, string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/ResetPasswordController.php
+
+		-
+			message: '#^Binary operation "/" between bool\|float\|int\|string\|null and 100 results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 3
+			path: src/Controller/StripeController.php
+
+		-
+			message: '#^Binary operation "/" between bool\|float\|int\|string\|null and 1000 results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 1
+			path: src/Controller/StripeController.php
+
+		-
+			message: '#^Call to an undefined method object\:\:getPrix\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Controller/StripeController.php
+
+		-
+			message: '#^Call to an undefined method object\:\:getQuantite\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Controller/StripeController.php
+
+		-
+			message: '#^Call to an undefined method object\:\:setQuantite\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Controller/StripeController.php
+
+		-
+			message: '#^Parameter \#1 \$json of function json_decode expects string, float\|int\<min, \-1\>\|int\<1, max\>\|string\|true given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/StripeController.php
+
+		-
+			message: '#^Parameter \#1 \$params of method Stripe\\Service\\ChargeService\:\:create\(\) expects array\{amount\?\: int, application_fee\?\: int, application_fee_amount\?\: int, capture\?\: bool, currency\?\: string, customer\?\: string, description\?\: string, destination\?\: array\{account\: string, amount\?\: int\}, \.\.\.\}\|null, array\{amount\: int, currency\: ''eur'', source\: float\|int\<min, \-1\>\|int\<1, max\>\|non\-falsy\-string\|true, description\: ''Donation''\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/StripeController.php
+
+		-
+			message: '#^Parameter \#1 \$params of method Stripe\\Service\\ChargeService\:\:create\(\) expects array\{amount\?\: int, application_fee\?\: int, application_fee_amount\?\: int, capture\?\: bool, currency\?\: string, customer\?\: string, description\?\: string, destination\?\: array\{account\: string, amount\?\: int\}, \.\.\.\}\|null, array\{amount\: int, currency\: bool\|float\|int\|string\|null, source\: float\|int\<min, \-1\>\|int\<1, max\>\|non\-falsy\-string\|true, description\: ''Order Payment'', metadata\: array\{order_id\: bool\|float\|int\|string\}\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/StripeController.php
+
+		-
+			message: '#^Parameter \#1 \$produit of method App\\Entity\\LigneCommande\:\:setProduit\(\) expects App\\Entity\\Produit\|null, object given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/StripeController.php
+
+		-
+			message: '#^Parameter \#2 \$currency of method App\\Service\\StripePaymentService\:\:convertToSmallestUnit\(\) expects string, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/StripeController.php
+
+		-
+			message: '#^Parameter \#2 \$currency of method App\\Service\\StripePaymentService\:\:createPaymentIntent\(\) expects string, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/StripeController.php
+
+		-
+			message: '#^Parameter \#3 \$metadata of method App\\Service\\StripePaymentService\:\:createPaymentIntent\(\) expects array\<string, string\>, array\<string, bool\|float\|int\|string\|null\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/StripeController.php
+
+		-
+			message: '#^Access to undefined constant App\\Entity\\Suivi\:\:EMERGENCY_LOW\.$#'
+			identifier: classConstant.notFound
+			count: 1
+			path: src/Controller/SuiviController.php
+
+		-
+			message: '#^Call to method set\(\) on an unknown class Dompdf\\Options\.$#'
+			identifier: class.notFound
+			count: 1
+			path: src/Controller/SuiviController.php
+
+		-
+			message: '#^Cannot call method getDiagnostic\(\) on App\\Entity\\Consultation\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Controller/SuiviController.php
+
+		-
+			message: '#^Cannot call method getId\(\) on App\\Entity\\Consultation\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Controller/SuiviController.php
+
+		-
+			message: '#^Cannot cast array\|bool\|float\|int\|string\|UnitEnum\|null to string\.$#'
+			identifier: cast.string
+			count: 2
+			path: src/Controller/SuiviController.php
+
+		-
+			message: '#^Instantiated class Dompdf\\Options not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: src/Controller/SuiviController.php
+
+		-
+			message: '#^Method App\\Controller\\SuiviController\:\:resolvePrimaryOrgan\(\) has parameter \$affectedParts with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Controller/SuiviController.php
+
+		-
+			message: '#^Method App\\Controller\\SuiviController\:\:resolvePrimaryOrgan\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Controller/SuiviController.php
+
+		-
+			message: '#^Parameter \#1 \$dogName of method App\\Service\\AiSymptomsService\:\:generateMedicalAnalysis\(\) expects string, string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/SuiviController.php
+
+		-
+			message: '#^Parameter \#1 \$emergencyLevel of method App\\Repository\\SuiviRepository\:\:findByEmergencyLevel\(\) expects string, float\|int\<min, \-1\>\|int\<1, max\>\|string\|true given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/SuiviController.php
+
+		-
+			message: '#^Parameter \#1 \$etat of method App\\Repository\\SuiviRepository\:\:findByEtat\(\) expects string, float\|int\<min, \-1\>\|int\<1, max\>\|string\|true given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/SuiviController.php
+
+		-
+			message: '#^Parameter \#1 \$string of function strtolower expects string, float\|int\<min, \-1\>\|int\<1, max\>\|string\|true given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/SuiviController.php
+
+		-
+			message: '#^Binary operation "\." between array\|bool\|float\|int\|string\|UnitEnum\|null and ''/public/uploads…'' results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 1
+			path: src/Controller/UserController.php
+
+		-
+			message: '#^Method App\\Controller\\UserController\:\:buildUserRows\(\) has parameter \$users with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Controller/UserController.php
+
+		-
+			message: '#^Method App\\Controller\\UserController\:\:buildUserRows\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Controller/UserController.php
+
+		-
+			message: '#^Parameter \#1 \$password of method App\\Entity\\User\:\:setPassword\(\) expects string, string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/UserController.php
+
+		-
+			message: '#^Parameter \#1 \$firmwareVersion of method App\\Repository\\ZiptagRepository\:\:findByFilters\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/ZiptagController.php
+
+		-
+			message: '#^Parameter \#1 \$query of method App\\Repository\\ZiptagRepository\:\:searchZiptags\(\) expects string, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/ZiptagController.php
+
+		-
+			message: '#^Method App\\Entity\\Categorie\:\:__toString\(\) should return string but returns string\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Entity/Categorie.php
+
+		-
+			message: '#^Property App\\Entity\\Categorie\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Categorie.php
+
+		-
+			message: '#^Property App\\Entity\\Categorie\:\:\$produits with generic interface Doctrine\\Common\\Collections\\Collection does not specify its types\: TKey, T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Entity/Categorie.php
+
+		-
+			message: '#^Property App\\Entity\\Commande\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Commande.php
+
+		-
+			message: '#^Property App\\Entity\\Consultation\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Consultation.php
+
+		-
+			message: '#^Property App\\Entity\\DemandForecast\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/DemandForecast.php
+
+		-
+			message: '#^Property App\\Entity\\Donation\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Donation.php
+
+		-
+			message: '#^Property App\\Entity\\Donation\:\:\$statut \(bool\|null\) is never assigned null so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Donation.php
+
+		-
+			message: '#^Property App\\Entity\\Evenement\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Evenement.php
+
+		-
+			message: '#^Property App\\Entity\\Guest\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Guest.php
+
+		-
+			message: '#^Property App\\Entity\\LigneCommande\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/LigneCommande.php
+
+		-
+			message: '#^Property App\\Entity\\Participation\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Participation.php
+
+		-
+			message: '#^Property App\\Entity\\Participation\:\:\$statut \(string\|null\) is never assigned null so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Participation.php
+
+		-
+			message: '#^Property App\\Entity\\Produit\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Produit.php
+
+		-
+			message: '#^Property App\\Entity\\ProduitComment\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/ProduitComment.php
+
+		-
+			message: '#^Method App\\Entity\\Suivi\:\:getAffectedBodyParts\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Entity/Suivi.php
+
+		-
+			message: '#^Method App\\Entity\\Suivi\:\:setAffectedBodyParts\(\) has parameter \$affectedBodyParts with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Entity/Suivi.php
+
+		-
+			message: '#^Property App\\Entity\\Suivi\:\:\$affectedBodyParts type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Entity/Suivi.php
+
+		-
+			message: '#^Property App\\Entity\\Suivi\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Suivi.php
+
+		-
+			message: '#^Method App\\Entity\\User\:\:getParticipations\(\) return type with generic interface Doctrine\\Common\\Collections\\Collection does not specify its types\: TKey, T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Entity/User.php
+
+		-
+			message: '#^Property App\\Entity\\Ziptag\:\:\$infos with generic interface Doctrine\\Common\\Collections\\Collection does not specify its types\: TKey, T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Entity/Ziptag.php
+
+		-
+			message: '#^Property App\\Entity\\ZiptagInfo\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/ZiptagInfo.php
+
+		-
+			message: '#^Cannot call method format\(\) on DateTimeInterface\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Form/LigneCommandeType.php
+
+		-
+			message: '#^Cannot call method format\(\) on DateTimeImmutable\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Form/SuiviType.php
+
+		-
+			message: '#^Class App\\Repository\\CategorieRepository extends generic class Doctrine\\Bundle\\DoctrineBundle\\Repository\\ServiceEntityRepository but does not specify its types\: T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Repository/CategorieRepository.php
+
+		-
+			message: '#^Method App\\Repository\\CategorieRepository\:\:advancedSearch\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/CategorieRepository.php
+
+		-
+			message: '#^Method App\\Repository\\CategorieRepository\:\:countAll\(\) should return int but returns bool\|float\|int\|string\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Repository/CategorieRepository.php
+
+		-
+			message: '#^Method App\\Repository\\CategorieRepository\:\:findAllOrdered\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/CategorieRepository.php
+
+		-
+			message: '#^Method App\\Repository\\CategorieRepository\:\:findAllWithProducts\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/CategorieRepository.php
+
+		-
+			message: '#^Method App\\Repository\\CategorieRepository\:\:findByProductCount\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/CategorieRepository.php
+
+		-
+			message: '#^Method App\\Repository\\CategorieRepository\:\:findEmptyCategories\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/CategorieRepository.php
+
+		-
+			message: '#^Method App\\Repository\\CategorieRepository\:\:findMostPopular\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/CategorieRepository.php
+
+		-
+			message: '#^Method App\\Repository\\CategorieRepository\:\:findPaginated\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/CategorieRepository.php
+
+		-
+			message: '#^Method App\\Repository\\CategorieRepository\:\:findWithMinProducts\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/CategorieRepository.php
+
+		-
+			message: '#^Method App\\Repository\\CategorieRepository\:\:searchCategories\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/CategorieRepository.php
+
+		-
+			message: '#^Class App\\Repository\\ConsultationRepository extends generic class Doctrine\\Bundle\\DoctrineBundle\\Repository\\ServiceEntityRepository but does not specify its types\: T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Repository/ConsultationRepository.php
+
+		-
+			message: '#^Method App\\Repository\\ConsultationRepository\:\:countThisMonth\(\) should return int but returns bool\|float\|int\|string\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Repository/ConsultationRepository.php
+
+		-
+			message: '#^Method App\\Repository\\ConsultationRepository\:\:findAllOrdered\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/ConsultationRepository.php
+
+		-
+			message: '#^Method App\\Repository\\ConsultationRepository\:\:findByType\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/ConsultationRepository.php
+
+		-
+			message: '#^Method App\\Repository\\ConsultationRepository\:\:search\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/ConsultationRepository.php
+
+		-
+			message: '#^Class App\\Repository\\DemandForecastRepository has PHPDoc tag @method for method findBy\(\) parameter \#1 \$criteria with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/DemandForecastRepository.php
+
+		-
+			message: '#^Class App\\Repository\\DemandForecastRepository has PHPDoc tag @method for method findBy\(\) parameter \#2 \$orderBy with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/DemandForecastRepository.php
+
+		-
+			message: '#^Class App\\Repository\\DemandForecastRepository has PHPDoc tag @method for method findOneBy\(\) parameter \#1 \$criteria with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/DemandForecastRepository.php
+
+		-
+			message: '#^Class App\\Repository\\DemandForecastRepository has PHPDoc tag @method for method findOneBy\(\) parameter \#2 \$orderBy with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/DemandForecastRepository.php
+
+		-
+			message: '#^Method App\\Repository\\DemandForecastRepository\:\:findHighDemandProducts\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/DemandForecastRepository.php
+
+		-
+			message: '#^Method App\\Repository\\DemandForecastRepository\:\:findRisingTrendProducts\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/DemandForecastRepository.php
+
+		-
+			message: '#^Method App\\Repository\\DogsRepository\:\:filterDogs\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/DogsRepository.php
+
+		-
+			message: '#^Method App\\Repository\\DogsRepository\:\:findUnassignedOrCurrent\(\) has parameter \$currentDogId with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Repository/DogsRepository.php
+
+		-
+			message: '#^Method App\\Repository\\DogsRepository\:\:searchDogs\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/DogsRepository.php
+
+		-
+			message: '#^Class App\\Repository\\DonationRepository extends generic class Doctrine\\Bundle\\DoctrineBundle\\Repository\\ServiceEntityRepository but does not specify its types\: T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Repository/DonationRepository.php
+
+		-
+			message: '#^Method App\\Repository\\ProduitCommentRepository\:\:getCommentCount\(\) should return int but returns bool\|float\|int\|string\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Repository/ProduitCommentRepository.php
+
+		-
+			message: '#^Class App\\Repository\\ProduitRepository extends generic class Doctrine\\Bundle\\DoctrineBundle\\Repository\\ServiceEntityRepository but does not specify its types\: T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Repository/ProduitRepository.php
+
+		-
+			message: '#^Binary operation "/" between bool\|float\|int\|string\|null and int\<1, max\> results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 1
+			path: src/Repository/SuiviRepository.php
+
+		-
+			message: '#^Method App\\Repository\\SuiviRepository\:\:countByEtat\(\) should return int but returns bool\|float\|int\|string\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Repository/SuiviRepository.php
+
+		-
+			message: '#^Method App\\Repository\\SuiviRepository\:\:countThisMonth\(\) should return int but returns bool\|float\|int\|string\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Repository/SuiviRepository.php
+
+		-
+			message: '#^Method App\\Repository\\SuiviRepository\:\:findAllOrdered\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/SuiviRepository.php
+
+		-
+			message: '#^Method App\\Repository\\SuiviRepository\:\:findByEmergencyLevel\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/SuiviRepository.php
+
+		-
+			message: '#^Method App\\Repository\\SuiviRepository\:\:findByEtat\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/SuiviRepository.php
+
+		-
+			message: '#^Method App\\Repository\\SuiviRepository\:\:findByType\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/SuiviRepository.php
+
+		-
+			message: '#^Method App\\Repository\\SuiviRepository\:\:findUpcoming\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/SuiviRepository.php
+
+		-
+			message: '#^Method App\\Repository\\ZiptagInfoRepository\:\:findByType\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Repository/ZiptagInfoRepository.php
+
+		-
+			message: '#^Method App\\Repository\\ZiptagInfoRepository\:\:findRecentByCollar\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Repository/ZiptagInfoRepository.php
+
+		-
+			message: '#^Method App\\Repository\\ZiptagInfoRepository\:\:findRecentByCollar\(\) has parameter \$collarId with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Repository/ZiptagInfoRepository.php
+
+		-
+			message: '#^Method App\\Repository\\ZiptagRepository\:\:findByFilters\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/ZiptagRepository.php
+
+		-
+			message: '#^Method App\\Repository\\ZiptagRepository\:\:findDistinctFirmwareVersions\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/ZiptagRepository.php
+
+		-
+			message: '#^Method App\\Repository\\ZiptagRepository\:\:findUnassignedOrCurrent\(\) has parameter \$currentZiptagId with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Repository/ZiptagRepository.php
+
+		-
+			message: '#^Method App\\Repository\\ZiptagRepository\:\:searchZiptags\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/ZiptagRepository.php
+
+		-
+			message: '#^Cannot cast array\|bool\|float\|int\|string\|UnitEnum\|null to string\.$#'
+			identifier: cast.string
+			count: 1
+			path: src/Service/AiSymptomsService.php
+
+		-
+			message: '#^Method App\\Service\\AiSymptomsService\:\:buildKnnReport\(\) has parameter \$affectedParts with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/AiSymptomsService.php
+
+		-
+			message: '#^Method App\\Service\\AiSymptomsService\:\:buildKnnReport\(\) has parameter \$neighbors with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/AiSymptomsService.php
+
+		-
+			message: '#^Method App\\Service\\AiSymptomsService\:\:generateMedicalAnalysis\(\) has parameter \$affectedParts with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/AiSymptomsService.php
+
+		-
+			message: '#^Method App\\Service\\AiSymptomsService\:\:generateMedicalAnalysis\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/AiSymptomsService.php
+
+		-
+			message: '#^Method App\\Service\\AiSymptomsService\:\:generateSymptomsForOrgan\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/AiSymptomsService.php
+
+		-
+			message: '#^Method App\\Service\\AiSymptomsService\:\:runKnn\(\) has parameter \$payload with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/AiSymptomsService.php
+
+		-
+			message: '#^Method App\\Service\\AiSymptomsService\:\:runKnn\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/AiSymptomsService.php
+
+		-
+			message: '#^Cannot call method getDate\(\) on App\\Entity\\Commande\|null\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: src/Service/DemandForecastService.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 2
+			path: src/Service/DemandForecastService.php
+
+		-
+			message: '#^Method App\\Service\\DemandForecastService\:\:calculatePredictedDemand\(\) should return int but returns float\|int\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Service/DemandForecastService.php
+
+		-
+			message: '#^Method App\\Service\\DemandForecastService\:\:generateForecasts\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/DemandForecastService.php
+
+		-
+			message: '#^Method App\\Service\\DemandForecastService\:\:getDemandSummary\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/DemandForecastService.php
+
+		-
+			message: '#^Parameter \#1 \$product of method App\\Service\\DemandForecastService\:\:generateForecastForProduct\(\) expects App\\Entity\\Produit, object given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/DemandForecastService.php
+
+		-
+			message: '#^Method App\\Service\\DonorNotificationService\:\:notifyPotentialDonors\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/DonorNotificationService.php
+
+		-
+			message: '#^Method App\\Service\\DonorNotificationService\:\:sendDonationEventEmail\(\) has parameter \$prediction with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/DonorNotificationService.php
+
+		-
+			message: '#^Method App\\Service\\DonorNotificationService\:\:sendDonationEventEmail\(\) has parameter \$user with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Service/DonorNotificationService.php
+
+		-
+			message: '#^Method App\\Service\\DonorPredictionService\:\:getModelInfo\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/DonorPredictionService.php
+
+		-
+			message: '#^Method App\\Service\\DonorPredictionService\:\:getUserStats\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/DonorPredictionService.php
+
+		-
+			message: '#^Method App\\Service\\DonorPredictionService\:\:predictForAllUsers\(\) has parameter \$users with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/DonorPredictionService.php
+
+		-
+			message: '#^Method App\\Service\\DonorPredictionService\:\:predictForAllUsers\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/DonorPredictionService.php
+
+		-
+			message: '#^Method App\\Service\\DonorPredictionService\:\:predictForUser\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/DonorPredictionService.php
+
+		-
+			message: '#^Method App\\Service\\DonorRetentionService\:\:calculateDonorMetrics\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/DonorRetentionService.php
+
+		-
+			message: '#^Method App\\Service\\DonorRetentionService\:\:getEmptyMetrics\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/DonorRetentionService.php
+
+		-
+			message: '#^Method App\\Service\\DonorRetentionService\:\:predictRetention\(\) has parameter \$metrics with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/DonorRetentionService.php
+
+		-
+			message: '#^Method App\\Service\\DonorRetentionService\:\:predictRetention\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/DonorRetentionService.php
+
+		-
+			message: '#^Parameter \#1 \$command of function proc_open expects list\<string\>\|string, array\{string, non\-falsy\-string, non\-empty\-string\|false\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/DonorRetentionService.php
+
+		-
+			message: '#^Parameter \#1 \$dates of method App\\Service\\DonorRetentionService\:\:calculateConsistency\(\) expects array\<DateTimeInterface\>, list\<DateTimeInterface\|null\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/DonorRetentionService.php
+
+		-
+			message: '#^Parameter \#1 \$targetObject of method DateTime\:\:diff\(\) expects DateTimeInterface, DateTimeInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/DonorRetentionService.php
+
+		-
+			message: '#^Cannot call method getDateDebut\(\) on App\\Entity\\Evenement\|null\.$#'
+			identifier: method.nonObject
+			count: 3
+			path: src/Service/EmailService.php
+
+		-
+			message: '#^Cannot call method getDateFin\(\) on App\\Entity\\Evenement\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Service/EmailService.php
+
+		-
+			message: '#^Cannot call method getDescription\(\) on App\\Entity\\Evenement\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Service/EmailService.php
+
+		-
+			message: '#^Cannot call method getEmail\(\) on App\\Entity\\User\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Service/EmailService.php
+
+		-
+			message: '#^Cannot call method getLieu\(\) on App\\Entity\\Evenement\|null\.$#'
+			identifier: method.nonObject
+			count: 3
+			path: src/Service/EmailService.php
+
+		-
+			message: '#^Cannot call method getNom\(\) on App\\Entity\\User\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Service/EmailService.php
+
+		-
+			message: '#^Cannot call method getPrenom\(\) on App\\Entity\\User\|null\.$#'
+			identifier: method.nonObject
+			count: 3
+			path: src/Service/EmailService.php
+
+		-
+			message: '#^Cannot call method getTitre\(\) on App\\Entity\\Evenement\|null\.$#'
+			identifier: method.nonObject
+			count: 3
+			path: src/Service/EmailService.php
+
+		-
+			message: '#^Cannot call method getType\(\) on App\\Entity\\Evenement\|null\.$#'
+			identifier: method.nonObject
+			count: 3
+			path: src/Service/EmailService.php
+
+		-
+			message: '#^Cannot call method getVille\(\) on App\\Entity\\Evenement\|null\.$#'
+			identifier: method.nonObject
+			count: 3
+			path: src/Service/EmailService.php
+
+		-
+			message: '#^Method App\\Service\\GeminiService\:\:getAvailableModels\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/GeminiService.php
+
+		-
+			message: '#^Property App\\Service\\GeminiService\:\:\$apiKey has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/GeminiService.php
+
+		-
+			message: '#^Property App\\Service\\GeminiService\:\:\$client has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/GeminiService.php
+
+		-
+			message: '#^Property App\\Service\\GeminiService\:\:\$logger has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: src/Service/GeminiService.php
+
+		-
+			message: '#^Method App\\Service\\ParticipationManager\:\:validate\(\) has parameter \$existingParticipations with no value type specified in iterable type iterable\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ParticipationManager.php
+
+		-
+			message: '#^Right side of && is always true\.$#'
+			identifier: booleanAnd.rightAlwaysTrue
+			count: 2
+			path: src/Service/ParticipationManager.php
+
+		-
+			message: '#^Cannot access offset ''score'' on App\\Entity\\Produit\|array\{product\: App\\Entity\\Produit, score\: float\}\|float\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 6
+			path: src/Service/RecommendationService.php
+
+		-
+			message: '#^Method App\\Service\\RecommendationService\:\:calculateCentroid\(\) should return list\<float\> but returns array\<int\<0, max\>, 0\|float\>\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Service/RecommendationService.php
+
+		-
+			message: '#^Parameter \#2 \$purchasedProductIds of method App\\Service\\RecommendationService\:\:calculateProductScore\(\) expects list\<int\>, array\<int\<0, max\>, int\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/RecommendationService.php
+
+		-
+			message: '#^Property App\\Service\\RecommendationService\:\:\$productDistances is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/Service/RecommendationService.php
+
+		-
+			message: '#^Access to property \$messages on an unknown class Twilio\\Rest\\Client\.$#'
+			identifier: class.notFound
+			count: 1
+			path: src/Service/TwilioNotificationService.php
+
+		-
+			message: '#^Instantiated class Twilio\\Rest\\Client not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: src/Service/TwilioNotificationService.php
+
+		-
+			message: '#^Property App\\Service\\TwilioNotificationService\:\:\$twilio has unknown class Twilio\\Rest\\Client as its type\.$#'
+			identifier: class.notFound
+			count: 1
+			path: src/Service/TwilioNotificationService.php
+
+		-
+			message: '#^Method App\\Service\\UserManager\:\:extractUserFaceFromArray\(\) has parameter \$payload with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/UserManager.php
+
+		-
+			message: '#^Method App\\Service\\WeatherApiService\:\:fetchCurrentWeather\(\) never returns null so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 1
+			path: src/Service/WeatherApiService.php
+
+		-
+			message: '#^Method App\\Service\\WeatherApiService\:\:fetchCurrentWeather\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/WeatherApiService.php
+
+		-
+			message: '#^Method App\\Service\\WeatherApiService\:\:fetchForecastForDate\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/WeatherApiService.php
+
+		-
+			message: '#^Method App\\Service\\WeatherApiService\:\:getWeatherForCity\(\) should return array\{temp\: float, description\: string, icon\: string, humidity\: int, wind_speed\: float\}\|array\{unavailable\: true, reason\: string\}\|null but returns array\|null\.$#'
+			identifier: return.type
+			count: 3
+			path: src/Service/WeatherApiService.php
+
+		-
+			message: '#^Call to an undefined method App\\Service\\NotificationService\:\:getLatestNotifications\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Twig/NotificationExtension.php
+
+		-
+			message: '#^Call to an undefined method App\\Service\\NotificationService\:\:getUnreadCount\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Twig/NotificationExtension.php

@@ -13,6 +13,7 @@ class Alert
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    // @phpstan-ignore-next-line
     private ?int $id = null;
 
     #[ORM\Column(length: 50)]
@@ -55,7 +56,7 @@ class Alert
         return $this->type;
     }
 
-    public function setType(?string $type): static
+    public function setType(string $type): static
     {
         $this->type = $type;
 

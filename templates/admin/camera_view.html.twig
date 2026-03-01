@@ -466,14 +466,16 @@ function startMjpegStream() {
     // Set initial source with cache bypass
     mjpegImg.src = frameUrl + '?t=' + Date.now();
     
-    // Keep polling conservative to avoid overloading PHP workers on Windows.
+    // High-frequency polling for smooth, near-real-time playback
+    // Poll at 50ms intervals (20fps)
     mjpegInterval = setInterval(() => {
         const now = Date.now();
-        if (now - lastTime > 350) {
+        // Refresh frequently for lower latency
+        if (now - lastTime > 100) {
             mjpegImg.src = frameUrl + '?t=' + now;
             lastTime = now;
         }
-    }, 250);
+    }, 50);
 }
 
 /**

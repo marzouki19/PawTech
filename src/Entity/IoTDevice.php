@@ -12,6 +12,7 @@ class IoTDevice
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    // @phpstan-ignore-next-line
     private ?int $id = null;
 
     #[ORM\Column(length: 100)]
@@ -48,6 +49,7 @@ class IoTDevice
     private ?string $apiEndpoint = null;
 
     // Sensor Configuration
+    /** @var array<string, mixed>|null */
     #[ORM\Column(type: 'json', nullable: true)]
     private ?array $sensorConfig = null;
 
@@ -193,11 +195,17 @@ class IoTDevice
         return $this;
     }
 
+    /**
+     * @return array<string, mixed>|null
+     */
     public function getSensorConfig(): ?array
     {
         return $this->sensorConfig;
     }
 
+    /**
+     * @param array<string, mixed>|null $sensorConfig
+     */
     public function setSensorConfig(?array $sensorConfig): self
     {
         $this->sensorConfig = $sensorConfig;
@@ -272,6 +280,8 @@ class IoTDevice
 
     /**
      * Get configuration as JSON for ESP32
+     *
+     * @return array<string, mixed>
      */
     public function getConfigJson(): array
     {

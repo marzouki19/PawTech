@@ -16,7 +16,7 @@ use App\Repository\IpCameraRepository;
 use App\Repository\IoTDataRepository;
 use App\Repository\IoTDeviceRepository;
 use App\Repository\DogDetectionRepository;
-use App\Repository\StatisticsRepository;
+use App\Repository\AlertRepository;
 use App\Service\StreamTranscoderService;
 use App\Service\PTZControlService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -135,20 +135,34 @@ final class ObservationStationController extends AbstractController
         IpCameraRepository $cameraRepo,
         IoTDataRepository $iotRepo,
         IoTDeviceRepository $iotDeviceRepo,
-        DogDetectionRepository $detectionRepo
+        DogDetectionRepository $detectionRepo,
+        AlertRepository $alertRepo
     ): Response
     {
+        $stationId = $station->getId();
+        if ($stationId === null) {
+            throw $this->createNotFoundException('Station ID is missing');
+        }
+
         // Get cameras for this station
-        $cameras = $cameraRepo->findByStationId($station->getId());
+        $cameras = $cameraRepo->findByStationId($stationId);
         
         // Get IoT devices for this station
-        $iotDevices = $iotDeviceRepo->findByStationId($station->getId());
+        $iotDevices = $iotDeviceRepo->findByStationId($stationId);
         
         // Get latest IoT data (last 20 readings)
         $latestIotData = $iotRepo->findLatestByStation($station, 20);
         
         // Get IoT data for charts (last 100 readings)
         $iotDataForCharts = $iotRepo->findLatestByStation($station, 100);
+
+        // True counters (not sliced arrays)
+        $totalIotReadings = $iotRepo->count(['station' => $station]);
+        $totalDetections = $detectionRepo->countByStation($station);
+        $totalHealthAlerts = $alertRepo->count([
+            'station' => $station,
+            'type' => 'HEALTH_ALERT',
+        ]);
         
         // Get recent detections for this station's cameras
         $detections = [];
@@ -166,10 +180,17 @@ final class ObservationStationController extends AbstractController
         // Get statistics for this station using IoT data instead
         $statistics = null;
         
-        // Get health alerts (detections with health issues)
-        $healthAlerts = array_filter($detections, function($d) {
-            return $d->getIsHealthIssue() === true;
-        });
+        // Use the same source as /admin/alerts for station-level health alert cards.
+        $stationHealthAlerts = $alertRepo->findBy(
+            ['station' => $station, 'type' => 'HEALTH_ALERT'],
+            ['date' => 'DESC']
+        );
+        if (count($stationHealthAlerts) === 0) {
+            $stationHealthAlerts = $alertRepo->findBy(
+                ['type' => 'HEALTH_ALERT'],
+                ['date' => 'DESC']
+            );
+        }
         
         // Parse localisation to get lat/lng for map
         $localisation = $station->getLocalisation();
@@ -191,8 +212,11 @@ final class ObservationStationController extends AbstractController
             'iotDevices' => $iotDevices,
             'latestIotData' => $latestIotData,
             'iotDataForCharts' => $iotDataForCharts,
+            'totalIotReadings' => $totalIotReadings,
+            'totalDetections' => $totalDetections,
+            'totalHealthAlerts' => $totalHealthAlerts,
             'detections' => array_slice($detections, 0, 20),
-            'healthAlerts' => array_slice($healthAlerts, 0, 10),
+            'stationHealthAlerts' => array_slice($stationHealthAlerts, 0, 10),
             'active' => 'station',
             'page_title' => 'Dashboard: ' . $station->getCode(),
         ]);
@@ -203,7 +227,12 @@ final class ObservationStationController extends AbstractController
     #[Route('/{id}/cameras', name: 'app_admin_station_cameras', methods: ['GET'], requirements: ['id' => '\d+'])]
     public function stationCameras(ObservationStation $station, IpCameraRepository $cameraRepo): Response
     {
-        $cameras = $cameraRepo->findByStationId($station->getId());
+        $stationId = $station->getId();
+        if ($stationId === null) {
+            throw $this->createNotFoundException('Station ID is missing');
+        }
+
+        $cameras = $cameraRepo->findByStationId($stationId);
         
         return $this->render('observation_station/cameras.html.twig', [
             'station' => $station,
@@ -342,8 +371,13 @@ final class ObservationStationController extends AbstractController
     #[Route('/cameras/{id}', name: 'app_admin_stations_cameras_view', methods: ['GET'], requirements: ['id' => '\\d+'])]
     public function viewCamera(IpCamera $camera, StreamTranscoderService $transcoder): Response
     {
-        $hlsStreamUrl = $transcoder->getStreamUrl($camera->getId());
-        $isTranscoding = $transcoder->isTranscoding($camera->getId());
+        $cameraId = $camera->getId();
+        if ($cameraId === null) {
+            throw $this->createNotFoundException('Camera ID is missing');
+        }
+
+        $hlsStreamUrl = $transcoder->getStreamUrl($cameraId);
+        $isTranscoding = $transcoder->isTranscoding($cameraId);
         
         return $this->render('observation_station/camera_view.html.twig', [
             'camera' => $camera,
@@ -369,18 +403,34 @@ final class ObservationStationController extends AbstractController
     #[Route('/cameras/{id}/stream/stop', name: 'app_admin_stations_cameras_stream_stop', methods: ['POST'])]
     public function stopStream(IpCamera $camera, StreamTranscoderService $transcoder): JsonResponse
     {
-        $success = $transcoder->stopTranscoding($camera->getId());
+        $cameraId = $camera->getId();
+        if ($cameraId === null) {
+            return new JsonResponse(['success' => false, 'message' => 'Camera ID is missing'], 400);
+        }
+
+        $success = $transcoder->stopTranscoding($cameraId);
         return new JsonResponse(['success' => $success, 'message' => $success ? 'Stream stopped' : 'Failed to stop']);
     }
 
     #[Route('/cameras/{id}/live-detections', name: 'app_admin_stations_cameras_live_detections', methods: ['GET'], requirements: ['id' => '\\d+'])]
-    public function liveDetections(IpCamera $camera): JsonResponse
+    public function liveDetections(IpCamera $camera, StreamTranscoderService $transcoder): JsonResponse
     {
         $cameraId = (int) $camera->getId();
+
+        if ($transcoder->isTranscoding($cameraId)) {
+            $transcoder->ensureDogDetectorRunning($camera);
+        }
+
         $payload = [
             'cameraId' => $cameraId,
             'timestamp' => null,
             'dogCount' => 0,
+            'illCount' => 0,
+            'healthyCount' => 0,
+            'unknownHealthCount' => 0,
+            'healthStatus' => 'unknown',
+            'illReportSent' => false,
+            'illReportReason' => 'not_available',
             'ptzAction' => null,
             'detections' => [],
             'stale' => true,
@@ -432,6 +482,12 @@ final class ObservationStationController extends AbstractController
             'frameWidth' => isset($decoded['frame_width']) ? (int) $decoded['frame_width'] : null,
             'frameHeight' => isset($decoded['frame_height']) ? (int) $decoded['frame_height'] : null,
             'dogCount' => max(0, $dogCount),
+            'illCount' => isset($decoded['ill_count']) ? max(0, (int) $decoded['ill_count']) : 0,
+            'healthyCount' => isset($decoded['healthy_count']) ? max(0, (int) $decoded['healthy_count']) : 0,
+            'unknownHealthCount' => isset($decoded['unknown_health_count']) ? max(0, (int) $decoded['unknown_health_count']) : 0,
+            'healthStatus' => isset($decoded['health_status']) ? (string) $decoded['health_status'] : 'unknown',
+            'illReportSent' => isset($decoded['ill_report_sent']) ? (bool) $decoded['ill_report_sent'] : false,
+            'illReportReason' => isset($decoded['ill_report_reason']) ? (string) $decoded['ill_report_reason'] : 'not_available',
             'ptzAction' => $decoded['ptz_action'] ?? null,
             'detections' => $detections,
             'stale' => $stale,
@@ -505,14 +561,10 @@ final class ObservationStationController extends AbstractController
                 ];
                 break;
             case 'snapshot':
-                $snapshotUrl = $camera->getFullSnapshotUrl();
-                if (!str_starts_with($snapshotUrl, 'data:')) {
-                    $snapshotUrl .= '?t=' . time();
-                }
                 $response = [
                     'success' => true,
                     'message' => 'Snapshot taken',
-                    'snapshotUrl' => $snapshotUrl,
+                    'snapshotUrl' => $camera->getFullSnapshotUrl() . '?t=' . time(),
                 ];
                 break;
             case 'ptz_home':
@@ -527,6 +579,55 @@ final class ObservationStationController extends AbstractController
         }
 
         return new JsonResponse($response);
+    }
+
+    #[Route('/api/ip-cameras', name: 'app_admin_stations_api_ip_cameras', methods: ['GET'])]
+    public function apiIpCameras(Request $request, IpCameraRepository $cameraRepo): JsonResponse
+    {
+        $schemeAndHost = $request->getSchemeAndHttpHost();
+        $cameras = $cameraRepo->findBy([], ['id' => 'ASC']);
+        $payload = [];
+
+        foreach ($cameras as $camera) {
+            $cameraId = $camera->getId();
+            if ($cameraId === null) {
+                continue;
+            }
+
+            $station = $camera->getStation();
+            $source = $camera->getRtspUrl() ?: $camera->getFullStreamUrl();
+            $ptzCapabilities = $camera->getPtzCapabilities() ?? [];
+            $cameraSettings = $camera->getCameraSettings();
+            $dogDetectorSettings = [];
+            if (is_array($cameraSettings) && isset($cameraSettings['dog_detector']) && is_array($cameraSettings['dog_detector'])) {
+                $dogDetectorSettings = $cameraSettings['dog_detector'];
+            }
+
+            $payload[] = [
+                'id' => $cameraId,
+                'name' => $camera->getName(),
+                'status' => $camera->getStatus(),
+                'ipAddress' => $camera->getIpAddress(),
+                'port' => $camera->getPort(),
+                'source' => $source,
+                'rtspUrl' => $camera->getRtspUrl(),
+                'fullStreamUrl' => $camera->getFullStreamUrl(),
+                'supportsPtz' => in_array('ptz', $ptzCapabilities, true),
+                'supportsZoom' => in_array('zoom', $ptzCapabilities, true),
+                'ptzCapabilities' => $ptzCapabilities,
+                'cameraSettings' => $cameraSettings,
+                'dogDetectorSettings' => $dogDetectorSettings,
+                'stationId' => $station?->getId(),
+                'stationCode' => $station?->getCode(),
+                'ptzControlUrl' => sprintf('%s/admin/stations/cameras/%d/control', $schemeAndHost, $cameraId),
+                'liveDetectionsUrl' => sprintf('%s/admin/stations/cameras/%d/live-detections', $schemeAndHost, $cameraId),
+            ];
+        }
+
+        return new JsonResponse([
+            'count' => count($payload),
+            'cameras' => $payload,
+        ]);
     }
 
     // ============ API FOR ESP32 IOT DEVICES ============
@@ -551,16 +652,50 @@ final class ObservationStationController extends AbstractController
         }
 
         $iotData = new IoTData();
+        $additionalSensors = [];
+        if (isset($data['additional_sensors']) && is_array($data['additional_sensors'])) {
+            $additionalSensors = $data['additional_sensors'];
+        } elseif (isset($data['additionalSensors']) && is_array($data['additionalSensors'])) {
+            $additionalSensors = $data['additionalSensors'];
+        }
+
+        $signalStrength = $this->extractSignalStrength($data, $additionalSensors);
+        $ultrasonicDistanceCm = $this->extractUltrasonicDistanceCm($data, $additionalSensors);
+        $dogDetected = $this->extractDogDetected($data, $additionalSensors);
+        $foodDispensed = $this->normalizeBool(
+            $data['food_dispensed']
+            ?? $data['foodDispensed']
+            ?? $additionalSensors['food_dispensed']
+            ?? $additionalSensors['foodDispensed']
+            ?? null
+        );
+
+        if ($ultrasonicDistanceCm !== null) {
+            $additionalSensors['ultrasonic_distance_cm'] = $ultrasonicDistanceCm;
+            $additionalSensors['ultrasonicDistanceCm'] = $ultrasonicDistanceCm;
+        }
+        if ($signalStrength !== null) {
+            $additionalSensors['signal_strength'] = $signalStrength;
+            $additionalSensors['signalStrength'] = $signalStrength;
+        }
+        if ($dogDetected !== null) {
+            $additionalSensors['dog_detected'] = $dogDetected;
+            $additionalSensors['dogDetected'] = $dogDetected;
+        }
+
         $iotData->setStation($station);
         $iotData->setTemperature($data['temperature'] ?? null);
         $iotData->setHumidity($data['humidity'] ?? null);
         $iotData->setPressure($data['pressure'] ?? null);
-        $iotData->setBatteryLevel($data['battery'] ?? null);
-        $iotData->setSignalStrength($data['signal_strength'] ?? null);
+        $iotData->setBatteryLevel($data['battery'] ?? $data['battery_level'] ?? $data['batteryLevel'] ?? null);
+        $iotData->setSignalStrength($signalStrength);
+        $iotData->setDistance($ultrasonicDistanceCm !== null ? number_format($ultrasonicDistanceCm, 2, '.', '') : null);
+        $iotData->setDogDetected($dogDetected);
+        $iotData->setFoodDispensed($foodDispensed);
         $iotData->setDeviceType($data['device_type'] ?? 'ESP32');
         $iotData->setDeviceId($data['device_id'] ?? null);
         $iotData->setFirmwareVersion($data['firmware_version'] ?? null);
-        $iotData->setAdditionalSensors($data['additional_sensors'] ?? null);
+        $iotData->setAdditionalSensors(!empty($additionalSensors) ? $additionalSensors : null);
         $iotData->setLastSeen(new \DateTime());
         $iotData->setCreatedAt(new \DateTime());
 
@@ -588,8 +723,105 @@ final class ObservationStationController extends AbstractController
 
         $cameraId = $data['camera_id'] ?? null;
         $camera = $cameraId ? $cameraRepo->find($cameraId) : null;
+        $alertCreated = false;
+        $duplicateSuppressed = false;
+        $healthConditionRaw = trim((string) ($data['health_condition'] ?? ''));
+        $healthCondition = strtolower($healthConditionRaw);
+        $severity = strtolower(trim((string) ($data['severity'] ?? 'normal')));
+        $metadata = isset($data['metadata']) && is_array($data['metadata']) ? $data['metadata'] : null;
+        $appearanceHash = null;
+        if ($metadata !== null && isset($metadata['appearance_hash'])) {
+            $candidate = trim((string) $metadata['appearance_hash']);
+            if ($candidate !== '') {
+                $appearanceHash = $candidate;
+            }
+        }
 
-        $detection = new \App\Entity\DogDetection();
+        $reportCooldownSeconds = isset($data['report_cooldown_seconds'])
+            ? max(5, min(24 * 3600, (int) $data['report_cooldown_seconds']))
+            : 4 * 3600;
+        $appearanceMatchMaxDistance = isset($data['report_hash_max_distance'])
+            ? max(0, min(32, (int) $data['report_hash_max_distance']))
+            : 10;
+
+        $hammingDistance = static function (string $left, string $right): int {
+            $left = strtolower(trim($left));
+            $right = strtolower(trim($right));
+            if ($left === '' || $right === '') {
+                return PHP_INT_MAX;
+            }
+            if (strlen($left) !== strlen($right)) {
+                return PHP_INT_MAX;
+            }
+            if (!ctype_xdigit($left) || !ctype_xdigit($right)) {
+                return PHP_INT_MAX;
+            }
+
+            $distance = 0;
+            $length = strlen($left);
+            for ($i = 0; $i < $length; $i++) {
+                $xorNibble = hexdec($left[$i]) ^ hexdec($right[$i]);
+                $distance += substr_count(decbin($xorNibble), '1');
+            }
+            return $distance;
+        };
+
+        if ($camera && $healthCondition !== '' && $healthCondition !== 'unknown') {
+            $since = (new \DateTimeImmutable())->modify(sprintf('-%d seconds', $reportCooldownSeconds));
+            $recent = $entityManager->getRepository(DogDetection::class)
+                ->createQueryBuilder('d')
+                ->andWhere('d.camera = :camera')
+                ->andWhere('LOWER(d.healthCondition) = :healthCondition')
+                ->andWhere('d.detectedAt >= :since')
+                ->setParameter('camera', $camera)
+                ->setParameter('healthCondition', $healthCondition)
+                ->setParameter('since', $since)
+                ->orderBy('d.detectedAt', 'DESC')
+                ->setMaxResults(25)
+                ->getQuery()
+                ->getResult();
+
+            // Only apply duplicate suppression when a visual hash is available.
+            // If hash is missing, we still accept the detection and rely on alert cooldown.
+            if (!empty($recent) && $appearanceHash !== null) {
+                foreach ($recent as $previousDetection) {
+                    if (!$previousDetection instanceof DogDetection) {
+                        continue;
+                    }
+                    $previousMetadata = $previousDetection->getMetadata();
+                    if (!is_array($previousMetadata)) {
+                        continue;
+                    }
+                    $previousHash = isset($previousMetadata['appearance_hash'])
+                        ? trim((string) $previousMetadata['appearance_hash'])
+                        : '';
+                    if ($previousHash === '') {
+                        continue;
+                    }
+
+                    if ($previousHash === $appearanceHash) {
+                        $duplicateSuppressed = true;
+                        break;
+                    }
+
+                    if ($hammingDistance($previousHash, $appearanceHash) <= $appearanceMatchMaxDistance) {
+                        $duplicateSuppressed = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if ($duplicateSuppressed) {
+            return new JsonResponse([
+                'success' => true,
+                'message' => 'Duplicate health report suppressed by cooldown',
+                'duplicateSuppressed' => true,
+                'alertCreated' => false,
+            ]);
+        }
+
+        $detection = new DogDetection();
         
         if ($camera) {
             $detection->setCamera($camera);
@@ -599,52 +831,149 @@ final class ObservationStationController extends AbstractController
         $detection->setConfidence($data['confidence'] ?? 0);
         $detection->setBoundingBox($data['bounding_box'] ?? null);
         $detection->setDetectedObject($data['detected_object'] ?? null);
-        $detection->setHealthCondition($data['health_condition'] ?? null);
+        $detection->setHealthCondition($healthConditionRaw !== '' ? $healthConditionRaw : null);
         $detection->setHealthSymptoms($data['health_symptoms'] ?? null);
         $detection->setSeverity($data['severity'] ?? 'normal');
         $detection->setDescription($data['description'] ?? null);
-        $detection->setMetadata($data['metadata'] ?? null);
+        $detection->setMetadata($metadata);
         $detection->setDetectedAt(new \DateTime());
         $detection->setCreatedAt(new \DateTime());
 
         $entityManager->persist($detection);
+
+        $isIll = $healthCondition !== '' && !in_array($healthCondition, ['healthy', 'normal', 'ok', 'unknown'], true);
+        if ($camera && $camera->getStation() && $isIll) {
+            $station = $camera->getStation();
+            $cooldownSeconds = isset($data['alert_cooldown_seconds'])
+                ? max(5, min(3600, (int) $data['alert_cooldown_seconds']))
+                : 120;
+
+            $latestAlert = $entityManager->getRepository(Alert::class)->findOneBy(
+                ['station' => $station, 'type' => 'HEALTH_ALERT'],
+                ['date' => 'DESC']
+            );
+
+            $shouldCreateAlert = true;
+            if ($latestAlert && $latestAlert->getDate()) {
+                $elapsed = time() - $latestAlert->getDate()->getTimestamp();
+                if ($elapsed < $cooldownSeconds) {
+                    $shouldCreateAlert = false;
+                }
+            }
+
+            if ($shouldCreateAlert) {
+                $symptoms = $data['health_symptoms'] ?? [];
+                if (!is_array($symptoms)) {
+                    $symptoms = [];
+                }
+                $symptoms = array_values(array_filter(array_map('strval', $symptoms), static fn(string $v): bool => $v !== ''));
+                $symptomSnippet = '';
+                if (!empty($symptoms)) {
+                    $symptomSnippet = ' Symptoms: ' . implode(', ', array_slice($symptoms, 0, 4));
+                }
+
+                $priority = match ($severity) {
+                    'critical' => 3,
+                    'serious' => 3,
+                    default => 2,
+                };
+
+                $alert = new Alert();
+                $alert->setType('HEALTH_ALERT');
+                $alert->setMessage(sprintf(
+                    'Ill dog detected by camera %s at station %s.%s',
+                    $camera->getName() ?: ('#' . $camera->getId()),
+                    $station->getCode() ?: ('#' . $station->getId()),
+                    $symptomSnippet
+                ));
+                $alert->setPrioritee($priority);
+                $alert->setStatut('unread');
+                $alert->setDate(new \DateTime());
+                $alert->setStation($station);
+                $alert->setUserId(null);
+
+                $entityManager->persist($alert);
+                $alertCreated = true;
+            }
+        }
+
         $entityManager->flush();
 
         return new JsonResponse([
             'success' => true,
             'message' => 'Detection received',
             'id' => $detection->getId(),
+            'alertCreated' => $alertCreated,
+            'duplicateSuppressed' => false,
         ]);
     }
 
     #[Route('/{id}/data', name: 'app_admin_stations_data', methods: ['GET'], requirements: ['id' => '\\d+'])]
     public function getStationData(
         ObservationStation $station,
-        IoTDataRepository $iotRepo
+        IoTDataRepository $iotRepo,
+        DogDetectionRepository $detectionRepo,
+        AlertRepository $alertRepo
     ): JsonResponse {
         $latestData = $iotRepo->findLatestByStation($station, 50);
+        $recentHealthAlerts = $alertRepo->findBy(
+            ['station' => $station, 'type' => 'HEALTH_ALERT'],
+            ['date' => 'DESC'],
+            5
+        );
+        if (count($recentHealthAlerts) === 0) {
+            $recentHealthAlerts = $alertRepo->findBy(
+                ['type' => 'HEALTH_ALERT'],
+                ['date' => 'DESC'],
+                5
+            );
+        }
         
         $data = [];
         foreach ($latestData as $item) {
+            $additionalSensors = is_array($item->getAdditionalSensors()) ? $item->getAdditionalSensors() : [];
+            $signalStrength = $item->getSignalStrength() ?? $this->extractSignalStrength([], $additionalSensors);
+            $distance = $item->getDistance();
+            if ($distance === null) {
+                $distanceFromSensors = $this->extractUltrasonicDistanceCm([], $additionalSensors);
+                $distance = $distanceFromSensors !== null ? number_format($distanceFromSensors, 2, '.', '') : null;
+            }
+            $dogDetected = $item->isDogDetected();
+            if ($dogDetected === null) {
+                $dogDetected = $this->extractDogDetected([], $additionalSensors);
+            }
+
             $data[] = [
                 'id' => $item->getId(),
                 'temperature' => $item->getTemperature(),
                 'humidity' => $item->getHumidity(),
                 'pressure' => $item->getPressure(),
                 'batteryLevel' => $item->getBatteryLevel(),
-                'signalStrength' => $item->getSignalStrength(),
-                'distance' => $item->getDistance(),
-                'dogDetected' => $item->isDogDetected(),
+                'signalStrength' => $signalStrength,
+                'distance' => $distance,
+                'ultrasonicDistanceCm' => $distance,
+                'dogDetected' => $dogDetected,
                 'foodDispensed' => $item->isFoodDispensed(),
+                'additionalSensors' => $additionalSensors,
                 'deviceType' => $item->getDeviceType(),
                 'deviceId' => $item->getDeviceId(),
                 'firmwareVersion' => $item->getFirmwareVersion(),
                 'lastSeen' => $item->getLastSeen()?->format('Y-m-d H:i:s'),
                 'lastSeenIso' => $item->getLastSeen()?->format(DATE_ATOM),
-                'createdAt' => $item->getCreatedAt()->format('Y-m-d H:i:s'),
-                'createdAtIso' => $item->getCreatedAt()->format(DATE_ATOM),
+                'createdAt' => $item->getCreatedAt()?->format('Y-m-d H:i:s'),
+                'createdAtIso' => $item->getCreatedAt()?->format(DATE_ATOM),
             ];
         }
+
+        $healthAlerts = array_map(static function (Alert $alert): array {
+            return [
+                'id' => $alert->getId(),
+                'message' => $alert->getMessage() ?? '',
+                'status' => $alert->getStatut() ?? 'unread',
+                'date' => $alert->getDate()?->format('Y-m-d H:i:s'),
+                'dateIso' => $alert->getDate()?->format(DATE_ATOM),
+            ];
+        }, $recentHealthAlerts);
 
         return new JsonResponse([
             'station' => [
@@ -653,6 +982,15 @@ final class ObservationStationController extends AbstractController
                 'zone' => $station->getZone(),
                 'status' => $station->getStatut(),
             ],
+            'totals' => [
+                'iotReadings' => $iotRepo->count(['station' => $station]),
+                'detections' => $detectionRepo->countByStation($station),
+                'healthAlerts' => $alertRepo->count([
+                    'station' => $station,
+                    'type' => 'HEALTH_ALERT',
+                ]),
+            ],
+            'healthAlerts' => $healthAlerts,
             'data' => $data,
         ]);
     }
@@ -661,8 +999,10 @@ final class ObservationStationController extends AbstractController
     #[Route('/api/camera/ptz', name: 'app_admin_stations_api_ptz', methods: ['POST'])]
     public function ptzByIp(Request $request, IpCameraRepository $cameraRepo): JsonResponse
     {
-        $ip = $request->query->get('ip');
-        $action = $request->query->get('action');
+        $ipRaw = $request->query->get('ip');
+        $actionRaw = $request->query->get('action');
+        $ip = is_string($ipRaw) ? trim($ipRaw) : '';
+        $action = is_string($actionRaw) ? trim($actionRaw) : '';
         
         if (!$ip || !$action) {
             return new JsonResponse(['success' => false, 'error' => 'IP and action required'], 400);
@@ -689,9 +1029,9 @@ final class ObservationStationController extends AbstractController
             'zoom_out' => 'zoom_out',
         ];
         
-        $fullAction = $actionMap[$action] ?? $action;
+        $fullAction = (string) ($actionMap[$action] ?? $action);
         
-        $isPtz = in_array('ptz', $ptzCapabilities);
+        $isPtz = in_array('ptz', $ptzCapabilities, true);
         $isZoom = in_array('zoom', $ptzCapabilities) && str_starts_with($fullAction, 'zoom');
         
         if (!$isPtz && !$isZoom) {
@@ -719,7 +1059,12 @@ final class ObservationStationController extends AbstractController
         ObservationStation $station,
         IoTDeviceRepository $deviceRepo
     ): Response {
-        $devices = $deviceRepo->findByStationId($station->getId());
+        $stationId = $station->getId();
+        if ($stationId === null) {
+            throw $this->createNotFoundException('Station ID is missing');
+        }
+
+        $devices = $deviceRepo->findByStationId($stationId);
         
         return $this->render('observation_station/iot_devices.html.twig', [
             'station' => $station,
@@ -742,7 +1087,6 @@ final class ObservationStationController extends AbstractController
         $device->setStation($station);
         $device->setStatus('inactive');
         $device->setDeviceId(uniqid('IOT_'));
-        $device->setApiEndpoint('/admin/stations/api/iot/data');
         
         $form = $this->createForm(IoTDeviceType::class, $device);
         $form->handleRequest($request);
@@ -776,12 +1120,13 @@ final class ObservationStationController extends AbstractController
         IoTDeviceRepository $deviceRepo
     ): Response {
         $device = $deviceRepo->find($deviceId);
+        $deviceStation = $device?->getStation();
         
-        if (!$device || $device->getStation()->getId() != $stationId) {
+        if (!$device || !$deviceStation || $deviceStation->getId() !== $stationId) {
             throw $this->createNotFoundException('IoT device not found');
         }
         
-        $station = $device->getStation();
+        $station = $deviceStation;
         
         $form = $this->createForm(IoTDeviceType::class, $device);
         $form->handleRequest($request);
@@ -815,8 +1160,9 @@ final class ObservationStationController extends AbstractController
         IoTDeviceRepository $deviceRepo
     ): Response {
         $device = $deviceRepo->find($deviceId);
+        $deviceStation = $device?->getStation();
         
-        if (!$device || $device->getStation()->getId() != $stationId) {
+        if (!$device || !$deviceStation || $deviceStation->getId() !== $stationId) {
             throw $this->createNotFoundException('IoT device not found');
         }
         
@@ -877,7 +1223,8 @@ final class ObservationStationController extends AbstractController
         IpCamera $camera,
         EntityManagerInterface $entityManager
     ): Response {
-        if ($camera->getStation()->getId() != $stationId) {
+        $cameraStation = $camera->getStation();
+        if (!$cameraStation || $cameraStation->getId() !== $stationId) {
             throw $this->createNotFoundException('Camera not found for this station');
         }
         
@@ -888,5 +1235,147 @@ final class ObservationStationController extends AbstractController
         }
 
         return $this->redirectToRoute('app_admin_station_cameras', ['id' => $stationId], Response::HTTP_SEE_OTHER);
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     * @param array<string, mixed> $additionalSensors
+     */
+    private function extractUltrasonicDistanceCm(array $data, array $additionalSensors): ?float
+    {
+        $nestedUltrasonic = isset($data['ultrasonic']) && is_array($data['ultrasonic']) ? $data['ultrasonic'] : [];
+
+        $candidates = [
+            $data['ultrasonic_distance_cm'] ?? null,
+            $data['ultrasonic_distance'] ?? null,
+            $data['ultrasonicDistanceCm'] ?? null,
+            $data['ultrasonicDistance'] ?? null,
+            $data['distance_cm'] ?? null,
+            $data['distanceCm'] ?? null,
+            $nestedUltrasonic['distance_cm'] ?? null,
+            $nestedUltrasonic['distanceCm'] ?? null,
+            $additionalSensors['ultrasonic_distance_cm'] ?? null,
+            $additionalSensors['ultrasonicDistanceCm'] ?? null,
+            $additionalSensors['ultrasonic_distance'] ?? null,
+            $additionalSensors['ultrasonicDistance'] ?? null,
+            $additionalSensors['distance_cm'] ?? null,
+            $additionalSensors['distanceCm'] ?? null,
+            $data['distance'] ?? null,
+            $additionalSensors['distance'] ?? null,
+        ];
+
+        foreach ($candidates as $candidate) {
+            $numeric = $this->normalizeNumeric($candidate);
+            if ($numeric !== null) {
+                return $numeric;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     * @param array<string, mixed> $additionalSensors
+     */
+    private function extractSignalStrength(array $data, array $additionalSensors): ?string
+    {
+        $network = isset($data['network']) && is_array($data['network']) ? $data['network'] : [];
+
+        $candidates = [
+            $data['signal_strength'] ?? null,
+            $data['signalStrength'] ?? null,
+            $data['signal'] ?? null,
+            $data['rssi'] ?? null,
+            $data['wifi_rssi'] ?? null,
+            $data['wifiRssi'] ?? null,
+            $network['signal_strength'] ?? null,
+            $network['signalStrength'] ?? null,
+            $network['signal'] ?? null,
+            $network['rssi'] ?? null,
+            $additionalSensors['signal_strength'] ?? null,
+            $additionalSensors['signalStrength'] ?? null,
+            $additionalSensors['signal'] ?? null,
+            $additionalSensors['rssi'] ?? null,
+            $additionalSensors['wifi_rssi'] ?? null,
+            $additionalSensors['wifiRssi'] ?? null,
+        ];
+
+        foreach ($candidates as $candidate) {
+            $numeric = $this->normalizeNumeric($candidate);
+            if ($numeric !== null) {
+                return number_format($numeric, 2, '.', '');
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     * @param array<string, mixed> $additionalSensors
+     */
+    private function extractDogDetected(array $data, array $additionalSensors): ?bool
+    {
+        $candidates = [
+            $data['dog_detected'] ?? null,
+            $data['dogDetected'] ?? null,
+            $data['is_dog_detected'] ?? null,
+            $data['isDogDetected'] ?? null,
+            $additionalSensors['dog_detected'] ?? null,
+            $additionalSensors['dogDetected'] ?? null,
+            $additionalSensors['is_dog_detected'] ?? null,
+            $additionalSensors['isDogDetected'] ?? null,
+        ];
+
+        foreach ($candidates as $candidate) {
+            $normalized = $this->normalizeBool($candidate);
+            if ($normalized !== null) {
+                return $normalized;
+            }
+        }
+
+        return null;
+    }
+
+    private function normalizeNumeric(mixed $value): ?float
+    {
+        if ($value === null) {
+            return null;
+        }
+        if (is_string($value)) {
+            $value = trim($value);
+            if ($value === '') {
+                return null;
+            }
+            $value = str_replace(',', '.', $value);
+            if (!is_numeric($value) && preg_match('/-?\d+(?:\.\d+)?/', $value, $matches) === 1) {
+                $value = $matches[0];
+            }
+        }
+        if (!is_numeric($value)) {
+            return null;
+        }
+        return (float) $value;
+    }
+
+    private function normalizeBool(mixed $value): ?bool
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        if (is_bool($value)) {
+            return $value;
+        }
+
+        $normalized = strtolower(trim((string) $value));
+        if (in_array($normalized, ['1', 'true', 'yes', 'on'], true)) {
+            return true;
+        }
+        if (in_array($normalized, ['0', 'false', 'no', 'off'], true)) {
+            return false;
+        }
+
+        return null;
     }
 }

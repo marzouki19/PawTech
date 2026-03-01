@@ -197,6 +197,8 @@ class StatisticsService
 
     /**
      * Update or create statistics entry
+     *
+     * @param array<string, mixed> $data
      */
     private function updateOrCreateStat(
         string $type,
@@ -238,6 +240,12 @@ class StatisticsService
 
     /**
      * Get statistics summary for dashboard
+     *
+     * @return array{
+     *   stations: array{total:int, active:int},
+     *   cameras: array{total:int, active:int},
+     *   detections: array{today:int}
+     * }
      */
     public function getDashboardSummary(): array
     {

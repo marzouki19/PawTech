@@ -1,17 +1,17 @@
 <?php
 
 namespace App\Controller;
-
 use App\Form\DonationType;
 use App\Entity\User;
 use App\Entity\Donation;
 use App\Entity\Produit;
+use App\Entity\ProduitComment;
 use App\Repository\UserRepository;
-use App\Repository\ProduitCommentRepository;
 use App\Repository\ProduitRepository;
+use App\Repository\ProduitCommentRepository;
 use App\Repository\CategorieRepository;
-use App\Repository\DonationRepository;
-use App\Service\RecommendationService;
+use App\Repository\DogsRepository;
+use App\Repository\EvenementRepository;
 use App\Form\UserType;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Doctrine\ORM\EntityManagerInterface;
@@ -26,9 +26,19 @@ final class PageController extends AbstractController
 {
     #[Route('/', name: 'app_home', methods: ['GET'])]
     #[Route('/home', name: 'app_home_alias', methods: ['GET'])]
-    public function home(): Response
+    public function home(
+        DogsRepository $dogsRepository,
+        EvenementRepository $evenementRepository
+    ): Response
     {
-        return $this->render('pages/home.html.twig');
+        return $this->render('pages/home.html.twig', [
+            'dogs' => $dogsRepository->findBy(
+                ['adoption_status' => 'Available'],
+                ['id' => 'DESC'],
+                4
+            ),
+            'events' => $evenementRepository->findUpcomingEvents(3),
+        ]);
     }
 
     #[Route('/signin', name: 'app_signin', methods: ['GET', 'POST'])]
@@ -116,6 +126,7 @@ final class PageController extends AbstractController
             'last_email' => $lastEmail,
         ]);
     }
+
    
 
     
@@ -142,16 +153,14 @@ final class PageController extends AbstractController
             return $this->redirectToRoute('app_signin');
         }
 
-        $formType = class_exists(\App\Form\AccountinfoType::class)
-            ? \App\Form\AccountinfoType::class
-            : UserType::class;
-        $form = $this->createForm($formType, $user, [
+        $form = $this->createForm(UserType::class, $user, [
             'validation_groups' => ['Default'],
         ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $avatarFile = $form->has('user_image') ? $form->get('user_image')->getData() : null;
+            // Handle avatar upload
+            $avatarFile = $form['user_image']->getData();
             if ($avatarFile) {
                 $this->handleUserImageUpload($avatarFile, $user);
             }
@@ -193,13 +202,13 @@ final class PageController extends AbstractController
     #[Route('/pages/about', name: 'app_about', methods: ['GET'])]
     public function about(): Response
     {
-        return $this->render('pages/about.html.twig');
+        return $this->render('about.html.twig');
     }
 
     #[Route('/pages/contact', name: 'app_contact', methods: ['GET'])]
     public function contact(): Response
     {
-        return $this->render('pages/contact.html.twig');
+        return $this->render('contact.html.twig');
     }
 
     #[Route('/pages/dogs', name: 'app_dogs', methods: ['GET'])]
@@ -215,7 +224,7 @@ final class PageController extends AbstractController
     }
 
     #[Route('/donation', name: 'app_donation')]
-    public function index(Request $request, EntityManagerInterface $entityManager, DonationRepository $donationRepository): Response
+    public function index(Request $request, EntityManagerInterface $entityManager): Response
     {
         $donation = new Donation();
         $form = $this->createForm(DonationType::class, $donation);
@@ -228,9 +237,6 @@ final class PageController extends AbstractController
             $this->addFlash('donation_success', 'Thank you for your donation!');
             return $this->redirectToRoute('app_donation');
         }
-
-        // Get recent validated donors
-        $recentDonors = $donationRepository->findRecentValidated(5);
 
         // Solution 1: Vérifier si le paramètre existe
         try {
@@ -248,21 +254,18 @@ final class PageController extends AbstractController
 
         return $this->render('pages/donation.html.twig', [
             'form' => $form->createView(),
-            'recentDonors' => $recentDonors,
             'stripe_key' => $stripeKey,
         ]);
     }
+
     //#[Route('/shop', name: 'app_shop', methods: ['GET'])]
     #[Route('/pages/shop', name: 'app_shop', methods: ['GET'])]
     public function shop(
         Request $request,
         ProduitRepository $produitRepository,
-        CategorieRepository $categorieRepository,
-        RecommendationService $recommendationService
+        CategorieRepository $categorieRepository
     ): Response
     {
-        // Get top-rated products for recommendations
-        $recommendedProducts = $recommendationService->getTopRatedProducts(6);
         // Récupérer les paramètres de filtrage
         $search = $request->query->get('search', '');
         $categorieId = $request->query->getInt('categorie', 0); // 0 si non défini
@@ -338,118 +341,81 @@ final class PageController extends AbstractController
             'produits' => $produits,
             'categories' => $categories,
             'search' => $search,
-            'selectedCategorie' => $categorieId,
+            'selectedCategorie' => $categorieId, // <-- AJOUTEZ CETTE LIGNE
             'minPrice' => $minPrice,
             'maxPrice' => $maxPrice,
             'sort' => $sort,
-            'recommendedProducts' => $recommendedProducts,
-        ]);
-    }
-    #[Route('/pages/product/{id}', name: 'app_product_detail', requirements: ['id' => '\d+'], methods: ['GET'])]
-    public function productDetail(Produit $produit, ProduitRepository $produitRepository, CategorieRepository $categorieRepository, ProduitCommentRepository $commentRepository): Response
-    {
-        // Get related products from same category
-        $relatedProducts = [];
-        if ($produit->getCategorie()) {
-            $allProducts = $produitRepository->findAll();
-            foreach ($allProducts as $p) {
-                if ($p->getId() !== $produit->getId() && $p->getCategorie() && $p->getCategorie()->getId() === $produit->getCategorie()->getId()) {
-                    $relatedProducts[] = $p;
-                }
-            }
-            $relatedProducts = array_slice($relatedProducts, 0, 4);
-        }
-        
-        // Get all categories for sidebar
-        $categories = $categorieRepository->findAll();
-        
-        // Get comments for this product
-        $comments = $commentRepository->findByProduct($produit->getId());
-        $commentCount = count($comments);
-        $avgRating = $commentCount > 0 ? round(array_sum(array_map(fn($c) => $c->getNote(), $comments)) / $commentCount, 1) : 0;
-        
-        return $this->render('pages/product_detail.html.twig', [
-            'produit' => $produit,
-            'relatedProducts' => $relatedProducts,
-            'categories' => $categories,
-            'comments' => $comments,
-            'commentCount' => $commentCount,
-            'avgRating' => $avgRating,
         ]);
     }
 
-    #[Route('/pages/product/{id}/comment', name: 'app_product_comment', requirements: ['id' => '\d+'], methods: ['POST'])]
-    public function addComment(Request $request, Produit $produit, EntityManagerInterface $em): Response
-    {
-        $auteur = $request->request->get('auteur');
-        $contenu = $request->request->get('contenu');
-        $note = (int) $request->request->get('note');
-        
-        if (empty($auteur) || empty($contenu) || $note < 1 || $note > 5) {
-            $this->addFlash('error', 'Please fill in all fields correctly.');
-            return $this->redirectToRoute('app_product_detail', ['id' => $produit->getId()]);
+    #[Route('/pages/shop/{id}', name: 'app_product_detail', requirements: ['id' => '\d+'], methods: ['GET'])]
+    public function productDetail(
+        Produit $produit,
+        ProduitRepository $produitRepository,
+        ProduitCommentRepository $produitCommentRepository
+    ): Response {
+        $produitId = (int) $produit->getId();
+
+        $comments = $produitCommentRepository->findByProduct($produitId);
+        $avgRating = $produitCommentRepository->getAverageRating($produitId) ?? 0.0;
+        $commentCount = $produitCommentRepository->getCommentCount($produitId);
+
+        $relatedProducts = [];
+        if ($produit->getCategorie() !== null) {
+            $relatedProducts = $produitRepository->createQueryBuilder('p')
+                ->andWhere('p.categorie = :categorie')
+                ->andWhere('p.id != :id')
+                ->setParameter('categorie', $produit->getCategorie())
+                ->setParameter('id', $produitId)
+                ->orderBy('p.id', 'DESC')
+                ->setMaxResults(4)
+                ->getQuery()
+                ->getResult();
         }
-        
+
+        return $this->render('pages/product_detail.html.twig', [
+            'produit' => $produit,
+            'relatedProducts' => $relatedProducts,
+            'comments' => $comments,
+            'avgRating' => $avgRating,
+            'commentCount' => $commentCount,
+        ]);
+    }
+
+    #[Route('/pages/shop/{id}/comment', name: 'app_product_comment', requirements: ['id' => '\d+'], methods: ['POST'])]
+    public function addProductComment(
+        Request $request,
+        Produit $produit,
+        EntityManagerInterface $entityManager
+    ): Response {
+        $auteur = trim((string) $request->request->get('auteur', ''));
+        $contenu = trim((string) $request->request->get('contenu', ''));
+        $note = (int) $request->request->get('note', 0);
+
+        if ($auteur === '' || $contenu === '' || $note < 1 || $note > 5) {
+            $this->addFlash('error', 'Please fill all review fields with a rating between 1 and 5.');
+
+            return $this->redirectToRoute('app_product_detail', [
+                'id' => $produit->getId(),
+            ]);
+        }
+
         $comment = new ProduitComment();
         $comment->setProduit($produit);
         $comment->setAuteur($auteur);
         $comment->setContenu($contenu);
         $comment->setNote($note);
-        $comment->setCreatedAt(new \DateTime());
-        
-        $em->persist($comment);
-        $em->flush();
-        
-        $this->addFlash('success', 'Thank you for your review!');
-        return $this->redirectToRoute('app_product_detail', ['id' => $produit->getId()]);
-    }
-    #[Route('/dashboard/demand-forecast', name: 'app_demand_forecast', methods: ['GET'])]
-    public function demandForecast(DemandForecastService $forecastService): Response
-    {
-        $summary = $forecastService->getDemandSummary();
-        
-        return $this->render('pages/demand_forecast.html.twig', [
-            'highDemandProducts' => $summary['highDemandProducts'],
-            'risingTrendProducts' => $summary['risingTrendProducts'],
-            'totalPredictedDemand' => $summary['totalPredictedDemand'],
-            'averageConfidence' => $summary['averageConfidence'],
-            'productsAnalyzed' => $summary['productsAnalyzed'],
-        ]);
-    }
-    
-    #[Route('/dashboard/demand-forecast/generate', name: 'app_demand_forecast_generate', methods: ['POST'])]
-    public function generateDemandForecast(Request $request, DemandForecastService $forecastService): Response
-    {
-        $timeframe = $request->request->get('timeframe', '30days');
-        
-        $forecasts = $forecastService->generateForecasts($timeframe);
-        
-        $this->addFlash('success', 'Demand forecast generated successfully for ' . count($forecasts) . ' products!');
-        
-        return $this->redirectToRoute('app_eshop_produit_index');
-    }
 
-    #[Route('/api/demand-forecast/{id}', name: 'app_api_demand_forecast_product', requirements: ['id' => '\d+'], methods: ['GET'])]
-    public function getProductForecast(int $id, DemandForecastService $forecastService, ProduitRepository $produitRepository): JsonResponse
-    {
-        $product = $produitRepository->find($id);
-        
-        if (!$product) {
-            return $this->json(['error' => 'Product not found'], 404);
-        }
-        
-        $forecast = $forecastService->generateForecastForProduct($product);
-        
-        return $this->json([
-            'product_id' => $product->getId(),
-            'product_name' => $product->getNom(),
-            'predicted_demand' => $forecast->getPredictedDemand(),
-            'confidence' => $forecast->getConfidence(),
-            'trend' => $forecast->getTrend(),
-            'growth_rate' => $forecast->getGrowthRate(),
-            'historical_sales' => $forecast->getHistoricalSales(),
-            'timeframe' => $forecast->getTimeframe(),
-            'generated_at' => $forecast->getGeneratedAt()->format('Y-m-d H:i:s'),
+        $produit->addRating((float) $note);
+
+        $entityManager->persist($comment);
+        $entityManager->persist($produit);
+        $entityManager->flush();
+
+        $this->addFlash('success', 'Your review has been submitted.');
+
+        return $this->redirectToRoute('app_product_detail', [
+            'id' => $produit->getId(),
         ]);
     }
 

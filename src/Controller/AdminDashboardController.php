@@ -193,7 +193,15 @@ class AdminDashboardController extends AbstractController
         DirectRtspService $directRtspService
     ): JsonResponse {
         $data = json_decode($request->getContent(), true);
-        $action = $data['action'] ?? '';
+        $data = is_array($data) ? $data : [];
+        $action = isset($data['action']) ? (string) $data['action'] : '';
+        $cameraId = $camera->getId();
+        if ($cameraId === null) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Camera ID is missing',
+            ], 400);
+        }
         
         // Get PTZ capabilities or use defaults if not set
         $ptzCapabilities = $camera->getPtzCapabilities();
@@ -234,7 +242,7 @@ class AdminDashboardController extends AbstractController
                     'protocol' => $result['protocol'] ?? 'unknown',
                     'camera_brand' => $result['brand'] ?? 'unknown',
                     'camera_ip' => $camera->getIpAddress() ?? 'not configured',
-                    'camera_port' => $camera->getPort() ?? 80,
+                    'camera_port' => $camera->getPort(),
                     'camera_username' => $camera->getUsername() ?? 'not set',
                     'demo' => $result['demo'] ?? false,
                     'error' => $result['error'] ?? null,
@@ -279,7 +287,7 @@ class AdminDashboardController extends AbstractController
                 break;
             case 'stream_stop':
                 try {
-                    $success = $streamTranscoder->stopTranscoding($camera->getId());
+                    $success = $streamTranscoder->stopTranscoding($cameraId);
                     $response = [
                         'success' => $success,
                         'message' => $success ? 'Stream stopped successfully' : 'Failed to stop stream',
@@ -297,7 +305,7 @@ class AdminDashboardController extends AbstractController
             case 'stream_restart':
                 try {
                     // Stop first, then start
-                    $streamTranscoder->stopTranscoding($camera->getId());
+                    $streamTranscoder->stopTranscoding($cameraId);
                     sleep(1);
                     $success = $streamTranscoder->startTranscoding($camera);
                     $response = [
@@ -344,7 +352,7 @@ class AdminDashboardController extends AbstractController
                 break;
             case 'vlc_stop':
                 try {
-                    $success = $streamTranscoder->stopVlcTranscoding($camera->getId());
+                    $success = $streamTranscoder->stopVlcTranscoding($cameraId);
                     $response = [
                         'success' => $success,
                         'message' => $success ? 'VLC stream stopped successfully' : 'Failed to stop VLC stream',
@@ -378,7 +386,7 @@ class AdminDashboardController extends AbstractController
                 break;
             case 'cv_stream_stop':
                 try {
-                    $success = $streamTranscoder->stopCvStream($camera->getId());
+                    $success = $streamTranscoder->stopCvStream($cameraId);
                     $response = [
                         'success' => $success,
                         'message' => $success ? 'CV stream stopped successfully' : 'Failed to stop CV stream',
@@ -395,7 +403,7 @@ class AdminDashboardController extends AbstractController
                 break;
             case 'get_stream_status':
                 // Return full stream status including VLC and CV
-                $status = $streamTranscoder->getFullStreamStatus($camera->getId());
+                $status = $streamTranscoder->getFullStreamStatus($cameraId);
                 $rtspStatus = $directRtspService->getStreamStatus($camera);
                 $response = [
                     'success' => true,
@@ -432,7 +440,7 @@ class AdminDashboardController extends AbstractController
             case 'rtsp_stop':
                 // Stop direct RTSP stream
                 try {
-                    $success = $directRtspService->stopDirectRtspStream($camera->getId());
+                    $success = $directRtspService->stopDirectRtspStream($cameraId);
                     $response = [
                         'success' => $success,
                         'message' => $success ? 'Direct RTSP stream stopped' : 'Failed to stop RTSP stream',
@@ -500,7 +508,7 @@ class AdminDashboardController extends AbstractController
         $hours = min(max($hours, 1), 168); // 1 hour to 7 days
         $limit = min(max($limit, 1), 1000);
         
-        $latestData = $iotRepo->findLatestByStation($station, $limit, $hours * 3600);
+        $latestData = $iotRepo->findLatestByStation($station, $limit);
         
         $data = [];
         foreach ($latestData as $item) {
@@ -519,8 +527,8 @@ class AdminDashboardController extends AbstractController
                 'firmwareVersion' => $item->getFirmwareVersion(),
                 'lastSeen' => $item->getLastSeen()?->format('Y-m-d H:i:s'),
                 'lastSeenIso' => $item->getLastSeen()?->format(DATE_ATOM),
-                'createdAt' => $item->getCreatedAt()->format('Y-m-d H:i:s'),
-                'createdAtIso' => $item->getCreatedAt()->format(DATE_ATOM),
+                'createdAt' => $item->getCreatedAt()?->format('Y-m-d H:i:s'),
+                'createdAtIso' => $item->getCreatedAt()?->format(DATE_ATOM),
             ];
         }
 
@@ -575,7 +583,7 @@ class AdminDashboardController extends AbstractController
                 'severity' => $detection->getSeverity(),
                 'description' => $detection->getDescription(),
                 'cameraName' => $detection->getCamera()?->getName(),
-                'detectedAt' => $detection->getDetectedAt()->format('Y-m-d H:i:s'),
+                'detectedAt' => $detection->getDetectedAt()?->format('Y-m-d H:i:s'),
             ];
         }
 
@@ -732,28 +740,51 @@ class AdminDashboardController extends AbstractController
             return new JsonResponse(['error' => 'Station not found'], 404);
         }
 
+        $additionalSensors = [];
+        if (isset($data['additional_sensors']) && is_array($data['additional_sensors'])) {
+            $additionalSensors = $data['additional_sensors'];
+        } elseif (isset($data['additionalSensors']) && is_array($data['additionalSensors'])) {
+            $additionalSensors = $data['additionalSensors'];
+        }
+
+        $signalStrength = $this->extractSignalStrength($data, $additionalSensors);
+        $ultrasonicDistanceCm = $this->extractUltrasonicDistanceCm($data, $additionalSensors);
+        $dogDetected = $this->extractDogDetected($data, $additionalSensors);
+        $foodDispensed = $this->normalizeBool(
+            $data['food_dispensed']
+            ?? $data['foodDispensed']
+            ?? $additionalSensors['food_dispensed']
+            ?? $additionalSensors['foodDispensed']
+            ?? null
+        );
+
+        if ($ultrasonicDistanceCm !== null) {
+            $additionalSensors['ultrasonic_distance_cm'] = $ultrasonicDistanceCm;
+            $additionalSensors['ultrasonicDistanceCm'] = $ultrasonicDistanceCm;
+        }
+        if ($signalStrength !== null) {
+            $additionalSensors['signal_strength'] = $signalStrength;
+            $additionalSensors['signalStrength'] = $signalStrength;
+        }
+        if ($dogDetected !== null) {
+            $additionalSensors['dog_detected'] = $dogDetected;
+            $additionalSensors['dogDetected'] = $dogDetected;
+        }
+
         $iotData = new IoTData();
         $iotData->setStation($station);
         $iotData->setTemperature($data['temperature'] ?? null);
         $iotData->setHumidity($data['humidity'] ?? null);
         $iotData->setPressure($data['pressure'] ?? null);
-        $iotData->setBatteryLevel($data['battery'] ?? null);
-        $iotData->setSignalStrength($data['signal_strength'] ?? null);
+        $iotData->setBatteryLevel($data['battery'] ?? $data['battery_level'] ?? $data['batteryLevel'] ?? null);
+        $iotData->setSignalStrength($signalStrength);
+        $iotData->setDistance($ultrasonicDistanceCm !== null ? number_format($ultrasonicDistanceCm, 2, '.', '') : null);
+        $iotData->setDogDetected($dogDetected);
+        $iotData->setFoodDispensed($foodDispensed);
         $iotData->setDeviceType($data['device_type'] ?? 'ESP32');
         $iotData->setDeviceId($data['device_id'] ?? null);
         $iotData->setFirmwareVersion($data['firmware_version'] ?? null);
-        $iotData->setAdditionalSensors($data['additional_sensors'] ?? null);
-        
-        // Dog feeder specific fields
-        if (isset($data['distance'])) {
-            $iotData->setDistance((string)$data['distance']);
-        }
-        if (isset($data['dog_detected'])) {
-            $iotData->setDogDetected((bool)$data['dog_detected']);
-        }
-        if (isset($data['food_dispensed'])) {
-            $iotData->setFoodDispensed((bool)$data['food_dispensed']);
-        }
+        $iotData->setAdditionalSensors(!empty($additionalSensors) ? $additionalSensors : null);
         
         $iotData->setLastSeen(new \DateTime());
         $iotData->setCreatedAt(new \DateTime());
@@ -886,6 +917,11 @@ class AdminDashboardController extends AbstractController
     public function getMjpegStream(IpCamera $camera): StreamedResponse
     {
         $cameraId = $camera->getId();
+        if ($cameraId === null) {
+            return new StreamedResponse(static function (): void {
+                // Keep response valid even if camera ID is missing.
+            }, 400);
+        }
         $mjpegFile = '/tmp/rtsp_stream_' . $cameraId . '.mjpg';
         
         return new StreamedResponse(function() use ($mjpegFile) {
@@ -900,6 +936,10 @@ class AdminDashboardController extends AbstractController
             while (!connection_aborted()) {
                 if (file_exists($mjpegFile)) {
                     $currentSize = filesize($mjpegFile);
+                    if (!is_int($currentSize)) {
+                        usleep(50000);
+                        continue;
+                    }
                     
                     if ($currentSize > $lastSize || $currentSize < $lastSize) {
                         $fp = fopen($mjpegFile, 'rb');
@@ -910,7 +950,14 @@ class AdminDashboardController extends AbstractController
                                 fseek($fp, $lastSize);
                             }
                             
-                            $data = fread($fp, $currentSize - $lastSize);
+                            $readLength = $currentSize - $lastSize;
+                            if ($readLength <= 0) {
+                                fclose($fp);
+                                $lastSize = $currentSize;
+                                usleep(50000);
+                                continue;
+                            }
+                            $data = fread($fp, $readLength);
                             fclose($fp);
                             
                             if ($data) {
@@ -1023,10 +1070,159 @@ class AdminDashboardController extends AbstractController
         return $response;
     }
 
-    private function resolveLegacyMjpegSource(int $cameraId): ?string
+    /**
+     * @param array<string, mixed> $data
+     * @param array<string, mixed> $additionalSensors
+     */
+    private function extractUltrasonicDistanceCm(array $data, array $additionalSensors): ?float
+    {
+        $nestedUltrasonic = isset($data['ultrasonic']) && is_array($data['ultrasonic']) ? $data['ultrasonic'] : [];
+
+        $candidates = [
+            $data['ultrasonic_distance_cm'] ?? null,
+            $data['ultrasonic_distance'] ?? null,
+            $data['ultrasonicDistanceCm'] ?? null,
+            $data['ultrasonicDistance'] ?? null,
+            $data['distance_cm'] ?? null,
+            $data['distanceCm'] ?? null,
+            $nestedUltrasonic['distance_cm'] ?? null,
+            $nestedUltrasonic['distanceCm'] ?? null,
+            $additionalSensors['ultrasonic_distance_cm'] ?? null,
+            $additionalSensors['ultrasonicDistanceCm'] ?? null,
+            $additionalSensors['ultrasonic_distance'] ?? null,
+            $additionalSensors['ultrasonicDistance'] ?? null,
+            $additionalSensors['distance_cm'] ?? null,
+            $additionalSensors['distanceCm'] ?? null,
+            $data['distance'] ?? null,
+            $additionalSensors['distance'] ?? null,
+        ];
+
+        foreach ($candidates as $candidate) {
+            $numeric = $this->normalizeNumeric($candidate);
+            if ($numeric !== null) {
+                return $numeric;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     * @param array<string, mixed> $additionalSensors
+     */
+    private function extractSignalStrength(array $data, array $additionalSensors): ?string
+    {
+        $network = isset($data['network']) && is_array($data['network']) ? $data['network'] : [];
+
+        $candidates = [
+            $data['signal_strength'] ?? null,
+            $data['signalStrength'] ?? null,
+            $data['signal'] ?? null,
+            $data['rssi'] ?? null,
+            $data['wifi_rssi'] ?? null,
+            $data['wifiRssi'] ?? null,
+            $network['signal_strength'] ?? null,
+            $network['signalStrength'] ?? null,
+            $network['signal'] ?? null,
+            $network['rssi'] ?? null,
+            $additionalSensors['signal_strength'] ?? null,
+            $additionalSensors['signalStrength'] ?? null,
+            $additionalSensors['signal'] ?? null,
+            $additionalSensors['rssi'] ?? null,
+            $additionalSensors['wifi_rssi'] ?? null,
+            $additionalSensors['wifiRssi'] ?? null,
+        ];
+
+        foreach ($candidates as $candidate) {
+            $numeric = $this->normalizeNumeric($candidate);
+            if ($numeric !== null) {
+                return number_format($numeric, 2, '.', '');
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     * @param array<string, mixed> $additionalSensors
+     */
+    private function extractDogDetected(array $data, array $additionalSensors): ?bool
     {
         $candidates = [
-            $this->getParameter('kernel.project_dir') . '/public/streams/camera_' . $cameraId . '/stream.mjpg',
+            $data['dog_detected'] ?? null,
+            $data['dogDetected'] ?? null,
+            $data['is_dog_detected'] ?? null,
+            $data['isDogDetected'] ?? null,
+            $additionalSensors['dog_detected'] ?? null,
+            $additionalSensors['dogDetected'] ?? null,
+            $additionalSensors['is_dog_detected'] ?? null,
+            $additionalSensors['isDogDetected'] ?? null,
+        ];
+
+        foreach ($candidates as $candidate) {
+            $normalized = $this->normalizeBool($candidate);
+            if ($normalized !== null) {
+                return $normalized;
+            }
+        }
+
+        return null;
+    }
+
+    private function normalizeNumeric(mixed $value): ?float
+    {
+        if ($value === null) {
+            return null;
+        }
+        if (is_string($value)) {
+            $value = trim($value);
+            if ($value === '') {
+                return null;
+            }
+            $value = str_replace(',', '.', $value);
+            if (!is_numeric($value) && preg_match('/-?\d+(?:\.\d+)?/', $value, $matches) === 1) {
+                $value = $matches[0];
+            }
+        }
+        if (!is_numeric($value)) {
+            return null;
+        }
+
+        return (float) $value;
+    }
+
+    private function normalizeBool(mixed $value): ?bool
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        if (is_bool($value)) {
+            return $value;
+        }
+
+        $normalized = strtolower(trim((string) $value));
+        if (in_array($normalized, ['1', 'true', 'yes', 'on'], true)) {
+            return true;
+        }
+        if (in_array($normalized, ['0', 'false', 'no', 'off'], true)) {
+            return false;
+        }
+
+        return null;
+    }
+
+    private function resolveLegacyMjpegSource(int $cameraId): ?string
+    {
+        $projectDirParam = $this->getParameter('kernel.project_dir');
+        if (!is_string($projectDirParam) || $projectDirParam === '') {
+            return null;
+        }
+
+        $projectDir = $projectDirParam;
+        $candidates = [
+            $projectDir . '/public/streams/camera_' . $cameraId . '/stream.mjpg',
             '/tmp/rtsp_stream_' . $cameraId . '.mjpg',
         ];
 

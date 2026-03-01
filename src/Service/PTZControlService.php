@@ -20,7 +20,7 @@ class PTZControlService
      * @param IpCamera $camera Camera entity
      * @param string $action PTZ action (ptz_up, ptz_down, ptz_left, ptz_right, zoom_in, zoom_out, ptz_stop, ptz_home)
      * @param int $timeoutSeconds Timeout for ContinuousMove in seconds (default 2). Used for hold-to-move functionality.
-     * @return array Response with success status and details
+     * @return array<string, mixed> Response with success status and details
      */
     public function sendPTZCommand(IpCamera $camera, string $action, int $timeoutSeconds = 2): array
     {
@@ -104,7 +104,7 @@ class PTZControlService
      * @param string|null $password ONVIF password
      * @param float $speed Zoom speed (-1 to 1)
      * @param int $timeoutSeconds Timeout in seconds for hold-to-move
-     * @return array Response with success status
+     * @return array<string, mixed> Response with success status
      */
     private function sendOnvifZoom(string $ip, int $port, ?string $username, ?string $password, float $speed, int $timeoutSeconds = 2): array
     {
@@ -125,6 +125,8 @@ class PTZControlService
 
     /**
      * Send ONVIF stop command
+     *
+     * @return array<string, mixed>
      */
     private function sendOnvifStop(string $ip, int $port, ?string $username, ?string $password): array
     {
@@ -156,6 +158,8 @@ class PTZControlService
 
     /**
      * Send ONVIF home command (go to preset 0)
+     *
+     * @return array<string, mixed>
      */
     private function sendOnvifHome(string $ip, int $port, ?string $username, ?string $password): array
     {
@@ -175,6 +179,8 @@ class PTZControlService
 
     /**
      * Send ONVIF request via curl
+     *
+     * @return array<string, mixed>
      */
     private function sendOnvifRequest(string $ip, int $port, ?string $username, ?string $password, string $body, string $action): array
     {
@@ -200,7 +206,8 @@ class PTZControlService
             escapeshellarg($url)
         );
         
-        $this->log("Curl command: " . str_replace($password, '***', $curlCmd));
+        $passwordForLog = $password ?? '';
+        $this->log("Curl command: " . str_replace($passwordForLog, '***', $curlCmd));
         
         exec($curlCmd, $output, $returnCode);
         unlink($tempFile);
@@ -218,8 +225,13 @@ class PTZControlService
 
         $this->log("ONVIF response: $statusCode - " . substr($response, 0, 200));
 
+        $hasFault = str_contains($response, '<env:Fault>')
+            || str_contains($response, '<s:Fault>')
+            || str_contains($response, '<Fault>');
+        $success = $returnCode === 0 && !$hasFault;
+
         // Check for fault response
-        if (str_contains($response, '<env:Fault>') || str_contains($response, '<s:Fault>') || str_contains($response, '<Fault>')) {
+        if ($hasFault) {
             return [
                 'success' => false,
                 'protocol' => 'onvif',
@@ -231,18 +243,20 @@ class PTZControlService
         }
 
         // Empty response usually means success for ONVIF
-        $isSuccess = $statusCode < 400;
         return [
-            'success' => $isSuccess,
+            'success' => $success,
             'status_code' => $statusCode,
             'action' => $action,
             'protocol' => 'onvif',
-            'message' => $isSuccess ? 'PTZ command sent' : 'PTZ command failed',
-            'error' => $isSuccess ? null : 'Unknown PTZ transport error',
+            'message' => $success ? 'PTZ command sent' : 'PTZ command failed',
+            'error' => $success ? null : 'Unknown PTZ transport error',
             'response_length' => strlen($response),
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function sendOnvifStopViaZeroVelocity(string $ip, int $port, ?string $username, ?string $password): array
     {
         $body = '<?xml version="1.0" encoding="UTF-8"?>
@@ -291,11 +305,13 @@ class PTZControlService
 
     /**
      * Move camera to a preset position
+     *
+     * @return array<string, mixed>
      */
     public function gotoPreset(IpCamera $camera, int $preset): array
     {
         $ipAddress = $camera->getIpAddress();
-        $port = $camera->getPort();
+        $port = $this->resolvePtzPort($camera);
         $username = $camera->getUsername();
         $password = $camera->getPassword();
 
@@ -321,6 +337,14 @@ class PTZControlService
 
     /**
      * Get PTZ capabilities for a camera
+     *
+     * @return array{
+     *   supported:bool,
+     *   ptz:bool,
+     *   zoom:bool,
+     *   presets:bool,
+     *   protocols:list<string>
+     * }
      */
     public function getCapabilities(IpCamera $camera): array
     {

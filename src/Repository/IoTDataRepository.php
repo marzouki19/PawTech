@@ -34,19 +34,14 @@ class IoTDataRepository extends ServiceEntityRepository
         }
     }
 
-    public function findLatestByStation(ObservationStation $station, int $limit = 10, int $hoursBack = null): array
+    /**
+     * @return list<IoTData>
+     */
+    public function findLatestByStation(ObservationStation $station, int $limit = 10): array
     {
-        $qb = $this->createQueryBuilder('i')
+        return $this->createQueryBuilder('i')
             ->andWhere('i.station = :station')
-            ->setParameter('station', $station);
-        
-        // Add time filter if hoursBack is specified
-        if ($hoursBack !== null) {
-            $qb->andWhere('i.createdAt >= :hoursAgo')
-               ->setParameter('hoursAgo', new \DateTime("-{$hoursBack} seconds"));
-        }
-        
-        return $qb
+            ->setParameter('station', $station)
             ->orderBy('i.createdAt', 'DESC')
             ->setMaxResults($limit)
             ->getQuery()
@@ -72,6 +67,9 @@ class IoTDataRepository extends ServiceEntityRepository
     /**
      * Find data newer than a given ID for a station
      */
+    /**
+     * @return list<IoTData>
+     */
     public function findNewerThan(int $stationId, int $afterId): array
     {
         return $this->createQueryBuilder('i')
@@ -84,6 +82,9 @@ class IoTDataRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * @return list<IoTData>
+     */
     public function findLatestDataForAllStations(): array
     {
         $sql = '
@@ -101,6 +102,9 @@ class IoTDataRepository extends ServiceEntityRepository
         return $this->getEntityManager()->createNativeQuery($sql, $rsm)->getResult();
     }
 
+    /**
+     * @return list<IoTData>
+     */
     public function findByDateRange(\DateTime $startDate, \DateTime $endDate, ?ObservationStation $station = null): array
     {
         $qb = $this->createQueryBuilder('i')
@@ -148,6 +152,9 @@ class IoTDataRepository extends ServiceEntityRepository
         return $result ? (float) $result : null;
     }
 
+    /**
+     * @return list<IoTData>
+     */
     public function findByStationId(int $stationId): array
     {
         return $this->createQueryBuilder('i')

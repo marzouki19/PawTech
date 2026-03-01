@@ -2,10 +2,12 @@
 
 namespace App\Controller;
 
+use App\Entity\IoTData;
 use App\Repository\IoTDataRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\StreamingHttpResponse;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Mercure\HubInterface;
 use Symfony\Component\Mercure\Update;
@@ -66,7 +68,7 @@ class IoTStreamController extends AbstractController
             if ($newData) {
                 foreach ($newData as $data) {
                     $this->sendEvent($response, $this->serializeIoTData($data));
-                    $lastId = $data->getId();
+                    $lastId = $data->getId() ?? $lastId;
                 }
             }
 
@@ -119,9 +121,9 @@ class IoTStreamController extends AbstractController
      * Returns when new data is available or timeout
      */
     #[Route('/iot/wait/{stationId}', name: 'app_iot_wait', methods: ['GET'])]
-    public function waitForData(int $stationId, IoTDataRepository $iotRepo): \Symfony\Component\HttpFoundation\JsonResponse
+    public function waitForData(int $stationId, IoTDataRepository $iotRepo, Request $request): JsonResponse
     {
-        $lastId = (int) ($_GET['after'] ?? 0);
+        $lastId = max(0, $request->query->getInt('after', 0));
         $timeout = 25; // 25 second timeout
         
         $startTime = time();
@@ -164,7 +166,7 @@ class IoTStreamController extends AbstractController
 
         $update = new Update(
             sprintf('iot/station/%d', $stationId),
-            json_encode($this->serializeIoTData($data)),
+            (string) (json_encode($this->serializeIoTData($data)) ?: '{}'),
             false
         );
 
@@ -186,13 +188,19 @@ class IoTStreamController extends AbstractController
         ]);
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     private function sendEvent(Response $response, array $data): void
     {
         $response->getContent();
-        echo "data: " . json_encode($data) . "\n\n";
+        echo "data: " . (json_encode($data) ?: '{}') . "\n\n";
     }
 
-    private function serializeIoTData($iotData): array
+    /**
+     * @return array<string, mixed>
+     */
+    private function serializeIoTData(IoTData $iotData): array
     {
         return [
             'id' => $iotData->getId(),

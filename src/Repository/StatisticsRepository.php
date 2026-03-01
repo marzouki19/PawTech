@@ -32,6 +32,9 @@ class StatisticsRepository extends ServiceEntityRepository
         }
     }
 
+    /**
+     * @return list<Statistics>
+     */
     public function findByType(string $type): array
     {
         return $this->createQueryBuilder('s')
@@ -42,6 +45,9 @@ class StatisticsRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * @return list<Statistics>
+     */
     public function findByDateRange(\DateTime $startDate, \DateTime $endDate, ?string $type = null): array
     {
         $qb = $this->createQueryBuilder('s')
@@ -59,6 +65,9 @@ class StatisticsRepository extends ServiceEntityRepository
         return $qb->getQuery()->getResult();
     }
 
+    /**
+     * @return list<Statistics>
+     */
     public function findLatestByType(string $type, int $limit = 30): array
     {
         return $this->createQueryBuilder('s')

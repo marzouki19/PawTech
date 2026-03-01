@@ -4,6 +4,7 @@ namespace App\Service;
 
 use App\Entity\DogDetection;
 use App\Entity\IpCamera;
+use App\Repository\IpCameraRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -79,10 +80,14 @@ class ComputerVisionService
 
     /**
      * Batch process detections for all active cameras
+     *
+     * @return list<DogDetection>
      */
     public function processAllCameras(): array
     {
-        $cameras = $this->entityManager->getRepository(IpCamera::class)->findBy(['status' => 'active']);
+        /** @var IpCameraRepository $cameraRepository */
+        $cameraRepository = $this->entityManager->getRepository(IpCamera::class);
+        $cameras = $cameraRepository->findActiveCameras();
         $results = [];
 
         foreach ($cameras as $camera) {
@@ -102,6 +107,9 @@ class ComputerVisionService
 
     /**
      * Analyze health conditions from detected dog
+     *
+     * @param array<string, mixed> $detectionData
+     * @return list<string>
      */
     public function analyzeHealthCondition(array $detectionData): array
     {
@@ -170,6 +178,8 @@ class ComputerVisionService
 
     /**
      * Determine severity based on health conditions
+     *
+     * @param list<string> $healthConditions
      */
     public function determineSeverity(array $healthConditions): string
     {
@@ -206,13 +216,15 @@ class ComputerVisionService
 
     /**
      * Create detection entity from API result
+     *
+     * @param array<string, mixed> $result
      */
     private function createDetectionFromResult(IpCamera $camera, array $result): DogDetection
     {
         $detection = new DogDetection();
         $detection->setCamera($camera);
         $detection->setBehaviorType($result['behavior'] ?? 'unknown');
-        $detection->setConfidence($result['confidence'] ?? 0);
+        $detection->setConfidence((string) ($result['confidence'] ?? 0));
         $detection->setDetectedObject($result['class'] ?? 'dog');
         
         if (isset($result['bbox'])) {
@@ -240,6 +252,8 @@ class ComputerVisionService
 
     /**
      * Get supported behaviors
+     *
+     * @return list<string>
      */
     public static function getSupportedBehaviors(): array
     {
@@ -261,6 +275,8 @@ class ComputerVisionService
 
     /**
      * Get supported health conditions
+     *
+     * @return list<string>
      */
     public static function getSupportedHealthConditions(): array
     {

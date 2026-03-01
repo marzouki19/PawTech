@@ -12,10 +12,19 @@ class NotificationChatService
 
     public function __construct(ParameterBagInterface $parameterBag)
     {
-        $projectDir = rtrim((string) $parameterBag->get('kernel.project_dir'), '/');
+        $projectDirParam = $parameterBag->get('kernel.project_dir');
+        $projectDir = is_string($projectDirParam) ? $projectDirParam : '';
+        if ($projectDir === '') {
+            throw new RuntimeException('Missing kernel.project_dir parameter.');
+        }
+
+        $projectDir = rtrim($projectDir, '/');
         $this->threadsDirectory = $projectDir . '/var/notification_chat_threads';
     }
 
+    /**
+     * @return list<array<string, mixed>>
+     */
     public function getMessages(int $notificationId): array
     {
         $thread = $this->getConversation($notificationId);
@@ -23,6 +32,16 @@ class NotificationChatService
         return $thread['messages'];
     }
 
+    /**
+     * @return array{
+     *   participants: array{
+     *     vet: array{user_id:int, name:string, role:string, assigned_at:string}|null,
+     *     agent: array{user_id:int, name:string, role:string, assigned_at:string}|null
+     *   },
+     *   entries: array{vet_entered:bool, agent_entered:bool},
+     *   messages: list<array<string, mixed>>
+     * }
+     */
     public function getConversation(int $notificationId): array
     {
         $path = $this->getThreadPath($notificationId);
@@ -43,6 +62,9 @@ class NotificationChatService
         return $this->normalizeThread($decoded);
     }
 
+    /**
+     * @return array{allowed:bool, reason:?string, both_entered:bool, thread:array<string,mixed>}
+     */
     public function registerParticipantEntry(
         int $notificationId,
         int $userId,
@@ -153,7 +175,10 @@ class NotificationChatService
         return (bool) $result;
     }
 
-    private function mutateThread(int $notificationId, callable $mutator)
+    /**
+     * @param callable $mutator
+     */
+    private function mutateThread(int $notificationId, callable $mutator): mixed
     {
         $this->ensureThreadsDirectory();
         $path = $this->getThreadPath($notificationId);
@@ -211,6 +236,16 @@ class NotificationChatService
         return $this->threadsDirectory . '/notification_' . $safeId . '.json';
     }
 
+    /**
+     * @return array{
+     *   participants: array{
+     *     vet: array{user_id:int, name:string, role:string, assigned_at:string}|null,
+     *     agent: array{user_id:int, name:string, role:string, assigned_at:string}|null
+     *   },
+     *   entries: array{vet_entered:bool, agent_entered:bool},
+     *   messages: list<array<string, mixed>>
+     * }
+     */
     private function createDefaultThread(): array
     {
         return [
@@ -226,6 +261,17 @@ class NotificationChatService
         ];
     }
 
+    /**
+     * @param array<int|string, mixed> $decoded
+     * @return array{
+     *   participants: array{
+     *     vet: array{user_id:int, name:string, role:string, assigned_at:string}|null,
+     *     agent: array{user_id:int, name:string, role:string, assigned_at:string}|null
+     *   },
+     *   entries: array{vet_entered:bool, agent_entered:bool},
+     *   messages: list<array<string, mixed>>
+     * }
+     */
     private function normalizeThread(array $decoded): array
     {
         // Backward compatibility: old files only stored a flat messages array.
@@ -271,6 +317,9 @@ class NotificationChatService
         return $thread;
     }
 
+    /**
+     * @param array<string, mixed> $thread
+     */
     private function hasBothRolesEntered(array $thread): bool
     {
         return !empty($thread['entries']['vet_entered']) && !empty($thread['entries']['agent_entered']);

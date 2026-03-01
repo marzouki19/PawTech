@@ -11,7 +11,6 @@ use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
-use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
@@ -28,9 +27,7 @@ class AlertType extends AbstractType
                     'class' => 'w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500 transition-colors bg-gray-50 hover:bg-white',
                 ],
                 'label' => 'Type',
-                'required' => true,
-                'placeholder' => false,
-                'empty_data' => 'TECHNICAL',
+                'placeholder' => 'Select type',
             ])
             ->add('message', TextareaType::class, [
                 'attr' => [

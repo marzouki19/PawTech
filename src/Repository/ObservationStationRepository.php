@@ -16,6 +16,9 @@ class ObservationStationRepository extends ServiceEntityRepository
         parent::__construct($registry, ObservationStation::class);
     }
 
+    /**
+     * @return list<ObservationStation>
+     */
     public function findStationByCode(string $code): array
     {
         return $this->createQueryBuilder('s')
@@ -25,6 +28,9 @@ class ObservationStationRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * @return list<ObservationStation>
+     */
     public function findInactiveStations(): array
     {
         return $this->createQueryBuilder('s')

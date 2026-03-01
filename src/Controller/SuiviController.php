@@ -7,7 +7,6 @@ use App\Form\SuiviType;
 use App\Repository\SuiviRepository;
 use App\Service\AiSymptomsService;
 use Doctrine\ORM\EntityManagerInterface;
-use Nucleos\DompdfBundle\Wrapper\DompdfWrapperInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -19,16 +18,13 @@ class SuiviController extends AbstractController
 {
     private EntityManagerInterface $entityManager;
     private AiSymptomsService $aiSymptomsService;
-    private DompdfWrapperInterface $dompdfWrapper;
     
     public function __construct(
         EntityManagerInterface $entityManager,
-        AiSymptomsService $aiSymptomsService,
-        DompdfWrapperInterface $dompdfWrapper
+        AiSymptomsService $aiSymptomsService
     ) {
         $this->entityManager = $entityManager;
         $this->aiSymptomsService = $aiSymptomsService;
-        $this->dompdfWrapper = $dompdfWrapper;
     }
 
     #[Route('/', name: 'app_suivi_index', methods: ['GET'])]
@@ -191,16 +187,28 @@ class SuiviController extends AbstractController
             'organ_image_data_uri' => $this->resolveOrganImageDataUri($organId),
         ]);
 
-        $pdfContent = $this->dompdfWrapper->getPdf($html, [
-            'defaultPaperSize' => 'a4',
-            'defaultPaperOrientation' => 'portrait',
-        ]);
         $consultationId = (string) $consultation->getId();
         $filename = 'consultation_' . $consultationId . '_followup_' . (string) $suivi->getId() . '.pdf';
 
-        return new Response($pdfContent, 200, [
-            'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        if (class_exists('Dompdf\\Dompdf')) {
+            $options = new \Dompdf\Options();
+            $options->set('isRemoteEnabled', true);
+
+            $dompdf = new \Dompdf\Dompdf($options);
+            $dompdf->loadHtml($html);
+            $dompdf->setPaper('a4', 'portrait');
+            $dompdf->render();
+            $pdfContent = $dompdf->output();
+
+            return new Response($pdfContent, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            ]);
+        }
+
+        return new Response($html, 200, [
+            'Content-Type' => 'text/html; charset=UTF-8',
+            'Content-Disposition' => 'inline; filename="' . str_replace('.pdf', '.html', $filename) . '"',
         ]);
     }
 

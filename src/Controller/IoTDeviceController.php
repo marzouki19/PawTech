@@ -10,7 +10,6 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Serializer\SerializerInterface;
 
 #[Route('/admin/stations/{stationId}/iot')]
 class IoTDeviceController extends AbstractController
@@ -25,7 +24,7 @@ class IoTDeviceController extends AbstractController
     ): JsonResponse {
         $devices = $deviceRepo->findByStationId($stationId);
         
-        $data = array_map(function($device) {
+        $data = array_map(function(IoTDevice $device): array {
             return [
                 'id' => $device->getId(),
                 'name' => $device->getName(),
@@ -61,6 +60,7 @@ class IoTDeviceController extends AbstractController
         }
         
         $data = json_decode($request->getContent(), true);
+        $data = is_array($data) ? $data : [];
         
         $device = new IoTDevice();
         $device->setStation($station);
@@ -72,7 +72,7 @@ class IoTDeviceController extends AbstractController
         $device->setWifiSsid($data['wifiSsid'] ?? null);
         $device->setWifiPassword($data['wifiPassword'] ?? null);
         $device->setApiServerUrl($data['apiServerUrl'] ?? null);
-        $device->setApiEndpoint($data['apiEndpoint'] ?? '/admin/stations/api/iot/data');
+        $device->setApiEndpoint($data['apiEndpoint'] ?? '/admin/api/iot/data');
         $device->setReportingInterval($data['reportingInterval'] ?? 60);
         $device->setHeartbeatInterval($data['heartbeatInterval'] ?? 300);
         $device->setSensorConfig($data['sensorConfig'] ?? null);
@@ -101,8 +101,9 @@ class IoTDeviceController extends AbstractController
         IoTDeviceRepository $deviceRepo
     ): JsonResponse {
         $device = $deviceRepo->find($id);
+        $station = $device?->getStation();
         
-        if (!$device || $device->getStation()->getId() != $stationId) {
+        if (!$device || !$station || $station->getId() !== $stationId) {
             return new JsonResponse(['error' => 'Device not found'], 404);
         }
         
@@ -136,12 +137,14 @@ class IoTDeviceController extends AbstractController
         IoTDeviceRepository $deviceRepo
     ): JsonResponse {
         $device = $deviceRepo->find($id);
+        $station = $device?->getStation();
         
-        if (!$device || $device->getStation()->getId() != $stationId) {
+        if (!$device || !$station || $station->getId() !== $stationId) {
             return new JsonResponse(['error' => 'Device not found'], 404);
         }
         
         $data = json_decode($request->getContent(), true);
+        $data = is_array($data) ? $data : [];
         
         if (isset($data['name'])) {
             $device->setName($data['name']);
@@ -203,8 +206,9 @@ class IoTDeviceController extends AbstractController
         IoTDeviceRepository $deviceRepo
     ): JsonResponse {
         $device = $deviceRepo->find($id);
+        $station = $device?->getStation();
         
-        if (!$device || $device->getStation()->getId() != $stationId) {
+        if (!$device || !$station || $station->getId() !== $stationId) {
             return new JsonResponse(['error' => 'Device not found'], 404);
         }
         

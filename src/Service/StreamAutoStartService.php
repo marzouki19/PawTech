@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Entity\IpCamera;
 use App\Repository\IpCameraRepository;
 use Psr\Log\LoggerInterface;
 
@@ -28,6 +29,12 @@ class StreamAutoStartService
     /**
      * Start all cameras that have 'active' status in the database
      * This should be called on application boot to recover streams after restart
+     *
+     * @return array{
+     *   started:list<int>,
+     *   already_running:list<int>,
+     *   failed:list<array{cameraId:int, reason:string}>
+     * }
      */
     public function startAllActiveStreams(): array
     {
@@ -44,6 +51,9 @@ class StreamAutoStartService
 
         foreach ($cameras as $camera) {
             $cameraId = $camera->getId();
+            if ($cameraId === null) {
+                continue;
+            }
             
             // Check if stream is already running (using our improved isTranscoding method)
             if ($this->transcoderService->isTranscoding($cameraId)) {
@@ -100,6 +110,12 @@ class StreamAutoStartService
     /**
      * Check and restart any streams that may have stopped
      * This can be called periodically via cron or a scheduler
+     *
+     * @return array{
+     *   restarted:list<int>,
+     *   still_running:list<int>,
+     *   not_active:list<int>
+     * }
      */
     public function checkAndRestartStoppedStreams(): array
     {
@@ -114,6 +130,9 @@ class StreamAutoStartService
 
         foreach ($cameras as $camera) {
             $cameraId = $camera->getId();
+            if ($cameraId === null) {
+                continue;
+            }
             
             // Check if stream is actually running
             if ($this->transcoderService->isTranscoding($cameraId)) {
@@ -140,6 +159,15 @@ class StreamAutoStartService
 
     /**
      * Get the current status of all cameras
+     *
+     * @return list<array{
+     *   id:int|null,
+     *   name:string|null,
+     *   dbStatus:string,
+     *   transcoding:bool,
+     *   hlsUrl:string|null,
+     *   rtspUrl:string
+     * }>
      */
     public function getStreamStatus(): array
     {

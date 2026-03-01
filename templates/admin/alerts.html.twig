@@ -38,7 +38,7 @@
                         <div>
                             <h3 class="font-bold text-gray-800">{{ alert.message }}</h3>
                             <div class="flex items-center gap-4 mt-2 text-sm text-gray-500">
-                                <span><i class="fas fa-calendar mr-1"></i> {{ alert.date|date('Y-m-d H:i') }}</span>
+                                <span><i class="fas fa-calendar mr-1"></i> {{ alert.date|date('Y-m-d H:i', app_timezone|default('UTC')) }}</span>
                                 {% if alert.station %}
                                 <span><i class="fas fa-satellite-dish mr-1"></i> {{ alert.station.code }}</span>
                                 {% endif %}

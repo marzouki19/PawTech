@@ -32,6 +32,9 @@ class IpCameraRepository extends ServiceEntityRepository
         }
     }
 
+    /**
+     * @return list<IpCamera>
+     */
     public function findActiveCameras(): array
     {
         return $this->createQueryBuilder('c')
@@ -42,6 +45,9 @@ class IpCameraRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * @return list<IpCamera>
+     */
     public function findByStationId(int $stationId): array
     {
         return $this->createQueryBuilder('c')
@@ -61,6 +67,9 @@ class IpCameraRepository extends ServiceEntityRepository
             ->getOneOrNullResult();
     }
 
+    /**
+     * @return list<IpCamera>
+     */
     public function findByStatus(string $status): array
     {
         return $this->createQueryBuilder('c')
@@ -71,6 +80,9 @@ class IpCameraRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * @return list<array{status:string|null, count:numeric-string|int}>
+     */
     public function countByStatus(): array
     {
         return $this->createQueryBuilder('c')

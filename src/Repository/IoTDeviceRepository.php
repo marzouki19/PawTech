@@ -18,6 +18,8 @@ class IoTDeviceRepository extends ServiceEntityRepository
 
     /**
      * Find all devices for a station
+     *
+     * @return list<IoTDevice>
      */
     public function findByStationId(int $stationId): array
     {
@@ -43,6 +45,8 @@ class IoTDeviceRepository extends ServiceEntityRepository
 
     /**
      * Find active devices for a station
+     *
+     * @return list<IoTDevice>
      */
     public function findActiveByStationId(int $stationId): array
     {
@@ -58,6 +62,8 @@ class IoTDeviceRepository extends ServiceEntityRepository
 
     /**
      * Find devices that haven't sent heartbeat within interval
+     *
+     * @return list<IoTDevice>
      */
     public function findStaleDevices(int $timeoutSeconds = 600): array
     {

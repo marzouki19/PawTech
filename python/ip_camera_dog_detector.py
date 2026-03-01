@@ -51,6 +51,22 @@ WINDOW_TITLE = "IP Camera Dog Detector"
 STATUS_FRAME_SHAPE = (720, 1280, 3)
 DEFAULT_SAVE_DIR = Path(__file__).resolve().parent / "detections"
 DEFAULT_HEALTH_MODEL_PATH = Path(__file__).resolve().parent / "models" / "dog_health_knn.joblib"
+HEALTH_FEATURE_COLUMNS = [
+    "foam_ratio",
+    "red_eye_ratio",
+    "motion_ratio",
+    "edge_ratio",
+    "mean_saturation",
+]
+
+
+def normalize_health_label(value: Any) -> str:
+    text = str(value).strip().lower()
+    if text in {"1", "1.0", "ill", "sick", "unhealthy", "diseased", "true"}:
+        return "ill"
+    if text in {"0", "0.0", "healthy", "normal", "false"}:
+        return "healthy"
+    return "ill" if "ill" in text or "sick" in text else "healthy"
 
 
 @dataclass
@@ -98,6 +114,10 @@ class PTZFollower:
         self.lost_frames = 0
         self.smoothed_x: Optional[float] = None
         self.smoothed_y: Optional[float] = None
+        # Track consecutive same-direction movements to detect stuck camera
+        self.consecutive_down_moves = 0
+        self.consecutive_up_moves = 0
+        self.max_consecutive_moves = 5  # After this many moves in same direction, stop and recalibrate
 
     def _send_action(self, action: str) -> bool:
         if requests is None:
@@ -168,32 +188,98 @@ class PTZFollower:
         return sent
 
     def update(self, target: Optional[DogTarget], frame_w: int, frame_h: int) -> str:
+        # If no target, increment lost frames and stop if needed
         if target is None:
             self.lost_frames += 1
+            # Reset consecutive move counters when target is lost
+            self.consecutive_down_moves = 0
+            self.consecutive_up_moves = 0
             if self.lost_frames >= self.lost_stop_frames:
                 self.maybe_send("ptz_stop")
             return "ptz_stop"
 
         self.lost_frames = 0
 
+        # Get the center of the detected dog
         cx, cy = target.center()
+        
+        # Initialize smoothed coordinates on first detection or after loss
         if self.smoothed_x is None or self.smoothed_y is None:
             self.smoothed_x = cx
             self.smoothed_y = cy
         else:
-            alpha = 0.45
+            # Use a moderate alpha for smooth tracking
+            alpha = 0.35
             self.smoothed_x = alpha * cx + (1.0 - alpha) * self.smoothed_x
             self.smoothed_y = alpha * cy + (1.0 - alpha) * self.smoothed_y
 
-        error_x = (self.smoothed_x - (frame_w / 2.0)) / (frame_w / 2.0)
-        error_y = (self.smoothed_y - (frame_h / 2.0)) / (frame_h / 2.0)
+        # Calculate center of frame
+        center_x = frame_w / 2.0
+        center_y = frame_h / 2.0
+        
+        # Calculate error from center (normalized to -1 to 1)
+        # error_x > 0: target is right of center
+        # error_y > 0: target is below center (in lower half of frame)
+        error_x = (self.smoothed_x - center_x) / center_x
+        error_y = (self.smoothed_y - center_y) / center_y
 
+        # Calculate deadzone thresholds (in normalized coordinates)
+        deadzone_x = self.x_threshold
+        deadzone_y = self.y_threshold
+        
+        # Check if target is within deadzone on BOTH axes
+        in_deadzone_x = abs(error_x) <= deadzone_x
+        in_deadzone_y = abs(error_y) <= deadzone_y
+        
+        # If target is well-centered on both axes, stop
+        if in_deadzone_x and in_deadzone_y:
+            self.consecutive_down_moves = 0
+            self.consecutive_up_moves = 0
+            self.maybe_send("ptz_stop")
+            return "ptz_stop"
+
+        # Determine action - move in the direction of larger error
         action = "ptz_stop"
-        if abs(error_x) > self.x_threshold or abs(error_y) > self.y_threshold:
+        
+        # Use absolute error to determine which axis needs more movement
+        if abs(error_x) > deadzone_x or abs(error_y) > deadzone_y:
+            # Determine primary direction based on which error is larger
             if abs(error_x) >= abs(error_y):
-                action = "ptz_right" if error_x > 0 else "ptz_left"
+                # Horizontal movement is primary
+                if abs(error_x) > deadzone_x:
+                    action = "ptz_right" if error_x > 0 else "ptz_left"
             else:
-                action = "ptz_down" if error_y > 0 else "ptz_up"
+                # Vertical movement is primary
+                if abs(error_y) > deadzone_y:
+                    action = "ptz_down" if error_y > 0 else "ptz_up"
+
+        # If no action selected (target slightly outside deadzone but not enough), stop
+        if action == "ptz_stop":
+            self.consecutive_down_moves = 0
+            self.consecutive_up_moves = 0
+            self.maybe_send("ptz_stop")
+            return action
+
+        # Track consecutive movements to detect stuck camera
+        if action == "ptz_down":
+            self.consecutive_down_moves += 1
+            self.consecutive_up_moves = 0
+            # After max consecutive moves, check if we should stop
+            if self.consecutive_down_moves >= self.max_consecutive_moves:
+                self.consecutive_down_moves = 0
+                self.maybe_send("ptz_stop")
+                return "ptz_stop"
+        elif action == "ptz_up":
+            self.consecutive_up_moves += 1
+            self.consecutive_down_moves = 0
+            if self.consecutive_up_moves >= self.max_consecutive_moves:
+                self.consecutive_up_moves = 0
+                self.maybe_send("ptz_stop")
+                return "ptz_stop"
+        else:
+            # Reset counters for horizontal movements
+            self.consecutive_down_moves = 0
+            self.consecutive_up_moves = 0
 
         self.maybe_send(action)
         return action
@@ -202,6 +288,12 @@ class PTZFollower:
         self._send_action("ptz_stop")
         self.last_sent_action = "ptz_stop"
         self.last_sent_at = time.time()
+        # Reset all tracking state
+        self.smoothed_x = None
+        self.smoothed_y = None
+        self.lost_frames = 0
+        self.consecutive_down_moves = 0
+        self.consecutive_up_moves = 0
 
 
 @dataclass
@@ -233,6 +325,8 @@ class DogHealthKNN:
     def __init__(self, model_path: Path) -> None:
         self.model_path = model_path
         self.model: Any = None
+        self.feature_columns: list[str] = list(HEALTH_FEATURE_COLUMNS)
+        self.label_order: list[str] = ["healthy", "ill"]
         self.enabled = False
         self.using_heuristic_fallback = True
 
@@ -250,8 +344,18 @@ class DogHealthKNN:
             loaded = joblib.load(self.model_path)
             if isinstance(loaded, dict) and "model" in loaded:
                 self.model = loaded["model"]
+                feature_columns = loaded.get("feature_columns")
+                if isinstance(feature_columns, list) and all(isinstance(item, str) for item in feature_columns):
+                    self.feature_columns = feature_columns
+                labels = loaded.get("labels")
+                if isinstance(labels, list) and len(labels) >= 2 and all(isinstance(item, str) for item in labels):
+                    self.label_order = [normalize_health_label(item) for item in labels]
             else:
                 self.model = loaded
+
+            if not hasattr(self.model, "predict"):
+                raise TypeError("Loaded model does not implement predict().")
+
             self.enabled = True
             self.using_heuristic_fallback = False
             print(f"KNN health model loaded: {self.model_path}")
@@ -261,29 +365,59 @@ class DogHealthKNN:
             print("Using symptom-based fallback.")
             return False
 
+    def _fallback_predict(self, symptoms: list[str]) -> HealthPrediction:
+        if symptoms:
+            return HealthPrediction(label="ill", confidence=0.70, symptoms=symptoms)
+        return HealthPrediction(label="healthy", confidence=0.75, symptoms=symptoms)
+
     def predict(self, features: HealthFeatures, symptoms: list[str]) -> HealthPrediction:
         if not self.enabled or self.model is None:
-            if symptoms:
-                return HealthPrediction(label="ill", confidence=0.65, symptoms=symptoms)
-            return HealthPrediction(label="healthy", confidence=0.70, symptoms=[])
+            return self._fallback_predict(symptoms)
 
         try:
             x = np.array([features.vector()], dtype=np.float32)
             raw_label = self.model.predict(x)[0]
-            label_text = str(raw_label).strip().lower()
-            label = "ill" if label_text in {"1", "ill", "sick", "unhealthy"} else "healthy"
+            label = normalize_health_label(raw_label)
 
-            confidence = 0.5
+            confidence = 0.60
             if hasattr(self.model, "predict_proba"):
-                proba = self.model.predict_proba(x)[0]
-                confidence = float(np.max(proba))
+                probabilities = self.model.predict_proba(x)[0]
+                classes = getattr(self.model, "classes_", None)
+                if classes is not None and len(classes) == len(probabilities):
+                    ill_probability = 0.0
+                    for class_value, class_probability in zip(classes, probabilities):
+                        if normalize_health_label(class_value) == "ill":
+                            ill_probability = max(ill_probability, float(class_probability))
+                    if ill_probability <= 0.0:
+                        confidence = float(np.max(probabilities))
+                    else:
+                        confidence = ill_probability if label == "ill" else (1.0 - ill_probability)
+                else:
+                    confidence = float(np.max(probabilities))
 
+            if symptoms and label == "healthy" and confidence < 0.60:
+                label = "ill"
+                confidence = 0.60
+
+            confidence = max(0.50, min(1.0, confidence))
             return HealthPrediction(label=label, confidence=confidence, symptoms=symptoms)
         except Exception as exc:
             print(f"KNN prediction error: {exc}")
-            if symptoms:
-                return HealthPrediction(label="ill", confidence=0.60, symptoms=symptoms)
-            return HealthPrediction(label="healthy", confidence=0.60, symptoms=[])
+            return self._fallback_predict(symptoms)
+
+
+def env_int_or_none(name: str) -> Optional[int]:
+    raw = os.getenv(name)
+    if raw is None:
+        return None
+    value = raw.strip()
+    if value == "":
+        return None
+    try:
+        parsed = int(value)
+    except ValueError:
+        return None
+    return parsed if parsed > 0 else None
 
 
 def parse_args() -> argparse.Namespace:
@@ -377,7 +511,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--camera-id",
         type=int,
-        default=int(os.getenv("CAMERA_ID", "0")) or None,
+        default=env_int_or_none("CAMERA_ID"),
         help="Camera ID used for web integration (optional).",
     )
     parser.add_argument(
@@ -399,20 +533,20 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--symptom-foam-threshold",
         type=float,
-        default=0.16,
-        help="Foam ratio threshold for symptom flagging (default: 0.16).",
+        default=0.22,
+        help="Foam ratio threshold for symptom flagging (default: 0.22).",
     )
     parser.add_argument(
         "--symptom-red-eye-threshold",
         type=float,
-        default=0.06,
-        help="Red-eye ratio threshold for symptom flagging (default: 0.06).",
+        default=0.09,
+        help="Red-eye ratio threshold for symptom flagging (default: 0.09).",
     )
     parser.add_argument(
         "--symptom-motion-threshold",
         type=float,
-        default=0.08,
-        help="Motion ratio threshold for symptom flagging (default: 0.08).",
+        default=0.12,
+        help="Motion ratio threshold for symptom flagging (default: 0.12).",
     )
     parser.add_argument(
         "--follow-dog",
@@ -447,20 +581,20 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--follow-x-threshold",
         type=float,
-        default=0.18,
-        help="Horizontal dead-zone threshold for follow logic (default: 0.18).",
+        default=0.15,
+        help="Horizontal dead-zone threshold for follow logic (default: 0.15).",
     )
     parser.add_argument(
         "--follow-y-threshold",
         type=float,
-        default=0.20,
-        help="Vertical dead-zone threshold for follow logic (default: 0.20).",
+        default=0.18,
+        help="Vertical dead-zone threshold for follow logic (default: 0.18).",
     )
     parser.add_argument(
         "--lost-stop-frames",
         type=int,
-        default=12,
-        help="Frames without dog before sending PTZ stop (default: 12).",
+        default=10,
+        help="Frames without dog before sending PTZ stop (default: 10).",
     )
     parser.add_argument(
         "--ptz-basic-user",
@@ -617,7 +751,7 @@ def compute_foam_ratio(frame: np.ndarray, target: DogTarget) -> float:
         return 0.0
 
     hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
-    foam_mask = cv2.inRange(hsv, np.array([0, 0, 180]), np.array([180, 70, 255]))
+    foam_mask = cv2.inRange(hsv, np.array([0, 0, 180]), np.array([180, 80, 255]))
     return safe_ratio(int(np.count_nonzero(foam_mask)), int(foam_mask.size))
 
 
@@ -634,8 +768,8 @@ def compute_red_eye_ratio(frame: np.ndarray, target: DogTarget) -> float:
         if roi.size == 0:
             continue
         hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
-        mask_1 = cv2.inRange(hsv, np.array([0, 60, 40]), np.array([10, 255, 255]))
-        mask_2 = cv2.inRange(hsv, np.array([165, 60, 40]), np.array([180, 255, 255]))
+        mask_1 = cv2.inRange(hsv, np.array([0, 70, 45]), np.array([12, 255, 255]))
+        mask_2 = cv2.inRange(hsv, np.array([168, 70, 45]), np.array([180, 255, 255]))
         red_mask = cv2.bitwise_or(mask_1, mask_2)
         ratio = safe_ratio(int(np.count_nonzero(red_mask)), int(red_mask.size))
         max_ratio = max(max_ratio, ratio)

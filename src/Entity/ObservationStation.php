@@ -22,6 +22,7 @@ class ObservationStation
     #[ORM\GeneratedValue]
     #[ORM\Column]
     #[Groups(['stations'])]
+    // @phpstan-ignore-next-line
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]

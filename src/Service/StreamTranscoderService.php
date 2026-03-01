@@ -10,9 +10,12 @@ use Symfony\Component\Process\Process;
 class StreamTranscoderService
 {
     private string $streamDirectory;
+    private string $projectDir;
     private LoggerInterface $logger;
     private EntityManagerInterface $entityManager;
+    /** @var array<int, array{pid:?string, camera:IpCamera, outputDir:string, startedAt:\DateTime}> */
     private array $activeProcesses = [];
+    /** @var array<int, array{pid:?string, camera:IpCamera, port:int, outputDir:string, startedAt:\DateTime}> */
     private array $vlcProcesses = [];  // Track VLC processes separately
 
     public function __construct(
@@ -23,38 +26,12 @@ class StreamTranscoderService
         $this->logger = $logger;
         $this->entityManager = $entityManager;
         $this->streamDirectory = $streamsDirectory;
+        $this->projectDir = dirname($streamsDirectory, 2);
         
         // Create streams directory if it doesn't exist
         if (!is_dir($this->streamDirectory)) {
             mkdir($this->streamDirectory, 0755, true);
         }
-
-        if ($this->isWindows()) {
-            $runtimeDir = rtrim(str_replace('\\', '/', sys_get_temp_dir()), '/') . '/pawtech_streams';
-            if (!is_dir($runtimeDir)) {
-                @mkdir($runtimeDir, 0755, true);
-            }
-        }
-    }
-
-    private function isWindows(): bool
-    {
-        return DIRECTORY_SEPARATOR === '\\';
-    }
-
-    private function getCameraOutputDir(int $cameraId): string
-    {
-        $baseDir = $this->streamDirectory;
-        if ($this->isWindows()) {
-            $baseDir = rtrim(str_replace('\\', '/', sys_get_temp_dir()), '/') . '/pawtech_streams';
-        }
-
-        return $baseDir . '/camera_' . $cameraId;
-    }
-
-    private function getFrameFile(int $cameraId): string
-    {
-        return $this->getCameraOutputDir($cameraId) . '/frame.jpg';
     }
 
     /**
@@ -63,170 +40,174 @@ class StreamTranscoderService
      */
     public function startTranscoding(IpCamera $camera): bool
     {
-        $cameraId = (int) $camera->getId();
-        $frameFile = $this->getFrameFile($cameraId);
-        $outputDir = $this->getCameraOutputDir($cameraId);
-
-        if ($this->isTranscoding($cameraId)) {
-            $this->logger->info("Transcoding already running for camera {$cameraId}, skipping restart");
-            return true;
+        $cameraId = $camera->getId();
+        if ($cameraId === null) {
+            return false;
         }
 
+        $frameFile = '/tmp/rtsp_frame_' . $cameraId . '.jpg';
+        
+        // Kill any existing FFmpeg processes for this camera to get fresh frames
+        // This prevents the "stale frames" issue where old processes show outdated video
+        $this->stopTranscoding($cameraId);
+        @unlink($frameFile);
+        
+        // Also clean up old files
+        $outputDir = $this->streamDirectory . '/camera_' . $cameraId;
+        if (is_dir($outputDir)) {
+            $files = glob($outputDir . '/*') ?: [];
+            foreach ($files as $file) {
+                if (is_file($file) && $file !== $outputDir . '/ffmpeg.log') {
+                    @unlink($file);
+                }
+            }
+        }
+        
+        // Check if already transcoding (after cleanup)
+        if (isset($this->activeProcesses[$cameraId])) {
+            unset($this->activeProcesses[$cameraId]);
+        }
+
+        $inputUrl = $this->buildCameraInputUrl($camera);
+        if ($inputUrl === null) {
+            $this->logger->error("No stream URL found for camera {$cameraId}");
+            return false;
+        }
+
+        $inputScheme = strtolower((string) parse_url($inputUrl, PHP_URL_SCHEME));
+        $inputTransportOptions = in_array($inputScheme, ['rtsp', 'rtsps'], true)
+            ? '-rtsp_transport tcp '
+            : '';
+
+        // Output directory - use absolute path
+        $outputDir = $this->streamDirectory . '/camera_' . $cameraId;
         if (!is_dir($outputDir)) {
             mkdir($outputDir, 0755, true);
         }
 
-        $lockFile = $outputDir . '/start.lock';
-        $lockHandle = @fopen($lockFile, 'c+');
-        if ($lockHandle === false) {
-            $this->logger->warning("Unable to open start lock for camera {$cameraId}, continuing without lock");
-        } elseif (!@flock($lockHandle, LOCK_EX | LOCK_NB)) {
-            $this->logger->info("Start already in progress for camera {$cameraId}, skipping duplicate request");
-            @fclose($lockHandle);
-            return true;
-        }
+        // Stable low-latency profile:
+        // - prioritize low-buffer frame updates for /frame.jpg polling
+        // - keep a very low-FPS MJPEG side output only for legacy compatibility
+        $quotedInputUrl = escapeshellarg($inputUrl);
+        $quotedStreamOutput = escapeshellarg($outputDir . '/stream.mjpg');
+        $quotedFrameOutput = escapeshellarg($frameFile);
+        $quotedLogOutput = escapeshellarg($outputDir . '/ffmpeg.log');
+        $quotedPidOutput = escapeshellarg($outputDir . '/ffmpeg.pid');
+        $ffmpegCommand = sprintf(
+            'nohup ffmpeg -hide_banner -loglevel warning -nostdin ' .
+            '%s' .
+            '-fflags +nobuffer+discardcorrupt -flags low_delay -avioflags direct ' .
+            '-reorder_queue_size 0 -max_delay 100000 -analyzeduration 200000 -probesize 16384 ' .
+            '-i %s ' .
+            '-an -sn ' .
+            '-map 0:v:0 -vf fps=1 -c:v mjpeg -q:v 10 -f mjpeg %s ' .
+            '-map 0:v:0 -vf fps=18 -vsync 0 -c:v mjpeg -q:v 5 -f image2 -update 1 %s ' .
+            '> %s 2>&1 & echo $! > %s',
+            $inputTransportOptions,
+            $quotedInputUrl,
+            $quotedStreamOutput,
+            $quotedFrameOutput,
+            $quotedLogOutput,
+            $quotedPidOutput
+        );
+
+        $this->logger->info("Starting FFmpeg transcoding for camera {$cameraId} (low-latency mode)");
+        $this->logger->info("Command: " . str_replace($camera->getPassword() ?? '', '***', $ffmpegCommand));
 
         try {
-            if ($this->isWindows()) {
-                // On Windows dev environments, detached FFmpeg process management can
-                // block Symfony local server shutdown. Use direct snapshot mode.
-                @file_put_contents($outputDir . '/ffmpeg.pid', 'snapshot-mode');
-                $this->activeProcesses[$cameraId] = [
-                    'pid' => 'snapshot-mode',
-                    'camera' => $camera,
-                    'outputDir' => $outputDir,
-                    'startedAt' => new \DateTime(),
-                ];
-                $camera->setStatus('active');
-                $this->entityManager->flush();
-                $this->logger->info("Using snapshot mode for camera {$cameraId} on Windows");
-                return true;
-            }
-
-            $this->stopTranscoding($cameraId);
-            @unlink($frameFile);
-
-            if (is_dir($outputDir)) {
-                $files = glob($outputDir . '/*');
-                foreach ($files as $file) {
-                    if (is_file($file) && $file !== $outputDir . '/ffmpeg.log') {
-                        @unlink($file);
-                    }
-                }
-            }
-
-            if (isset($this->activeProcesses[$cameraId])) {
-                unset($this->activeProcesses[$cameraId]);
-            }
-
-            $rtspUrl = $camera->getRtspUrl() ?: $camera->getFullStreamUrl();
-            if (!$rtspUrl) {
-                $this->logger->error("No stream URL found for camera {$cameraId}");
-                return false;
-            }
-
-            $auth = '';
-            if ($camera->getUsername() && $camera->getPassword()) {
-                $auth = $camera->getUsername() . ':' . $camera->getPassword() . '@';
-            }
-            $inputUrl = str_replace('://', '://' . $auth, $rtspUrl);
-
-            $quotedInputUrl = escapeshellarg($inputUrl);
-            $quotedStreamOutput = escapeshellarg($outputDir . '/stream.mjpg');
-            $quotedFrameOutput = escapeshellarg($frameFile);
-            $quotedLogOutput = escapeshellarg($outputDir . '/ffmpeg.log');
-            $quotedStdoutOutput = escapeshellarg($outputDir . '/ffmpeg.out.log');
-            $quotedPidOutput = escapeshellarg($outputDir . '/ffmpeg.pid');
-            $ffmpegCommand = '';
-
-            if (!$this->isWindows()) {
-                $ffmpegCommand = sprintf(
-                    'nohup ffmpeg -hide_banner -loglevel warning -nostdin ' .
-                    '-rtsp_transport tcp ' .
-                    '-fflags +genpts+discardcorrupt -flags low_delay ' .
-                    '-max_delay 500000 -analyzeduration 1000000 -probesize 32768 ' .
-                    '-i %s ' .
-                    '-an -sn ' .
-                    '-map 0:v -vf fps=8 -c:v mjpeg -q:v 6 -f mjpeg %s ' .
-                    '-map 0:v -vf fps=12 -c:v mjpeg -q:v 5 -f image2 -update 1 %s ' .
-                    '> %s 2>&1 & echo $! > %s',
-                    $quotedInputUrl,
-                    $quotedStreamOutput,
-                    $quotedFrameOutput,
-                    $quotedLogOutput,
-                    $quotedPidOutput
-                );
-            }
-
-            if ($ffmpegCommand === '') {
-                $this->logger->error("Unable to build FFmpeg command for camera {$cameraId}");
-                return false;
-            }
-
-            $this->logger->info("Starting FFmpeg transcoding for camera {$cameraId} (low-latency mode)");
-            $this->logger->info("Command: " . str_replace($camera->getPassword() ?? '', '***', $ffmpegCommand));
-
+            // Run FFmpeg in background using shell exec
             exec($ffmpegCommand, $output, $returnCode);
-            usleep(500000);
 
             $pidFile = $outputDir . '/ffmpeg.pid';
-            $pid = null;
-            if (file_exists($pidFile)) {
-                $pid = trim((string) file_get_contents($pidFile));
-                if ($pid !== '') {
-                    $this->logger->info("FFmpeg started with PID token: {$pid}");
-                }
+            if (!file_exists($pidFile)) {
+                $this->logger->error("FFmpeg PID file was not created for camera {$cameraId}");
+                return false;
             }
 
-            sleep(1);
-            $mjpegFile = $outputDir . '/stream.mjpg';
-            $frameReady = file_exists($frameFile) && filesize($frameFile) > 0;
-            $mjpegReady = file_exists($mjpegFile) && filesize($mjpegFile) > 0;
+            $pid = trim((string) file_get_contents($pidFile));
+            if ($pid === '' || !ctype_digit($pid)) {
+                $this->logger->error("Invalid FFmpeg PID for camera {$cameraId}: " . $pid);
+                return false;
+            }
 
-            $streamReady = $this->isWindows() ? $frameReady : ($frameReady || $mjpegReady);
-            if (!$streamReady) {
+            $this->logger->info("FFmpeg started with PID: {$pid}");
+
+            $mjpegFile = $outputDir . '/stream.mjpg';
+            $frameReady = false;
+            $mjpegReady = false;
+            $processRunning = true;
+
+            // Wait up to ~4 seconds for first output frame/chunks.
+            for ($attempt = 0; $attempt < 10; $attempt++) {
+                clearstatcache(true, $frameFile);
+                clearstatcache(true, $mjpegFile);
+
+                $frameReady = file_exists($frameFile) && filesize($frameFile) > 0;
+                $mjpegReady = file_exists($mjpegFile) && filesize($mjpegFile) > 0;
+                if ($frameReady || $mjpegReady) {
+                    break;
+                }
+
+                if (!$this->isProcessRunning($pid)) {
+                    $processRunning = false;
+                    break;
+                }
+
+                usleep(400000);
+            }
+
+            if (!$frameReady && !$mjpegReady && !$processRunning) {
                 $logFile = $outputDir . '/ffmpeg.log';
                 if (file_exists($logFile)) {
-                    $logContent = (string) file_get_contents($logFile);
-                    $this->logger->warning("FFmpeg log for camera {$cameraId}: " . substr($logContent, -500));
+                    $logContent = file_get_contents($logFile);
+                    if (is_string($logContent) && $logContent !== '') {
+                        $this->logger->error("FFmpeg failed for camera {$cameraId}: " . substr($logContent, -800));
+                    }
                 }
+                return false;
+            }
+
+            if (!$frameReady && !$mjpegReady) {
+                $this->logger->warning("FFmpeg is running for camera {$cameraId} but no output file is ready yet.");
             }
 
             $this->activeProcesses[$cameraId] = [
                 'pid' => $pid,
                 'camera' => $camera,
                 'outputDir' => $outputDir,
-                'startedAt' => new \DateTime(),
+                'startedAt' => new \DateTime()
             ];
-
+            
             $camera->setStatus('active');
             $this->entityManager->flush();
 
+            $this->startDogDetector($camera);
+            $this->logger->info("FFmpeg transcoding started successfully for camera {$cameraId}");
             return true;
+
         } catch (\Exception $e) {
             $this->logger->error("Failed to start transcoding for camera {$cameraId}: " . $e->getMessage());
             return false;
-        } finally {
-            if (is_resource($lockHandle)) {
-                @flock($lockHandle, LOCK_UN);
-                @fclose($lockHandle);
-            }
         }
     }
 
     /**
      * Stop transcoding for a camera
      */
-    public function stopTranscoding(int $cameraId): bool
+    public function stopTranscoding(?int $cameraId): bool
     {
-        if ($this->isWindows()) {
-            exec('taskkill /F /IM ffmpeg.exe >NUL 2>&1');
-        } else {
-            exec("pkill -9 -f 'ffmpeg.*camera_{$cameraId}' 2>/dev/null");
-            exec("pkill -9 -f 'ffmpeg.*streams/camera_{$cameraId}' 2>/dev/null");
-            exec("pkill -9 -f 'ffmpeg.*frame.jpg' 2>/dev/null");
+        if ($cameraId === null) {
+            return false;
         }
-        @unlink($this->getFrameFile($cameraId));
+
+        $this->stopDogDetector($cameraId);
+
+        // Kill all FFmpeg processes for this camera (not just tracked ones)
+        // This ensures we get fresh frames on restart
+        exec("pkill -9 -f 'ffmpeg.*camera_{$cameraId}' 2>/dev/null");
+        exec("pkill -9 -f 'ffmpeg.*streams/camera_{$cameraId}' 2>/dev/null");
+        exec("pkill -9 -f 'ffmpeg.*rtsp_frame_{$cameraId}' 2>/dev/null");
+        @unlink('/tmp/rtsp_frame_' . $cameraId . '.jpg');
         
         if (isset($this->activeProcesses[$cameraId])) {
             try {
@@ -236,16 +217,8 @@ class StreamTranscoderService
                 // Try to kill using PID file
                 $pidFile = $outputDir . '/ffmpeg.pid';
                 if (file_exists($pidFile)) {
-                    $pid = trim(file_get_contents($pidFile));
-                    if ($this->isWindows()) {
-                        if ($pid === 'snapshot-mode') {
-                            // No OS process to kill in snapshot mode.
-                        } elseif (ctype_digit($pid)) {
-                            exec("taskkill /PID {$pid} /F >NUL 2>&1");
-                        }
-                    } else {
-                        exec("kill -9 $pid 2>/dev/null");
-                    }
+                    $pid = trim((string) file_get_contents($pidFile));
+                    exec("kill -9 $pid 2>/dev/null");
                     @unlink($pidFile);
                 }
                 
@@ -265,12 +238,309 @@ class StreamTranscoderService
     }
 
     /**
+     * Ensure detector loop is running while stream is active.
+     */
+    public function ensureDogDetectorRunning(IpCamera $camera): void
+    {
+        $cameraId = (int) $camera->getId();
+        if ($cameraId <= 0) {
+            return;
+        }
+        if (!$this->isTranscoding($cameraId)) {
+            return;
+        }
+        if ($this->isDogDetectorRunning($cameraId)) {
+            return;
+        }
+        $this->startDogDetector($camera);
+    }
+
+    private function startDogDetector(IpCamera $camera): void
+    {
+        $cameraId = (int) $camera->getId();
+        if ($cameraId <= 0) {
+            return;
+        }
+
+        $scriptPath = $this->resolveDogDetectorScriptPath();
+        if ($scriptPath === null) {
+            $this->logger->warning('Dog detector script missing: expected python/dog_detector_loop.py or python/ip_camera_dog_detector.py');
+            return;
+        }
+
+        $pythonBin = $this->resolvePythonBinary();
+        $outputDir = $this->streamDirectory . '/camera_' . $cameraId;
+        if (!is_dir($outputDir)) {
+            @mkdir($outputDir, 0755, true);
+        }
+
+        $pidFile = $outputDir . '/dog_detector.pid';
+        $logFile = $outputDir . '/dog_detector.log';
+        $jsonPath = '/tmp/pawtech_live_detections_camera_' . $cameraId . '.json';
+        $modelPath = $this->resolveDogModelPath();
+        $healthModelPath = $this->resolveDogHealthModelPath();
+        $reportUrl = $this->resolveDetectionApiUrl();
+        $sourceUrl = $this->buildCameraInputUrl($camera);
+
+        if ($sourceUrl === null || $sourceUrl === '') {
+            $this->logger->warning("Dog detector source URL missing for camera {$cameraId}");
+            return;
+        }
+
+        // Clean stale process first.
+        $this->stopDogDetector($cameraId);
+
+        $scriptName = basename($scriptPath);
+        if ($scriptName === 'ip_camera_dog_detector.py') {
+            $commandParts = [
+                escapeshellarg($pythonBin),
+                escapeshellarg($scriptPath),
+                '--source',
+                escapeshellarg($sourceUrl),
+                '--camera-id',
+                (string) $cameraId,
+                '--model',
+                escapeshellarg($modelPath),
+                '--conf',
+                '0.25',
+                '--imgsz',
+                '640',
+                '--no-display',
+                '--no-save',
+                '--live-json-path',
+                escapeshellarg($jsonPath),
+                '--live-json-interval',
+                '0.10',
+            ];
+
+            if ($healthModelPath !== '') {
+                $commandParts[] = '--health-knn-model';
+                $commandParts[] = escapeshellarg($healthModelPath);
+            }
+        } else {
+            // Backward-compatible command for legacy local detector loop script.
+            $framePath = '/tmp/rtsp_frame_' . $cameraId . '.jpg';
+            $commandParts = [
+                escapeshellarg($pythonBin),
+                escapeshellarg($scriptPath),
+                '--camera-id',
+                (string) $cameraId,
+                '--frame-path',
+                escapeshellarg($framePath),
+                '--output-json',
+                escapeshellarg($jsonPath),
+                '--model',
+                escapeshellarg($modelPath),
+                '--conf',
+                '0.25',
+                '--imgsz',
+                '640',
+                '--interval',
+                '0.10',
+                '--report-cooldown-seconds',
+                '8',
+                '--report-duplicate-cooldown-seconds',
+                '20',
+                '--report-alert-cooldown-seconds',
+                '8',
+                '--report-min-ill-confidence',
+                '0.40',
+            ];
+
+            if ($healthModelPath !== '') {
+                $commandParts[] = '--health-model';
+                $commandParts[] = escapeshellarg($healthModelPath);
+            }
+
+            if ($reportUrl !== '') {
+                $commandParts[] = '--report-url';
+                $commandParts[] = escapeshellarg($reportUrl);
+            }
+        }
+
+        $command = sprintf(
+            'nohup %s > %s 2>&1 & echo $! > %s',
+            implode(' ', $commandParts),
+            escapeshellarg($logFile),
+            escapeshellarg($pidFile)
+        );
+
+        exec($command);
+        usleep(250000);
+        if (is_file($pidFile)) {
+            $pid = trim((string) @file_get_contents($pidFile));
+            $this->logger->info("Dog detector started for camera {$cameraId} with PID {$pid}");
+            if ($healthModelPath === '') {
+                $this->logger->warning("Dog health KNN model missing for camera {$cameraId}; detector will use symptom heuristics.");
+            }
+        } else {
+            $this->logger->warning("Dog detector did not create PID file for camera {$cameraId}");
+        }
+    }
+
+    private function stopDogDetector(int $cameraId): void
+    {
+        $outputDir = $this->streamDirectory . '/camera_' . $cameraId;
+        $pidFile = $outputDir . '/dog_detector.pid';
+        $jsonPath = '/tmp/pawtech_live_detections_camera_' . $cameraId . '.json';
+
+        if (is_file($pidFile)) {
+            $pid = trim((string) @file_get_contents($pidFile));
+            if ($pid !== '') {
+                exec("kill -9 {$pid} 2>/dev/null");
+            }
+            @unlink($pidFile);
+        }
+
+        // Kill any detector process matching this camera id.
+        exec("pkill -9 -f 'dog_detector_loop.py.*--camera-id {$cameraId}' 2>/dev/null");
+        exec("pkill -9 -f 'ip_camera_dog_detector.py.*--camera-id {$cameraId}' 2>/dev/null");
+
+        $stoppedPayload = [
+            'camera_id' => $cameraId,
+            'timestamp' => (new \DateTimeImmutable())->format(DATE_ATOM),
+            'status' => 'stopped',
+            'dog_count' => 0,
+            'frame_width' => null,
+            'frame_height' => null,
+            'ptz_action' => null,
+            'follow_dx' => 0.0,
+            'follow_dy' => 0.0,
+            'follow_pred_dx' => 0.0,
+            'follow_pred_dy' => 0.0,
+            'follow_error' => 0.0,
+            'ptz_pulse' => 0.0,
+            'ill_count' => 0,
+            'healthy_count' => 0,
+            'unknown_health_count' => 0,
+            'health_status' => 'unknown',
+            'ill_report_sent' => false,
+            'detections' => [],
+        ];
+        @file_put_contents($jsonPath, json_encode($stoppedPayload));
+    }
+
+    private function isDogDetectorRunning(int $cameraId): bool
+    {
+        $pidFile = $this->streamDirectory . '/camera_' . $cameraId . '/dog_detector.pid';
+        if (!is_file($pidFile)) {
+            return false;
+        }
+
+        $pid = trim((string) @file_get_contents($pidFile));
+        if ($pid === '') {
+            return false;
+        }
+
+        return $this->isProcessRunning($pid);
+    }
+
+    private function resolvePythonBinary(): string
+    {
+        $candidates = [
+            $this->projectDir . '/.venv/bin/python',
+            $this->projectDir . '/.venv-dog/bin/python',
+            $this->projectDir . '/venv/bin/python',
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (is_file($candidate) && is_executable($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return 'python3';
+    }
+
+    private function resolveDogModelPath(): string
+    {
+        $candidates = [
+            $this->projectDir . '/yolov8n.pt',
+            $this->projectDir . '/python/yolov8n.pt',
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (is_file($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return 'yolov8n.pt';
+    }
+
+    private function resolveDogHealthModelPath(): string
+    {
+        $candidates = [
+            $this->projectDir . '/python/models/dog_health_knn.joblib',
+            $this->projectDir . '/var/ml/dog_health_knn.joblib',
+            $this->projectDir . '/python/models/knn_dog_health.npz',
+            $this->projectDir . '/var/ml/knn_dog_health.npz',
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (is_file($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return '';
+    }
+
+    private function resolveDogDetectorScriptPath(): ?string
+    {
+        $candidates = [
+            $this->projectDir . '/python/dog_detector_loop.py',
+            $this->projectDir . '/python/ip_camera_dog_detector.py',
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (is_file($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return null;
+    }
+
+    private function resolveDetectionApiUrl(): string
+    {
+        $base = null;
+        $envCandidates = [
+            $_ENV['DOG_DETECTION_API_BASE_URL'] ?? null,
+            $_SERVER['DOG_DETECTION_API_BASE_URL'] ?? null,
+            $_ENV['APP_URL'] ?? null,
+            $_SERVER['APP_URL'] ?? null,
+        ];
+
+        foreach ($envCandidates as $candidate) {
+            if (!is_string($candidate)) {
+                continue;
+            }
+            $candidate = trim($candidate);
+            if ($candidate !== '') {
+                $base = $candidate;
+                break;
+            }
+        }
+
+        if ($base === null) {
+            $base = 'http://127.0.0.1:8000';
+        }
+
+        if (!preg_match('/^https?:\/\//i', $base)) {
+            $base = 'http://' . $base;
+        }
+
+        return rtrim($base, '/') . '/admin/stations/api/detection';
+    }
+
+    /**
      * Get the HLS playlist URL for a camera
      */
     public function getStreamUrl(int $cameraId): ?string
     {
-        $outputDir = $this->getCameraOutputDir($cameraId);
-        $frameFile = $this->getFrameFile($cameraId);
+        $outputDir = $this->streamDirectory . '/camera_' . $cameraId;
+        $frameFile = '/tmp/rtsp_frame_' . $cameraId . '.jpg';
         $mjpegFile = $outputDir . '/stream.mjpg';
         $playlistFile = $outputDir . '/playlist.m3u8';
 
@@ -291,11 +561,13 @@ class StreamTranscoderService
 
     /**
      * Get stream status for a specific camera
+     *
+     * @return array<string, mixed>
      */
     public function getStreamStatus(int $cameraId): array
     {
-        $outputDir = $this->getCameraOutputDir($cameraId);
-        $frameFile = $this->getFrameFile($cameraId);
+        $outputDir = $this->streamDirectory . '/camera_' . $cameraId;
+        $frameFile = '/tmp/rtsp_frame_' . $cameraId . '.jpg';
         $streamFile = $outputDir . '/stream.mjpg';
         $playlistFile = $outputDir . '/playlist.m3u8';
         $pidFile = $outputDir . '/ffmpeg.pid';
@@ -316,8 +588,9 @@ class StreamTranscoderService
         
         // Check if process is running
         if (file_exists($pidFile)) {
-            $pid = trim(file_get_contents($pidFile));
-            if ($pid && $this->isProcessRunning($pid)) {
+            $pid = trim((string) file_get_contents($pidFile));
+            exec("ps -p $pid -o pid=", $output);
+            if (!empty($output[0])) {
                 $status['running'] = true;
                 $status['pid'] = $pid;
             }
@@ -349,7 +622,7 @@ class StreamTranscoderService
             }
             
             // Get latest segment
-            $segments = glob($outputDir . '/segment_*.ts');
+            $segments = glob($outputDir . '/segment_*.ts') ?: [];
             if (!empty($segments)) {
                 usort($segments, function($a, $b) {
                     return filemtime($b) - filemtime($a);
@@ -361,7 +634,7 @@ class StreamTranscoderService
         // Check for errors in log
         if (file_exists($logFile)) {
             $logContent = file_get_contents($logFile);
-            if (preg_match('/(error|failed|invalid)/i', $logContent)) {
+            if (is_string($logContent) && preg_match('/(error|failed|invalid)/i', $logContent)) {
                 $status['error'] = 'Check log for errors';
             }
         }
@@ -375,6 +648,9 @@ class StreamTranscoderService
     public function restartStream(IpCamera $camera): bool
     {
         $cameraId = $camera->getId();
+        if ($cameraId === null) {
+            return false;
+        }
         $this->logger->info("Restarting stream for camera {$cameraId}");
         
         // Stop
@@ -383,7 +659,7 @@ class StreamTranscoderService
         // Clean up old segments
         $outputDir = $this->streamDirectory . '/camera_' . $cameraId;
         if (is_dir($outputDir)) {
-            $files = glob($outputDir . '/*');
+            $files = glob($outputDir . '/*') ?: [];
             foreach ($files as $file) {
                 if (is_file($file) && $file !== $outputDir . '/ffmpeg.log') {
                     @unlink($file);
@@ -406,7 +682,7 @@ class StreamTranscoderService
         
         // Only clear old segments, keep log and pid
         if (is_dir($outputDir)) {
-            $files = glob($outputDir . '/segment_*.ts');
+            $files = glob($outputDir . '/segment_*.ts') ?: [];
             foreach ($files as $file) {
                 @unlink($file);
             }
@@ -426,8 +702,12 @@ class StreamTranscoderService
      * Check if transcoding is active for a camera
      * Checks both in-memory process tracking and actual PID file
      */
-    public function isTranscoding(int $cameraId): bool
+    public function isTranscoding(?int $cameraId): bool
     {
+        if ($cameraId === null || $cameraId <= 0) {
+            return false;
+        }
+
         // First check in-memory tracking
         if (isset($this->activeProcesses[$cameraId])) {
             $processInfo = $this->activeProcesses[$cameraId];
@@ -436,7 +716,7 @@ class StreamTranscoderService
             // Check if PID file exists and process is running
             $pidFile = $outputDir . '/ffmpeg.pid';
             if (file_exists($pidFile)) {
-                $pid = trim(file_get_contents($pidFile));
+                $pid = trim((string) file_get_contents($pidFile));
                 if ($pid && $this->isProcessRunning($pid)) {
                     return true;
                 }
@@ -447,21 +727,14 @@ class StreamTranscoderService
         }
         
         // Also check if HLS files exist and are being updated (fallback check)
-        $outputDir = $this->getCameraOutputDir($cameraId);
-        $frameFile = $this->getFrameFile($cameraId);
+        $outputDir = $this->streamDirectory . '/camera_' . $cameraId;
+        $frameFile = '/tmp/rtsp_frame_' . $cameraId . '.jpg';
         $streamFile = $outputDir . '/stream.mjpg';
         $playlistFile = $outputDir . '/playlist.m3u8';
         $pidFile = $outputDir . '/ffmpeg.pid';
-
-        if (file_exists($frameFile)) {
-            $frameMtime = @filemtime($frameFile);
-            if ($frameMtime !== false && (time() - $frameMtime) <= 10) {
-                return true;
-            }
-        }
-
+        
         if ((file_exists($frameFile) || file_exists($streamFile) || file_exists($playlistFile)) && file_exists($pidFile)) {
-            $pid = trim(file_get_contents($pidFile));
+            $pid = trim((string) file_get_contents($pidFile));
             if ($pid && $this->isProcessRunning($pid)) {
                 return true;
             }
@@ -475,37 +748,119 @@ class StreamTranscoderService
      */
     private function isProcessRunning(string $pid): bool
     {
-        if (empty($pid)) {
+        $pid = trim($pid);
+        if ($pid === '' || !ctype_digit($pid)) {
             return false;
         }
 
-        if ($pid === 'snapshot-mode') {
+        $pidInt = (int) $pid;
+        if ($pidInt <= 0) {
+            return false;
+        }
+
+        // Prefer kill -0 style check (works even when ps output is restricted).
+        if (function_exists('posix_kill')) {
+            return @posix_kill($pidInt, 0);
+        }
+
+        $escapedPid = escapeshellarg((string) $pidInt);
+        exec('kill -0 ' . $escapedPid . ' 2>/dev/null', $output, $returnCode);
+        if ($returnCode === 0) {
             return true;
         }
 
-        if ($this->isWindows()) {
-            if (!ctype_digit($pid)) {
-                exec('tasklist /FI "IMAGENAME eq ffmpeg.exe" /NH', $out, $code);
-                return $code === 0 && !empty($out) && stripos(implode(' ', $out), 'ffmpeg.exe') !== false;
-            }
+        // Fallback to ps for platforms where kill -0 is unavailable.
+        exec("ps -p {$pidInt} -o pid=", $psOutput, $psReturnCode);
+        return $psReturnCode === 0 && !empty($psOutput);
+    }
 
-            exec("tasklist /FI \"PID eq {$pid}\" /NH", $out, $code);
-            return $code === 0 && !empty($out) && stripos(implode(' ', $out), (string) $pid) !== false;
+    private function buildCameraInputUrl(IpCamera $camera): ?string
+    {
+        $urlCandidates = [
+            $camera->getRtspUrl(),
+            $camera->getStreamUrl(),
+            $camera->getFullStreamUrl(),
+        ];
+
+        $rawUrl = null;
+        foreach ($urlCandidates as $candidate) {
+            if (!is_string($candidate)) {
+                continue;
+            }
+            $candidate = trim($candidate);
+            if ($candidate !== '') {
+                $rawUrl = $candidate;
+                break;
+            }
         }
 
-        exec("ps -p $pid -o pid=", $output, $returnCode);
-        return $returnCode === 0 && !empty($output);
+        if ($rawUrl === null) {
+            return null;
+        }
+
+        if (!preg_match('#^[a-z][a-z0-9+.-]*://#i', $rawUrl)) {
+            $ip = trim((string) $camera->getIpAddress());
+            if ($ip === '') {
+                return null;
+            }
+            $port = $camera->getPort() > 0 ? $camera->getPort() : 80;
+            $path = str_starts_with($rawUrl, '/') ? $rawUrl : '/' . $rawUrl;
+            $rawUrl = sprintf('http://%s:%d%s', $ip, $port, $path);
+        }
+
+        return $this->attachCredentialsIfMissing($rawUrl, $camera);
+    }
+
+    private function attachCredentialsIfMissing(string $url, IpCamera $camera): string
+    {
+        $username = trim((string) ($camera->getUsername() ?? ''));
+        $password = trim((string) ($camera->getPassword() ?? ''));
+        if ($username === '' || $password === '') {
+            return $url;
+        }
+
+        $parts = parse_url($url);
+        if (!is_array($parts)) {
+            return $url;
+        }
+        if (isset($parts['user']) || isset($parts['pass'])) {
+            return $url;
+        }
+        if (!isset($parts['scheme'], $parts['host'])) {
+            return $url;
+        }
+
+        $auth = rawurlencode($username) . ':' . rawurlencode($password) . '@';
+        $rebuilt = $parts['scheme'] . '://' . $auth . $parts['host'];
+
+        if (isset($parts['port'])) {
+            $rebuilt .= ':' . $parts['port'];
+        }
+
+        $rebuilt .= $parts['path'] ?? '/';
+
+        if (isset($parts['query'])) {
+            $rebuilt .= '?' . $parts['query'];
+        }
+
+        if (isset($parts['fragment'])) {
+            $rebuilt .= '#' . $parts['fragment'];
+        }
+
+        return $rebuilt;
     }
 
     /**
      * Get status of all active transcoding processes
+     *
+     * @return array<int, array<string, mixed>>
      */
     public function getStatus(): array
     {
         $status = [];
         
         // Get all camera directories in streams folder
-        $streamDirs = glob($this->streamDirectory . '/camera_*');
+        $streamDirs = glob($this->streamDirectory . '/camera_*') ?: [];
         
         foreach ($streamDirs as $dir) {
             if (!is_dir($dir)) {
@@ -514,7 +869,7 @@ class StreamTranscoderService
             
             $cameraId = (int) str_replace($this->streamDirectory . '/camera_', '', $dir);
             $pidFile = $dir . '/ffmpeg.pid';
-            $frameFile = $this->getFrameFile($cameraId);
+            $frameFile = '/tmp/rtsp_frame_' . $cameraId . '.jpg';
             $streamFile = $dir . '/stream.mjpg';
             $playlistFile = $dir . '/playlist.m3u8';
             $logFile = $dir . '/ffmpeg.log';
@@ -523,7 +878,7 @@ class StreamTranscoderService
             $pid = null;
             
             if (file_exists($pidFile)) {
-                $pid = trim(file_get_contents($pidFile));
+                $pid = trim((string) file_get_contents($pidFile));
                 if ($pid && $this->isProcessRunning($pid)) {
                     $isRunning = true;
                 }
@@ -561,7 +916,7 @@ class StreamTranscoderService
         $outputDir = $this->streamDirectory . '/camera_' . $cameraId;
         
         if (is_dir($outputDir)) {
-            $files = glob($outputDir . '/*');
+            $files = glob($outputDir . '/*') ?: [];
             foreach ($files as $file) {
                 if (is_file($file)) {
                     unlink($file);
@@ -578,9 +933,12 @@ class StreamTranscoderService
      * @param int $vlcHttpPort The HTTP port for VLC stream (default 8080 + cameraId)
      * @return bool True if VLC started successfully
      */
-    public function startVlcTranscoding(IpCamera $camera, int $vlcHttpPort = null): bool
+    public function startVlcTranscoding(IpCamera $camera, ?int $vlcHttpPort = null): bool
     {
         $cameraId = $camera->getId();
+        if ($cameraId === null) {
+            return false;
+        }
         
         // Determine port - default to 8080 + cameraId to avoid conflicts
         if ($vlcHttpPort === null) {
@@ -613,7 +971,7 @@ class StreamTranscoderService
         
         // Check if port is available
         $checkPort = shell_exec("lsof -i:{$vlcHttpPort} 2>/dev/null");
-        if (!empty(trim($checkPort))) {
+        if (is_string($checkPort) && trim($checkPort) !== '') {
             $this->logger->warning("Port {$vlcHttpPort} is already in use, trying " . ($vlcHttpPort + 1));
             $vlcHttpPort = $vlcHttpPort + 1;
         }
@@ -642,7 +1000,7 @@ class StreamTranscoderService
             
             $pidFile = $outputDir . '/vlc.pid';
             if (file_exists($pidFile)) {
-                $pid = trim(file_get_contents($pidFile));
+                $pid = trim((string) file_get_contents($pidFile));
                 $this->vlcProcesses[$cameraId] = [
                     'pid' => $pid,
                     'camera' => $camera,
@@ -659,7 +1017,9 @@ class StreamTranscoderService
             $logFile = $outputDir . '/vlc.log';
             if (file_exists($logFile)) {
                 $logContent = file_get_contents($logFile);
-                $this->logger->warning("VLC log for camera {$cameraId}: " . substr($logContent, -500));
+                if (is_string($logContent)) {
+                    $this->logger->warning("VLC log for camera {$cameraId}: " . substr($logContent, -500));
+                }
             }
             
             return false;
@@ -673,8 +1033,12 @@ class StreamTranscoderService
     /**
      * Stop VLC transcoding for a camera
      */
-    public function stopVlcTranscoding(int $cameraId): bool
+    public function stopVlcTranscoding(?int $cameraId): bool
     {
+        if ($cameraId === null) {
+            return false;
+        }
+
         // Kill all VLC processes for this camera
         exec("pkill -9 -f 'cvlc.*camera_{$cameraId}' 2>/dev/null");
         exec("pkill -9 -f 'vlc.*camera_{$cameraId}' 2>/dev/null");
@@ -683,7 +1047,7 @@ class StreamTranscoderService
         $pidFile = $outputDir . '/vlc.pid';
         
         if (file_exists($pidFile)) {
-            $pid = trim(file_get_contents($pidFile));
+            $pid = trim((string) file_get_contents($pidFile));
             exec("kill -9 $pid 2>/dev/null");
             @unlink($pidFile);
         }
@@ -712,7 +1076,7 @@ class StreamTranscoderService
         $pidFile = $outputDir . '/vlc.pid';
         
         if (file_exists($pidFile)) {
-            $pid = trim(file_get_contents($pidFile));
+            $pid = trim((string) file_get_contents($pidFile));
             if ($pid && $this->isProcessRunning($pid)) {
                 // Extract port from log or use default
                 $logFile = $outputDir . '/vlc.log';
@@ -720,7 +1084,7 @@ class StreamTranscoderService
                 
                 if (file_exists($logFile)) {
                     $logContent = file_get_contents($logFile);
-                    if (preg_match('/Listening on.*?:(\d+)/', $logContent, $matches)) {
+                    if (is_string($logContent) && preg_match('/Listening on.*?:(\d+)/', $logContent, $matches)) {
                         $port = (int)$matches[1];
                     }
                 }
@@ -740,6 +1104,10 @@ class StreamTranscoderService
     public function getVlcMjpegUrl(IpCamera $camera): ?string
     {
         $cameraId = $camera->getId();
+        if ($cameraId === null) {
+            return null;
+        }
+
         $port = 8080 + $cameraId;
         
         // Check if VLC is running
@@ -747,7 +1115,7 @@ class StreamTranscoderService
         $pidFile = $outputDir . '/vlc.pid';
         
         if (file_exists($pidFile)) {
-            $pid = trim(file_get_contents($pidFile));
+            $pid = trim((string) file_get_contents($pidFile));
             if ($pid && $this->isProcessRunning($pid)) {
                 return "http://localhost:{$port}/stream.jpg";
             }
@@ -774,7 +1142,7 @@ class StreamTranscoderService
         $pidFile = $outputDir . '/vlc.pid';
         
         if (file_exists($pidFile)) {
-            $pid = trim(file_get_contents($pidFile));
+            $pid = trim((string) file_get_contents($pidFile));
             if ($pid && $this->isProcessRunning($pid)) {
                 return true;
             }
@@ -791,9 +1159,12 @@ class StreamTranscoderService
      * @param string $socketPath Unix socket path for CV processing
      * @return bool True if started successfully
      */
-    public function startCvStream(IpCamera $camera, string $socketPath = null): bool
+    public function startCvStream(IpCamera $camera, ?string $socketPath = null): bool
     {
         $cameraId = $camera->getId();
+        if ($cameraId === null) {
+            return false;
+        }
         
         if ($socketPath === null) {
             $socketPath = '/tmp/cv_camera_' . $cameraId . '.sock';
@@ -853,7 +1224,7 @@ class StreamTranscoderService
             
             $pidFile = $outputDir . '/cv.pid';
             if (file_exists($pidFile)) {
-                $pid = trim(file_get_contents($pidFile));
+                $pid = trim((string) file_get_contents($pidFile));
                 $this->logger->info("CV stream started with PID: {$pid}");
                 return true;
             }
@@ -869,8 +1240,12 @@ class StreamTranscoderService
     /**
      * Stop CV stream for a camera
      */
-    public function stopCvStream(int $cameraId): bool
+    public function stopCvStream(?int $cameraId): bool
     {
+        if ($cameraId === null) {
+            return false;
+        }
+
         exec("pkill -9 -f 'ffmpeg.*cv_camera_{$cameraId}' 2>/dev/null");
         exec("pkill -9 -f 'nc.*9000{$cameraId}' 2>/dev/null");
         
@@ -878,7 +1253,7 @@ class StreamTranscoderService
         $pidFile = $outputDir . '/cv.pid';
         
         if (file_exists($pidFile)) {
-            $pid = trim(file_get_contents($pidFile));
+            $pid = trim((string) file_get_contents($pidFile));
             exec("kill -9 $pid 2>/dev/null");
             @unlink($pidFile);
         }
@@ -895,6 +1270,8 @@ class StreamTranscoderService
 
     /**
      * Get stream status including VLC and CV streams
+     *
+     * @return array<string, mixed>
      */
     public function getFullStreamStatus(int $cameraId): array
     {
@@ -902,7 +1279,8 @@ class StreamTranscoderService
         
         // Add VLC status
         $baseStatus['vlcRunning'] = $this->isVlcTranscoding($cameraId);
-        $baseStatus['vlcUrl'] = $this->getVlcMjpegUrl($this->entityManager->getReference(IpCamera::class, $cameraId));
+        $camera = $this->entityManager->find(IpCamera::class, $cameraId);
+        $baseStatus['vlcUrl'] = $camera instanceof IpCamera ? $this->getVlcMjpegUrl($camera) : null;
         
         // Add CV stream status
         $outputDir = $this->streamDirectory . '/camera_' . $cameraId;
@@ -910,7 +1288,7 @@ class StreamTranscoderService
         $baseStatus['cvRunning'] = false;
         
         if (file_exists($cvPidFile)) {
-            $pid = trim(file_get_contents($cvPidFile));
+            $pid = trim((string) file_get_contents($cvPidFile));
             $baseStatus['cvRunning'] = $this->isProcessRunning($pid);
         }
         

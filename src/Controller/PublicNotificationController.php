@@ -2,8 +2,8 @@
 
 namespace App\Controller;
 
-use App\Service\NotificationChatService;
 use App\Service\NotificationService;
+use App\Service\NotificationChatService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -32,10 +32,25 @@ final class PublicNotificationController extends AbstractController
         Request $request,
         NotificationService $notificationService
     ): Response {
-        $token = $request->request->get('_token');
-        
+        $token = (string) $request->request->get('_token', '');
+
         if ($this->isCsrfTokenValid('mark_read_' . $id, $token)) {
             $notificationService->markAsRead($id);
+        }
+
+        return $this->redirectToRoute('app_notifications');
+    }
+
+    #[Route('/{id}/unread', name: 'app_notifications_unread', methods: ['POST'])]
+    public function markAsUnread(
+        int $id,
+        Request $request,
+        NotificationService $notificationService
+    ): Response {
+        $token = (string) $request->request->get('_token', '');
+
+        if ($this->isCsrfTokenValid('mark_unread_' . $id, $token)) {
+            $notificationService->markAsUnread($id);
         }
 
         return $this->redirectToRoute('app_notifications');
@@ -50,6 +65,7 @@ final class PublicNotificationController extends AbstractController
     ): Response {
         if (!$this->canAccessChat($request)) {
             $this->addFlash('error', 'Only veterinarians and municipal agents can access notification chat.');
+
             return $this->redirectToRoute('app_notifications');
         }
 
@@ -61,11 +77,13 @@ final class PublicNotificationController extends AbstractController
         $identity = $this->resolveChatIdentity($request);
         if ($identity['user_id'] <= 0) {
             $this->addFlash('error', 'Please sign in again before opening notification chat.');
-            return $this->redirectToRoute('app_notifications');
+
+            return $this->redirectToRoute('app_signin');
         }
 
         if (!in_array($identity['role_type'], ['vet', 'agent'], true)) {
             $this->addFlash('error', 'Only veterinarians and municipal agents can access notification chat.');
+
             return $this->redirectToRoute('app_notifications');
         }
 
@@ -76,13 +94,15 @@ final class PublicNotificationController extends AbstractController
             $identity['role'],
             $identity['role_type']
         );
+        if ($entry['allowed'] !== true) {
+            $reason = $entry['reason'];
+            $this->addFlash('error', is_string($reason) && $reason !== '' ? $reason : 'You are not allowed to access this conversation.');
 
-        if (empty($entry['allowed'])) {
-            $this->addFlash('error', (string) ($entry['reason'] ?? 'You are not allowed to access this conversation.'));
             return $this->redirectToRoute('app_notifications');
         }
 
-        if (!empty($entry['both_entered'])) {
+        // Notification is marked read only after one vet and one municipal agent have entered.
+        if ($entry['both_entered'] === true) {
             $notificationService->markAsRead($id);
         } else {
             $notificationService->markAsUnread($id);
@@ -92,12 +112,14 @@ final class PublicNotificationController extends AbstractController
             $token = (string) $request->request->get('_token', '');
             if (!$this->isCsrfTokenValid('chat_message_' . $id, $token)) {
                 $this->addFlash('error', 'Invalid CSRF token for chat message.');
+
                 return $this->redirectToRoute('app_notifications_chat', ['id' => $id]);
             }
 
             $message = trim((string) $request->request->get('message', ''));
             if ($message === '') {
                 $this->addFlash('error', 'Message cannot be empty.');
+
                 return $this->redirectToRoute('app_notifications_chat', ['id' => $id]);
             }
 
@@ -109,7 +131,6 @@ final class PublicNotificationController extends AbstractController
                 $identity['role'],
                 $message
             );
-
             if (!$saved) {
                 $this->addFlash('error', 'Only the assigned veterinarian and assigned municipal agent can send messages in this notification thread.');
             }
@@ -118,18 +139,18 @@ final class PublicNotificationController extends AbstractController
         }
 
         $conversation = $notificationChatService->getConversation($id);
-        $participants = $conversation['participants'] ?? ['vet' => null, 'agent' => null];
-        $bothEntered = !empty($conversation['entries']['vet_entered']) && !empty($conversation['entries']['agent_entered']);
+        $currentUserName = $identity['display_name'];
+        $currentRole = $identity['role'];
 
         return $this->render('notifications/chat.html.twig', [
             'notification' => $notification,
-            'messages' => $conversation['messages'] ?? [],
-            'participants' => $participants,
-            'both_entered' => $bothEntered,
-            'current_user_name' => $identity['display_name'],
+            'messages' => $conversation['messages'],
+            'participants' => $conversation['participants'],
+            'both_entered' => !empty($conversation['entries']['vet_entered']) && !empty($conversation['entries']['agent_entered']),
             'current_user_id' => $identity['user_id'],
-            'current_role' => $identity['role'],
-            'can_access_chat' => true,
+            'current_user_name' => $currentUserName,
+            'current_role' => $currentRole,
+            'current_role_type' => $identity['role_type'],
             'voip_room_url' => sprintf('https://meet.jit.si/pawtech-notification-%d', $id),
         ]);
     }
@@ -142,7 +163,7 @@ final class PublicNotificationController extends AbstractController
         NotificationChatService $notificationChatService
     ): JsonResponse {
         if (!$this->canAccessChat($request)) {
-            return $this->json(['ok' => false, 'message' => 'Access denied'], Response::HTTP_FORBIDDEN);
+            return $this->json(['ok' => false, 'message' => 'Forbidden'], Response::HTTP_FORBIDDEN);
         }
 
         $notification = $notificationService->getNotificationById($id);
@@ -152,7 +173,7 @@ final class PublicNotificationController extends AbstractController
 
         $identity = $this->resolveChatIdentity($request);
         if ($identity['user_id'] <= 0 || !in_array($identity['role_type'], ['vet', 'agent'], true)) {
-            return $this->json(['ok' => false, 'message' => 'Invalid user identity'], Response::HTTP_FORBIDDEN);
+            return $this->json(['ok' => false, 'message' => 'Unauthorized'], Response::HTTP_FORBIDDEN);
         }
 
         $entry = $notificationChatService->registerParticipantEntry(
@@ -162,60 +183,39 @@ final class PublicNotificationController extends AbstractController
             $identity['role'],
             $identity['role_type']
         );
-
-        if (empty($entry['allowed'])) {
-            return $this->json(['ok' => false, 'message' => (string) ($entry['reason'] ?? 'Access denied')], Response::HTTP_FORBIDDEN);
+        if ($entry['allowed'] !== true) {
+            $reason = $entry['reason'];
+            return $this->json([
+                'ok' => false,
+                'message' => is_string($reason) && $reason !== '' ? $reason : 'Not allowed',
+            ], Response::HTTP_FORBIDDEN);
         }
 
-        if (!empty($entry['both_entered'])) {
+        if ($entry['both_entered'] === true) {
             $notificationService->markAsRead($id);
         } else {
             $notificationService->markAsUnread($id);
         }
 
         $conversation = $notificationChatService->getConversation($id);
-        $participants = $conversation['participants'] ?? ['vet' => null, 'agent' => null];
-        $bothEntered = !empty($conversation['entries']['vet_entered']) && !empty($conversation['entries']['agent_entered']);
 
         return $this->json([
             'ok' => true,
-            'messages' => $conversation['messages'] ?? [],
-            'participants' => $participants,
-            'both_entered' => $bothEntered,
+            'messages' => $conversation['messages'],
+            'participants' => $conversation['participants'],
+            'both_entered' => !empty($conversation['entries']['vet_entered']) && !empty($conversation['entries']['agent_entered']),
             'current_user_id' => $identity['user_id'],
+            'current_user_name' => $identity['display_name'],
             'current_role' => $identity['role'],
+            'current_role_type' => $identity['role_type'],
             'notification_status' => $notification->getStatut(),
         ]);
     }
 
     private function canAccessChat(Request $request): bool
     {
-        $session = $request->getSession();
-        $sessionUser = $session->get('user');
-        if (!is_array($sessionUser)) {
-            return false;
-        }
-
-        $role = strtoupper((string) ($sessionUser['role'] ?? ''));
-        if (
-            $role === 'VETERINAIRE' ||
-            $role === 'ROLE_VETERINAIRE' ||
-            $role === 'AGENT_MUNICIPALE' ||
-            $role === 'ROLE_AGENT_MUNICIPALE' ||
-            str_contains($role, 'VETERINAIRE') ||
-            str_contains($role, 'AGENT_MUNICIPALE')
-        ) {
-            return true;
-        }
-
-        $roles = $sessionUser['roles'] ?? [];
-        if (is_string($roles)) {
-            $roles = [$roles];
-        }
-
-        foreach ((array) $roles as $candidate) {
-            $candidateRole = strtoupper((string) $candidate);
-            if ($candidateRole === 'ROLE_VETERINAIRE' || $candidateRole === 'ROLE_AGENT_MUNICIPALE') {
+        foreach ($this->collectCurrentRoles($request) as $role) {
+            if ($this->isVeterinarianRole($role) || $this->isMunicipalAgentRole($role)) {
                 return true;
             }
         }
@@ -223,44 +223,109 @@ final class PublicNotificationController extends AbstractController
         return false;
     }
 
+    /**
+     * @return array<string>
+     */
+    private function collectCurrentRoles(Request $request): array
+    {
+        $roles = [];
+
+        if ($this->getUser() !== null) {
+            foreach ((array) $this->getUser()->getRoles() as $role) {
+                $roles[] = $this->normalizeRole((string) $role);
+            }
+        }
+
+        if ($request->hasSession()) {
+            $sessionUser = $request->getSession()->get('user');
+            if (is_array($sessionUser)) {
+                $rawRole = $sessionUser['role'] ?? '';
+
+                if (is_array($rawRole)) {
+                    foreach ($rawRole as $role) {
+                        $roles[] = $this->normalizeRole((string) $role);
+                    }
+                } else {
+                    $roles[] = $this->normalizeRole((string) $rawRole);
+                }
+            }
+        }
+
+        return array_values(array_unique(array_filter($roles)));
+    }
+
+    private function isVeterinarianRole(string $role): bool
+    {
+        return str_contains($role, 'VETERINAIRE')
+            || str_contains($role, 'VETERINARY')
+            || preg_match('/\bVET\b/', $role) === 1;
+    }
+
+    private function isMunicipalAgentRole(string $role): bool
+    {
+        if (str_contains($role, 'AGENT_MUNICIP')) {
+            return true;
+        }
+
+        return str_contains($role, 'AGENT') && str_contains($role, 'MUNICIP');
+    }
+
+    /**
+     * @return array{user_id:int,display_name:string,role:string,role_type:'vet'|'agent'|null}
+     */
     private function resolveChatIdentity(Request $request): array
     {
-        $sessionUser = $request->getSession()->get('user');
-        if (!is_array($sessionUser)) {
-            return [
-                'user_id' => 0,
-                'display_name' => '',
-                'role' => 'ROLE_USER',
-                'role_type' => 'unknown',
-            ];
-        }
+        $sessionUser = $request->hasSession() ? $request->getSession()->get('user') : null;
+        $sessionUser = is_array($sessionUser) ? $sessionUser : [];
+        $userId = isset($sessionUser['id']) ? (int) $sessionUser['id'] : 0;
 
-        $userId = (int) ($sessionUser['id'] ?? 0);
-        $firstName = trim((string) ($sessionUser['prenom'] ?? ''));
-        $lastName = trim((string) ($sessionUser['nom'] ?? ''));
-        $displayName = trim($firstName . ' ' . $lastName);
+        $displayName = trim((string) ($sessionUser['prenom'] ?? '') . ' ' . (string) ($sessionUser['nom'] ?? ''));
         if ($displayName === '') {
-            $displayName = (string) ($sessionUser['email'] ?? 'Unknown user');
+            $displayName = (string) ($sessionUser['email'] ?? '');
+        }
+        if ($displayName === '') {
+            $displayName = 'User';
         }
 
-        $rawRole = strtoupper((string) ($sessionUser['role'] ?? ''));
-        $mappedRole = match ($rawRole) {
-            'VETERINAIRE' => 'ROLE_VETERINAIRE',
-            'AGENT_MUNICIPALE' => 'ROLE_AGENT_MUNICIPALE',
-            default => ($rawRole !== '' ? $rawRole : 'ROLE_USER'),
-        };
+        $role = $this->normalizeRole((string) ($sessionUser['role'] ?? ''));
+        if ($role === '' && $this->getUser() !== null) {
+            $roles = $this->getUser()->getRoles();
+            $role = isset($roles[0]) ? $this->normalizeRole((string) $roles[0]) : '';
+        }
+        if ($role === '') {
+            $role = 'ROLE_USER';
+        }
 
-        $roleType = match ($mappedRole) {
-            'ROLE_VETERINAIRE' => 'vet',
-            'ROLE_AGENT_MUNICIPALE' => 'agent',
-            default => 'unknown',
-        };
+        $roleType = null;
+        if ($this->isVeterinarianRole($role)) {
+            $roleType = 'vet';
+        } elseif ($this->isMunicipalAgentRole($role)) {
+            $roleType = 'agent';
+        }
 
         return [
             'user_id' => $userId,
             'display_name' => $displayName,
-            'role' => $mappedRole,
+            'role' => $role,
             'role_type' => $roleType,
         ];
+    }
+
+    private function normalizeRole(string $role): string
+    {
+        $raw = trim($role);
+        if ($raw === '') {
+            return '';
+        }
+
+        $ascii = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $raw);
+        $clean = strtoupper($ascii !== false ? $ascii : $raw);
+        $clean = preg_replace('/[^A-Z0-9]+/', '_', $clean) ?? '';
+        $clean = trim($clean, '_');
+        if ($clean === '') {
+            return '';
+        }
+
+        return str_starts_with($clean, 'ROLE_') ? $clean : 'ROLE_' . $clean;
     }
 }

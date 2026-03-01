@@ -3,7 +3,6 @@
 {% block title %}Station Dashboard | PawTech{% endblock %}
 
 {% block main %}
-{% set station_health_alerts = stationHealthAlerts|default(healthAlerts|default([])) %}
 <div class="px-4 sm:px-6 lg:px-8 py-8 max-w-[1600px] mx-auto">
     <!-- Header -->
     <div class="bg-white rounded-2xl border border-gray-200 p-6 mb-6 shadow-sm">
@@ -61,7 +60,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">IoT Readings</p>
-                    <p id="stat-iot-readings" class="mt-2 text-2xl font-bold text-gray-900">{{ totalIotReadings|default(iotDataForCharts|length) }}</p>
+                    <p id="stat-iot-readings" class="mt-2 text-2xl font-bold text-gray-900">{{ totalIotReadings }}</p>
                 </div>
                 <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
                     <svg class="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -74,7 +73,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Detections</p>
-                    <p id="stat-detections" class="mt-2 text-2xl font-bold text-gray-900">{{ totalDetections|default(detections|length) }}</p>
+                    <p id="stat-detections" class="mt-2 text-2xl font-bold text-gray-900">{{ totalDetections }}</p>
                 </div>
                 <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100">
                     <svg class="h-5 w-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -87,7 +86,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Health Alerts</p>
-                    <p id="stat-health-alerts" class="mt-2 text-2xl font-bold text-gray-900">{{ totalHealthAlerts|default(healthAlerts|length) }}</p>
+                    <p id="stat-health-alerts" class="mt-2 text-2xl font-bold text-gray-900">{{ totalHealthAlerts }}</p>
                 </div>
                 <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-red-100">
                     <svg class="h-5 w-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -414,15 +413,15 @@
                     <div class="flex items-center gap-2">
                         <span class="text-xs text-gray-500">Time Range:</span>
                         <div class="inline-flex rounded-md shadow-sm" role="group">
-                            <button type="button" onclick="setIotTimeRange('hour', this)" 
+                            <button type="button" onclick="setIotTimeRange('hour')" 
                                 class="time-range-btn px-3 py-1 text-xs font-medium rounded-l-lg bg-orange-500 text-white hover:bg-orange-600">
                                 1 Hour
                             </button>
-                            <button type="button" onclick="setIotTimeRange('day', this)" 
+                            <button type="button" onclick="setIotTimeRange('day')" 
                                 class="time-range-btn px-3 py-1 text-xs font-medium bg-gray-100 text-gray-700 hover:bg-gray-200">
                                 24 Hours
                             </button>
-                            <button type="button" onclick="setIotTimeRange('week', this)" 
+                            <button type="button" onclick="setIotTimeRange('week')" 
                                 class="time-range-btn px-3 py-1 text-xs font-medium rounded-r-lg bg-gray-100 text-gray-700 hover:bg-gray-200">
                                 7 Days
                             </button>
@@ -455,8 +454,8 @@
                     </a>
                 </div>
                 
-                <div id="health-alerts-list" class="space-y-3 {% if station_health_alerts|length == 0 %}hidden{% endif %}">
-                    {% for alert in station_health_alerts|slice(0, 5) %}
+                <div id="health-alerts-list" class="space-y-3 {% if stationHealthAlerts|length == 0 %}hidden{% endif %}">
+                    {% for alert in stationHealthAlerts|slice(0, 5) %}
                     <div class="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50">
                         <div class="flex-shrink-0 h-10 w-10 rounded-full 
                             bg-red-100 flex items-center justify-center">
@@ -480,7 +479,7 @@
                     </div>
                     {% endfor %}
                 </div>
-                <div id="health-alerts-empty" class="text-center py-8 text-gray-500 {% if station_health_alerts|length > 0 %}hidden{% endif %}">
+                <div id="health-alerts-empty" class="text-center py-8 text-gray-500 {% if stationHealthAlerts|length > 0 %}hidden{% endif %}">
                     <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
                     </svg>
@@ -511,8 +510,8 @@ const stationCameraIds = [{% for camera in cameras|slice(0, 2) %}{{ camera.id }}
 let iotTimeRange = 'hour'; // hour, day, week
 const APP_TIMEZONE = {{ (app_timezone|default('UTC'))|json_encode|raw }};
 const IOT_REFRESH_INTERVAL = 1000;
-const CAMERA_FRAME_INTERVAL = 90;
-const CAMERA_FRAME_RETRY_INTERVAL = 450;
+const CAMERA_FRAME_INTERVAL = 60;
+const CAMERA_FRAME_RETRY_INTERVAL = 300;
 const STREAM_START_RETRY_MS = 10000;
 const PTZ_REFRESH_INTERVAL = 2500;
 const PTZ_TIMEOUT_SECONDS = 3;
@@ -745,6 +744,72 @@ function toNumeric(value) {
     return Number.isFinite(n) ? n : null;
 }
 
+function toBoolean(value) {
+    if (value === true || value === false) return value;
+    if (value === null || value === undefined || value === '') return null;
+
+    const normalized = String(value).trim().toLowerCase();
+    if (['1', 'true', 'yes', 'on'].includes(normalized)) return true;
+    if (['0', 'false', 'no', 'off'].includes(normalized)) return false;
+
+    return null;
+}
+
+function getSignalStrength(row) {
+    if (!row || typeof row !== 'object') return null;
+    const sensors = row.additionalSensors && typeof row.additionalSensors === 'object' ? row.additionalSensors : {};
+
+    return row.signalStrength
+        ?? row.signal_strength
+        ?? row.signal
+        ?? row.rssi
+        ?? sensors.signalStrength
+        ?? sensors.signal_strength
+        ?? sensors.signal
+        ?? sensors.rssi
+        ?? sensors.wifiRssi
+        ?? sensors.wifi_rssi
+        ?? null;
+}
+
+function getUltrasonicDistance(row) {
+    if (!row || typeof row !== 'object') return null;
+    const sensors = row.additionalSensors && typeof row.additionalSensors === 'object' ? row.additionalSensors : {};
+
+    return row.ultrasonicDistanceCm
+        ?? row.ultrasonic_distance_cm
+        ?? row.ultrasonicDistance
+        ?? row.ultrasonic_distance
+        ?? row.distanceCm
+        ?? row.distance_cm
+        ?? row.distance
+        ?? sensors.ultrasonicDistanceCm
+        ?? sensors.ultrasonic_distance_cm
+        ?? sensors.ultrasonicDistance
+        ?? sensors.ultrasonic_distance
+        ?? sensors.distanceCm
+        ?? sensors.distance_cm
+        ?? sensors.distance
+        ?? null;
+}
+
+function getDogDetected(row) {
+    if (!row || typeof row !== 'object') return null;
+    const sensors = row.additionalSensors && typeof row.additionalSensors === 'object' ? row.additionalSensors : {};
+
+    const candidate = row.dogDetected
+        ?? row.dog_detected
+        ?? row.isDogDetected
+        ?? row.is_dog_detected
+        ?? sensors.dogDetected
+        ?? sensors.dog_detected
+        ?? sensors.isDogDetected
+        ?? sensors.is_dog_detected
+        ?? null;
+
+    return toBoolean(candidate);
+}
+
 function formatMetric(value, suffix = '') {
     if (value === null || value === undefined || value === '') return 'N/A';
     const n = toNumeric(value);
@@ -894,7 +959,7 @@ function ensureIotChart() {
                     label: 'Battery (%)',
                     data: [],
                     yAxisID: 'yPercent',
-                    borderColor: 'rgb(234, 179, 😎',
+                    borderColor: 'rgb(234, 179, 8)',
                     backgroundColor: 'rgba(234, 179, 8, 0.1)',
                     borderDash: [3, 3],
                     tension: 0.3,
@@ -923,7 +988,7 @@ function ensureIotChart() {
                 },
                 tooltip: {
                     enabled: true,
-                    backgroundColor: 'rgba(0, 0, 0, 0.😎',
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
                     titleFont: { size: 13 },
                     bodyFont: { size: 12 },
                     padding: 10,
@@ -1036,7 +1101,7 @@ function ensureIotChart() {
 }
 
 // Time range function
-function setIotTimeRange(range, btn = null) {
+function setIotTimeRange(range) {
     iotTimeRange = range;
     
     // Update button styles
@@ -1044,10 +1109,8 @@ function setIotTimeRange(range, btn = null) {
         btn.classList.remove('bg-orange-500', 'text-white');
         btn.classList.add('bg-gray-100', 'text-gray-700');
     });
-    if (btn) {
-        btn.classList.remove('bg-gray-100', 'text-gray-700');
-        btn.classList.add('bg-orange-500', 'text-white');
-    }
+    event.target.classList.remove('bg-gray-100', 'text-gray-700');
+    event.target.classList.add('bg-orange-500', 'text-white');
     
     // Refresh data
     refreshStationIotData();
@@ -1080,7 +1143,7 @@ function updateIotChart(rows) {
     chart.data.labels = labels;
     chart.data.datasets[0].data = ordered.map(row => toNumeric(row.temperature));
     chart.data.datasets[1].data = ordered.map(row => toNumeric(row.humidity));
-    chart.data.datasets[2].data = ordered.map(row => toNumeric(row.ultrasonicDistanceCm ?? row.distance));
+    chart.data.datasets[2].data = ordered.map(row => toNumeric(getUltrasonicDistance(row)));
     chart.data.datasets[3].data = ordered.map(row => toNumeric(row.batteryLevel));
     
     // Update point count display
@@ -1094,6 +1157,7 @@ function updateIotChart(rows) {
 
 function updateIotCards(latestRow) {
     const hasData = Boolean(latestRow);
+    const dogDetected = hasData ? getDogDetected(latestRow) : null;
     const emptyState = document.getElementById('iot-empty-state');
     if (emptyState) {
         emptyState.classList.toggle('hidden', hasData);
@@ -1103,11 +1167,11 @@ function updateIotCards(latestRow) {
     setElementText('iot-humidity', hasData ? formatMetric(latestRow.humidity, '%') : 'N/A');
     setElementText('iot-pressure', hasData ? formatMetric(latestRow.pressure, ' hPa') : 'N/A');
     setElementText('iot-battery', hasData ? formatMetric(latestRow.batteryLevel, '%') : 'N/A');
-    setElementText('iot-signal', hasData ? formatMetric(latestRow.signalStrength) : 'N/A');
-    setElementText('iot-distance', hasData ? formatMetric(latestRow.ultrasonicDistanceCm ?? latestRow.distance, ' cm') : 'N/A');
+    setElementText('iot-signal', hasData ? formatMetric(getSignalStrength(latestRow)) : 'N/A');
+    setElementText('iot-distance', hasData ? formatMetric(getUltrasonicDistance(latestRow), ' cm') : 'N/A');
     setElementText(
         'iot-dog',
-        hasData ? (latestRow.dogDetected === true ? 'Yes' : latestRow.dogDetected === false ? 'No' : 'N/A') : 'N/A'
+        hasData ? (dogDetected === true ? 'Yes' : dogDetected === false ? 'No' : 'N/A') : 'N/A'
     );
     setElementText(
         'iot-food',

@@ -15,6 +15,7 @@ class DogDetection
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    // @phpstan-ignore-next-line
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'detections')]
@@ -27,6 +28,7 @@ class DogDetection
     #[ORM\Column(type: Types::DECIMAL, precision: 5, scale: 2)]
     private ?string $confidence = null;
 
+    /** @var array<string, mixed>|null */
     #[ORM\Column(type: Types::JSON, nullable: true)]
     private ?array $boundingBox = null;
 
@@ -36,6 +38,7 @@ class DogDetection
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $healthCondition = null;
 
+    /** @var array<int, string>|null */
     #[ORM\Column(type: Types::JSON, nullable: true)]
     private ?array $healthSymptoms = null;
 
@@ -48,6 +51,7 @@ class DogDetection
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $imagePath = null;
 
+    /** @var array<string, mixed>|null */
     #[ORM\Column(type: Types::JSON, nullable: true)]
     private ?array $metadata = null;
 
@@ -102,11 +106,17 @@ class DogDetection
         return $this;
     }
 
+    /**
+     * @return array<string, mixed>|null
+     */
     public function getBoundingBox(): ?array
     {
         return $this->boundingBox;
     }
 
+    /**
+     * @param array<string, mixed>|null $boundingBox
+     */
     public function setBoundingBox(?array $boundingBox): static
     {
         $this->boundingBox = $boundingBox;
@@ -135,11 +145,17 @@ class DogDetection
         return $this;
     }
 
+    /**
+     * @return array<int, string>|null
+     */
     public function getHealthSymptoms(): ?array
     {
         return $this->healthSymptoms;
     }
 
+    /**
+     * @param array<int, string>|null $healthSymptoms
+     */
     public function setHealthSymptoms(?array $healthSymptoms): static
     {
         $this->healthSymptoms = $healthSymptoms;
@@ -179,11 +195,17 @@ class DogDetection
         return $this;
     }
 
+    /**
+     * @return array<string, mixed>|null
+     */
     public function getMetadata(): ?array
     {
         return $this->metadata;
     }
 
+    /**
+     * @param array<string, mixed>|null $metadata
+     */
     public function setMetadata(?array $metadata): static
     {
         $this->metadata = $metadata;
@@ -249,6 +271,9 @@ class DogDetection
     /**
      * Get available behavior types
      */
+    /**
+     * @return array<int, string>
+     */
     public static function getBehaviorTypes(): array
     {
         return [
@@ -270,6 +295,9 @@ class DogDetection
 
     /**
      * Get available health conditions
+     */
+    /**
+     * @return array<string, string>
      */
     public static function getHealthConditions(): array
     {
@@ -295,6 +323,9 @@ class DogDetection
 
     /**
      * Get severity levels
+     */
+    /**
+     * @return array<string, string>
      */
     public static function getSeverityLevels(): array
     {

@@ -238,8 +238,8 @@ const cameraId = {{ camera.id }};
 const frameUrl = `/admin/cameras/${cameraId}/frame.jpg`;
 const liveDetectionsUrl = `/admin/stations/cameras/${cameraId}/live-detections`;
 const streamInitiallyRunning = {{ isTranscoding ? 'true' : 'false' }};
-const FRAME_MIN_INTERVAL = 320;
-const FRAME_RETRY_INTERVAL = 900;
+const FRAME_MIN_INTERVAL = 60;
+const FRAME_RETRY_INTERVAL = 300;
 const LIVE_REFRESH_INTERVAL = 1000;
 
 let ptzInterval = null;

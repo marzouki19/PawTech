@@ -106,7 +106,7 @@
                                 Date
                             </span>
                         </th>
-                        <td class="py-3 pl-4 text-gray-900">{{ alert.date ? alert.date|date('d/m/Y H:i') : '' }}</td>
+                        <td class="py-3 pl-4 text-gray-900">{{ alert.date ? alert.date|date('d/m/Y H:i', app_timezone|default('UTC')) : '' }}</td>
                     </tr>
                 </tbody>
             </table>

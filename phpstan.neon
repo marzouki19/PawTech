@@ -1,0 +1,18 @@
+includes:
+    - phpstan-baseline.neon
+
+parameters:
+    level: 8
+    parallel:
+        maximumNumberOfProcesses: 1
+    paths:
+        - src
+    excludePaths:
+        analyse:
+            - src/Controller/PageController.php
+            - src/DataFixtures/DogsFixtures.php
+            - src/DataFixtures/EvenementFixtures.php
+            - src/DataFixtures/GuestFixtures.php
+            - src/DataFixtures/ZiptagFixtures.php
+            - src/Controller/PublicNotificationController copy.php
+            - src/Service/NotificationService copy.php

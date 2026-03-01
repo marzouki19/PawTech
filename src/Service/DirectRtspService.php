@@ -21,14 +21,15 @@ class DirectRtspService
 {
     private string $streamDirectory;
     private LoggerInterface $logger;
+    /** @var array<int, array{pid:?string, cameraId:int, outputDir:string, startedAt:\DateTime, restartAttempts:int}> */
     private array $mjpegProcesses = [];
+    /** @var array<int, array<string, mixed>> */
     private array $frameProcesses = [];
 
     // Configuration - can be injected via parameters
     private const MJPEG_PORT_BASE = 8888;
     private const MAX_RESTART_ATTEMPTS = 3;
     private const FRAME_TIMEOUT_SECONDS = 10; // Frame must be updated within this time
-
     public function __construct(
         LoggerInterface $logger,
         string $streamsDirectory
@@ -48,6 +49,9 @@ class DirectRtspService
     public function startDirectRtspStream(IpCamera $camera): bool
     {
         $cameraId = $camera->getId();
+        if ($cameraId === null) {
+            return false;
+        }
         
         try {
             // Stop any existing stream first
@@ -134,7 +138,7 @@ class DirectRtspService
 
             foreach ($pidFiles as $pidFile) {
                 if (file_exists($pidFile)) {
-                    $pid = trim(file_get_contents($pidFile));
+                    $pid = trim((string) file_get_contents($pidFile));
                     if ($pid && $this->isProcessRunning($pid)) {
                         exec("kill -9 $pid 2>/dev/null");
                     }
@@ -169,6 +173,9 @@ class DirectRtspService
     public function restartDirectRtspStream(IpCamera $camera): bool
     {
         $cameraId = $camera->getId();
+        if ($cameraId === null) {
+            return false;
+        }
         
         // Check restart attempts
         if (isset($this->mjpegProcesses[$cameraId]['restartAttempts'])) {
@@ -189,6 +196,8 @@ class DirectRtspService
 
     /**
      * Health check - verifies stream is working properly
+     *
+     * @return array{healthy:bool,mjpegRunning:bool,frameFresh:bool,errors:list<string>}
      */
     public function healthCheck(int $cameraId): array
     {
@@ -212,11 +221,15 @@ class DirectRtspService
             $frameFile = "/tmp/rtsp_frame_{$cameraId}.jpg";
             if (file_exists($frameFile)) {
                 $lastModified = filemtime($frameFile);
-                $age = time() - $lastModified;
-                if ($age <= self::FRAME_TIMEOUT_SECONDS) {
-                    $health['frameFresh'] = true;
+                if ($lastModified !== false) {
+                    $age = time() - $lastModified;
+                    if ($age <= self::FRAME_TIMEOUT_SECONDS) {
+                        $health['frameFresh'] = true;
+                    } else {
+                        $health['errors'][] = "Frame is stale (age: {$age}s)";
+                    }
                 } else {
-                    $health['errors'][] = "Frame is stale (age: {$age}s)";
+                    $health['errors'][] = 'Unable to read frame timestamp';
                 }
             } else {
                 $health['errors'][] = 'Frame file not found';
@@ -238,6 +251,10 @@ class DirectRtspService
     public function autoHeal(IpCamera $camera): bool
     {
         $cameraId = $camera->getId();
+        if ($cameraId === null) {
+            return false;
+        }
+
         $health = $this->healthCheck($cameraId);
 
         if (!$health['healthy']) {
@@ -257,7 +274,7 @@ class DirectRtspService
         $pidFile = $outputDir . '/rtsp.pid';
 
         if (file_exists($pidFile)) {
-            $pid = trim(file_get_contents($pidFile));
+            $pid = trim((string) file_get_contents($pidFile));
             if ($pid && $this->isProcessRunning($pid)) {
                 $port = self::MJPEG_PORT_BASE + $cameraId;
                 return "http://127.0.0.1:{$port}/stream.mjpg";
@@ -302,7 +319,7 @@ class DirectRtspService
         $pidFile = $outputDir . '/rtsp.pid';
 
         if (file_exists($pidFile)) {
-            $pid = trim(file_get_contents($pidFile));
+            $pid = trim((string) file_get_contents($pidFile));
             if ($pid && $this->isProcessRunning($pid)) {
                 return true;
             }
@@ -313,10 +330,34 @@ class DirectRtspService
 
     /**
      * Get stream status with detailed information
+     *
+     * @return array<string, mixed>
      */
     public function getStreamStatus(IpCamera $camera): array
     {
         $cameraId = $camera->getId();
+        if ($cameraId === null) {
+            return [
+                'running' => false,
+                'mode' => 'direct_rtsp',
+                'rtspUrl' => null,
+                'mjpegUrl' => null,
+                'frameUrl' => null,
+                'filePath' => null,
+                'framePath' => null,
+                'fileExists' => false,
+                'frameExists' => false,
+                'fileSize' => 0,
+                'frameSize' => 0,
+                'lastModified' => null,
+                'frameLastModified' => null,
+                'pid' => null,
+                'uptime' => null,
+                'health' => null,
+                'error' => 'Camera ID is missing',
+            ];
+        }
+
         $outputDir = $this->streamDirectory . '/camera_' . $cameraId;
         
         $rtspUrl = $this->buildRtspUrl($camera);
@@ -324,7 +365,7 @@ class DirectRtspService
         $status = [
             'running' => false,
             'mode' => 'direct_rtsp',
-            'rtspUrl' => $this->maskCredentials($rtspUrl),
+            'rtspUrl' => is_string($rtspUrl) ? $this->maskCredentials($rtspUrl) : null,
             'mjpegUrl' => null,
             'frameUrl' => null,
             'filePath' => null,
@@ -345,7 +386,7 @@ class DirectRtspService
             // Check if MJPEG process is running
             $pidFile = $outputDir . '/rtsp.pid';
             if (file_exists($pidFile)) {
-                $pid = trim(file_get_contents($pidFile));
+                $pid = trim((string) file_get_contents($pidFile));
                 if ($pid && $this->isProcessRunning($pid)) {
                     $status['running'] = true;
                     $status['pid'] = $pid;
@@ -364,7 +405,8 @@ class DirectRtspService
                 $status['fileExists'] = true;
                 $status['filePath'] = $mjpegFile;
                 $status['fileSize'] = filesize($mjpegFile);
-                $status['lastModified'] = date('Y-m-d H:i:s', filemtime($mjpegFile));
+                $fileMtime = filemtime($mjpegFile);
+                $status['lastModified'] = $fileMtime !== false ? date('Y-m-d H:i:s', $fileMtime) : null;
                 $status['mjpegUrl'] = $this->getMjpegStreamUrl($cameraId);
             }
 
@@ -374,7 +416,8 @@ class DirectRtspService
                 $status['frameExists'] = true;
                 $status['framePath'] = $frameFile;
                 $status['frameSize'] = filesize($frameFile);
-                $status['frameLastModified'] = date('Y-m-d H:i:s', filemtime($frameFile));
+                $frameMtime = filemtime($frameFile);
+                $status['frameLastModified'] = $frameMtime !== false ? date('Y-m-d H:i:s', $frameMtime) : null;
                 $status['frameUrl'] = '/admin/cameras/' . $cameraId . '/frame.jpg';
             }
 
@@ -395,13 +438,15 @@ class DirectRtspService
 
     /**
      * Get all active streams
+     *
+     * @return array<int, bool>
      */
     public function getAllStreamsStatus(): array
     {
         $streams = [];
         
         // Get all camera directories
-        $dirs = glob($this->streamDirectory . '/camera_*', GLOB_ONLYDIR);
+        $dirs = glob($this->streamDirectory . '/camera_*', GLOB_ONLYDIR) ?: [];
         
         foreach ($dirs as $dir) {
             if (preg_match('/camera_(\d+)$/', $dir, $matches)) {
@@ -427,8 +472,10 @@ class DirectRtspService
         }
         
         // Clean up temp files
-        array_map('unlink', glob("/tmp/rtsp_stream_*.mjpg"));
-        array_map('unlink', glob("/tmp/rtsp_frame_*.jpg"));
+        $mjpegFiles = glob("/tmp/rtsp_stream_*.mjpg") ?: [];
+        $frameFiles = glob("/tmp/rtsp_frame_*.jpg") ?: [];
+        array_map('unlink', $mjpegFiles);
+        array_map('unlink', $frameFiles);
         
         $this->logger->info("Cleaned up all streams");
     }
@@ -544,7 +591,7 @@ class DirectRtspService
         usleep(700000);
 
         // Check if process is running
-        $pid = trim(file_get_contents($pidFile));
+        $pid = trim((string) file_get_contents($pidFile));
         if ($pid && $this->isProcessRunning($pid)) {
             return true;
         }
@@ -571,7 +618,7 @@ class DirectRtspService
         
         $outputDir = $this->streamDirectory . '/camera_' . $cameraId;
         if (is_dir($outputDir)) {
-            $files = glob($outputDir . '/*');
+            $files = glob($outputDir . '/*') ?: [];
             foreach ($files as $file) {
                 if (is_file($file)) {
                     @unlink($file);
@@ -586,7 +633,7 @@ class DirectRtspService
     private function releasePort(int $port): void
     {
         $checkPort = shell_exec("lsof -i:{$port} 2>/dev/null");
-        if (!empty(trim($checkPort))) {
+        if (is_string($checkPort) && trim($checkPort) !== '') {
             $this->logger->warning("Port {$port} is in use, killing existing process");
             shell_exec("fuser -k {$port}/tcp 2>/dev/null");
             usleep(500000);
@@ -655,6 +702,6 @@ class DirectRtspService
      */
     private function maskCredentials(string $url): string
     {
-        return preg_replace('/(rtsp|http):\/\/([^:]+):([^@]+)@/', '$1://****:****@', $url);
+        return preg_replace('/(rtsp|http):\/\/([^:]+):([^@]+)@/', '$1://****:****@', $url) ?? $url;
     }
 }

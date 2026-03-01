@@ -1,29 +1,57 @@
-
 ###> symfony/framework-bundle ###
 /.env.local
 /.env.local.php
 /.env.*.local
 /config/secrets/prod/prod.decrypt.private.php
 /public/bundles/
-/var/
 /vendor/
 ###< symfony/framework-bundle ###
 
 ###> phpunit/phpunit ###
-/phpunit.xml
-.phpunit.result.cache
+/.phpunit.cache/
 ###< phpunit/phpunit ###
-
-###> symfony/phpunit-bridge ###
-.phpunit.result.cache
-/phpunit.xml
-###< symfony/phpunit-bridge ###
 
 ###> symfony/asset-mapper ###
 /public/assets/
 /assets/vendor/
 ###< symfony/asset-mapper ###
 
-/ml/data/
-/public/uploads/
-/ml/__pycache__/
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+python/venv/
+
+# IDE / Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build / Env
+dist/
+build/
+.env
+.env.local
+*.log
+
+# Large files / cache
+var/
+public/streams/
+python/detections/
+python/__pycache__/
+*.pt
+/vendor/
+/node_modules/
+/var/
+*.pt
+*.h5
+*.onnx
+.env.local

@@ -269,6 +269,24 @@ class ProduitController extends AbstractController
         ]);
     }
 
+    #[Route('/demand-forecast/generate', name: 'app_demand_forecast_generate', methods: ['POST'])]
+    public function generateDemandForecast(Request $request, DemandForecastService $demandForecastService): Response
+    {
+        $requestedTimeframe = (string) $request->request->get('timeframe', '30days');
+        $allowedTimeframes = ['7days', '30days', '90days', '180days', '365days'];
+        $timeframe = in_array($requestedTimeframe, $allowedTimeframes, true) ? $requestedTimeframe : '30days';
+
+        $generated = $demandForecastService->generateForecasts($timeframe);
+        $this->addFlash('success', sprintf('Demand forecast generated for %d product(s).', count($generated)));
+
+        $referer = (string) $request->headers->get('referer', '');
+        if ($referer !== '') {
+            return $this->redirect($referer);
+        }
+
+        return $this->redirectToRoute('app_eshop_produit_index');
+    }
+
     #[Route('/new', name: 'app_eshop_produit_new', methods: ['GET','POST'])]
     public function new(Request $request, EntityManagerInterface $em): Response
     {

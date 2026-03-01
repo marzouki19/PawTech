@@ -10,10 +10,7 @@
         "doctrine/doctrine-bundle": "^2.18",
         "doctrine/doctrine-migrations-bundle": "^3.7",
         "doctrine/orm": "^3.6",
-        "dompdf/dompdf": "3.1",
-        "endroid/qr-code": "^5.1",
         "fakerphp/faker": "^1.24",
-        "nucleos/dompdf-bundle": "^4.3",
         "phpdocumentor/reflection-docblock": "^5.2",
         "phpstan/phpdoc-parser": "^2.3",
         "stripe/stripe-php": "^19.3",
@@ -26,15 +23,13 @@
         "symfony/flex": "^2",
         "symfony/form": "6.4.*",
         "symfony/framework-bundle": "6.4.*",
-        "symfony/google-mailer": "6.4.*",
         "symfony/http-client": "6.4.*",
         "symfony/intl": "6.4.*",
         "symfony/mailer": "6.4.*",
-        "symfony/mercure-bundle": "*",
+        "symfony/mercure-bundle": "^0.4.2",
         "symfony/mime": "6.4.*",
-        "symfony/monolog-bundle": "^3.11",
+        "symfony/monolog-bundle": "^3.0|^4.0",
         "symfony/notifier": "6.4.*",
-        "symfony/phpunit-bridge": "^8.0",
         "symfony/process": "6.4.*",
         "symfony/property-access": "6.4.*",
         "symfony/property-info": "6.4.*",
@@ -50,8 +45,7 @@
         "symfony/web-link": "6.4.*",
         "symfony/yaml": "6.4.*",
         "twig/extra-bundle": "^2.12|^3.0",
-        "twig/twig": "^2.12|^3.0",
-        "twilio/sdk": "^8.11"
+        "twig/twig": "^2.12|^3.0"
     },
     "config": {
         "allow-plugins": {
@@ -59,12 +53,7 @@
             "symfony/flex": true,
             "symfony/runtime": true
         },
-
-        "sort-packages": true,
-        "platform": {
-            "php": "8.1.25"
-        }
-
+        "sort-packages": true
     },
     "autoload": {
         "psr-4": {
@@ -91,7 +80,6 @@
             "assets:install %PUBLIC_DIR%": "symfony-cmd",
             "importmap:install": "symfony-cmd"
         },
-        "phpstan": "php -d memory_limit=1G vendor/bin/phpstan analyse --ansi",
         "post-install-cmd": [
             "@auto-scripts"
         ],
@@ -111,7 +99,7 @@
     "require-dev": {
         "doctrine/doctrine-fixtures-bundle": "^4.3",
         "phpstan/phpstan": "^2.1",
-        "phpunit/phpunit": "9.6.34",
+        "phpunit/phpunit": "^11.5",
         "symfony/browser-kit": "6.4.*",
         "symfony/css-selector": "6.4.*",
         "symfony/debug-bundle": "6.4.*",

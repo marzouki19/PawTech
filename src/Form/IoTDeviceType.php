@@ -71,7 +71,7 @@ class IoTDeviceType extends AbstractType
             ->add('apiEndpoint', TextType::class, [
                 'label' => 'API Endpoint',
                 'required' => false,
-                'attr' => ['class' => 'form-control', 'placeholder' => '/admin/stations/api/iot/data'],
+                'attr' => ['class' => 'form-control', 'placeholder' => '/admin/api/iot/data'],
             ])
             ->add('reportingInterval', IntegerType::class, [
                 'label' => 'Reporting Interval (seconds)',

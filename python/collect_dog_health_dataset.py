@@ -34,7 +34,6 @@ except ImportError:
     sys.exit(1)
 
 from ip_camera_dog_detector import (
-    DogTarget,
     configure_rtsp_transport,
     extract_dog_targets,
     extract_health_features,
@@ -124,19 +123,19 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--symptom-foam-threshold",
         type=float,
-        default=0.16,
+        default=0.22,
         help="Foam ratio threshold for symptom flags.",
     )
     parser.add_argument(
         "--symptom-red-eye-threshold",
         type=float,
-        default=0.06,
+        default=0.09,
         help="Red-eye ratio threshold for symptom flags.",
     )
     parser.add_argument(
         "--symptom-motion-threshold",
         type=float,
-        default=0.08,
+        default=0.12,
         help="Motion ratio threshold for symptom flags.",
     )
     parser.add_argument(

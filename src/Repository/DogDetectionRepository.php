@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Entity\DogDetection;
 use App\Entity\IpCamera;
+use App\Entity\ObservationStation;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -33,6 +34,9 @@ class DogDetectionRepository extends ServiceEntityRepository
         }
     }
 
+    /**
+     * @return list<DogDetection>
+     */
     public function findRecentDetections(int $limit = 50): array
     {
         return $this->createQueryBuilder('d')
@@ -42,6 +46,9 @@ class DogDetectionRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * @return list<DogDetection>
+     */
     public function findByCamera(IpCamera $camera, int $limit = 50): array
     {
         return $this->createQueryBuilder('d')
@@ -53,6 +60,9 @@ class DogDetectionRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * @return list<DogDetection>
+     */
     public function findHealthAlerts(): array
     {
         return $this->createQueryBuilder('d')
@@ -64,6 +74,9 @@ class DogDetectionRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * @return list<array{behaviorType:string|null, count:numeric-string|int}>
+     */
     public function countByBehaviorType(): array
     {
         return $this->createQueryBuilder('d')
@@ -73,6 +86,9 @@ class DogDetectionRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * @return list<array{healthCondition:string|null, count:numeric-string|int}>
+     */
     public function countByHealthCondition(): array
     {
         return $this->createQueryBuilder('d')
@@ -83,6 +99,9 @@ class DogDetectionRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * @return list<DogDetection>
+     */
     public function findByDateRange(\DateTime $startDate, \DateTime $endDate): array
     {
         return $this->createQueryBuilder('d')
@@ -107,6 +126,9 @@ class DogDetectionRepository extends ServiceEntityRepository
             ->getSingleScalarResult();
     }
 
+    /**
+     * @return list<DogDetection>
+     */
     public function findSeriousDetections(): array
     {
         return $this->createQueryBuilder('d')
@@ -126,6 +148,17 @@ class DogDetectionRepository extends ServiceEntityRepository
             ->select('COUNT(d.id)')
             ->andWhere('d.detectedAt >= :today')
             ->setParameter('today', $today)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    public function countByStation(ObservationStation $station): int
+    {
+        return (int) $this->createQueryBuilder('d')
+            ->select('COUNT(d.id)')
+            ->innerJoin('d.camera', 'c')
+            ->andWhere('c.station = :station')
+            ->setParameter('station', $station)
             ->getQuery()
             ->getSingleScalarResult();
     }

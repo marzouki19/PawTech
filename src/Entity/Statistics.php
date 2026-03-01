@@ -15,6 +15,7 @@ class Statistics
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    // @phpstan-ignore-next-line
     private ?int $id = null;
 
     #[ORM\Column(length: 50)]
@@ -23,11 +24,12 @@ class Statistics
     #[ORM\Column(type: Types::DATE_MUTABLE)]
     private ?\DateTimeInterface $date = null;
 
+    /** @var array<string, mixed> */
     #[ORM\Column(type: Types::JSON)]
     private array $data = [];
 
     #[ORM\Column]
-    private ?int $count = 0;
+    private int $count = 0;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2, nullable: true)]
     private ?string $average = null;
@@ -78,18 +80,24 @@ class Statistics
         return $this;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getData(): array
     {
         return $this->data;
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public function setData(array $data): static
     {
         $this->data = $data;
         return $this;
     }
 
-    public function getCount(): ?int
+    public function getCount(): int
     {
         return $this->count;
     }
@@ -157,6 +165,8 @@ class Statistics
 
     /**
      * Get available statistic types
+     *
+     * @return array<string, string>
      */
     public static function getTypes(): array
     {

@@ -17,34 +17,33 @@
     <table class="min-w-full text-sm">
       <thead class="bg-white">
         <tr class="text-left text-gray-500">
-          <th class="px-6 py-4 font-medium whitespace-nowrap"><a href="#" class="sort-header" data-sort="id">ID</a></th>
-          <th class="px-6 py-4 font-medium whitespace-nowrap"><a href="#" class="sort-header" data-sort="first_name">First Name</a></th>
-          <th class="px-6 py-4 font-medium whitespace-nowrap"><a href="#" class="sort-header" data-sort="last_name">Last Name</a></th>
-          <th class="px-6 py-4 font-medium whitespace-nowrap"><a href="#" class="sort-header" data-sort="email">Email</a></th>
-          <th class="px-6 py-4 font-medium whitespace-nowrap"><a href="#" class="sort-header" data-sort="phone">Phone</a></th>
-          <th class="px-6 py-4 font-medium whitespace-nowrap"><a href="#" class="sort-header" data-sort="role">Role</a></th>
-          <th class="px-6 py-4 font-medium whitespace-nowrap"><a href="#" class="sort-header" data-sort="status">Status</a></th>
+          {% for col in columns|default([]) %}
+            <th class="px-6 py-4 font-medium whitespace-nowrap">{{ col }}</th>
+          {% endfor %}
           {% if actions_enabled|default(false) %}
             <th class="px-6 py-4 font-medium whitespace-nowrap">Actions</th>
           {% endif %}
         </tr>
       </thead>
-      <tbody id="user-table-body" class="divide-y divide-gray-100">
+      <tbody class="divide-y divide-gray-100" data-entity-sort-target="tbody" data-entity-sort-column="0">
         {% set safe_rows = rows|default([]) %}
         {% if safe_rows is empty %}
           <tr>
-            <td class="px-6 py-6 text-gray-400" colspan="8">No data yet.</td>
+            <td class="px-6 py-6 text-gray-400" colspan="{{ columns|length + (actions_enabled|default(false) ? 1 : 0) }}">No data yet.</td>
           </tr>
         {% else %}
           {% for row in safe_rows %}
             <tr class="text-gray-700 hover:bg-gray-50">
-              <td class="px-6 py-4 whitespace-nowrap">{{ row[0] }}</td>
-              <td class="px-6 py-4 whitespace-nowrap">{{ row[1] }}</td>
-              <td class="px-6 py-4 whitespace-nowrap">{{ row[2] }}</td>
-              <td class="px-6 py-4 whitespace-nowrap">{{ row[3] }}</td>
-              <td class="px-6 py-4 whitespace-nowrap">{{ row[4] }}</td>
-              <td class="px-6 py-4 whitespace-nowrap">{{ row[5] }}</td>
-              <td class="px-6 py-4 whitespace-nowrap">{{ row[6] }}</td>
+              {% for cell in row %}
+                {% if status_badge_index is defined and loop.index0 == status_badge_index %}
+                  {% set is_active = cell|lower == 'actif' or cell|lower == 'active' %}
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="text-xs px-2 py-1 rounded-full font-medium {{ is_active ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600' }}">{{ cell }}</span>
+                  </td>
+                {% else %}
+                  <td class="px-6 py-4 whitespace-nowrap">{{ cell }}</td>
+                {% endif %}
+              {% endfor %}
               {% if actions_enabled|default(false) %}
                 {% set row_id_index = actions_id_index|default(0) %}
                 {% set row_id = attribute(row, row_id_index) %}

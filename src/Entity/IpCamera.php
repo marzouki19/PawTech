@@ -17,6 +17,7 @@ class IpCamera
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    // @phpstan-ignore-next-line
     private ?int $id = null;
 
     #[ORM\Column(length: 100)]
@@ -30,7 +31,7 @@ class IpCamera
 
     #[ORM\Column(length: 10)]
     #[Assert\Range(min: 1, max: 65535)]
-    private ?int $port = 80;
+    private int $port = 80;
 
     #[ORM\Column(length: 100, nullable: true)]
     private ?string $username = null;
@@ -53,7 +54,7 @@ class IpCamera
 
     #[ORM\Column(length: 50)]
     #[Assert\Choice(choices: ['active', 'inactive', 'error'], message: 'Statut invalide')]
-    private ?string $status = 'inactive';
+    private string $status = 'inactive';
 
     #[ORM\Column(length: 50, nullable: true)]
     private ?string $model = null;
@@ -61,9 +62,11 @@ class IpCamera
     #[ORM\Column(length: 50, nullable: true)]
     private ?string $resolution = null;
 
+    /** @var array<int, string>|null */
     #[ORM\Column(type: Types::JSON, nullable: true)]
     private ?array $ptzCapabilities = null;
 
+    /** @var array<string, mixed>|null */
     #[ORM\Column(type: Types::JSON, nullable: true)]
     private ?array $cameraSettings = null;
 
@@ -117,7 +120,7 @@ class IpCamera
         return $this;
     }
 
-    public function getPort(): ?int
+    public function getPort(): int
     {
         return $this->port;
     }
@@ -194,7 +197,7 @@ class IpCamera
         return $this;
     }
 
-    public function getStatus(): ?string
+    public function getStatus(): string
     {
         return $this->status;
     }
@@ -227,11 +230,17 @@ class IpCamera
         return $this;
     }
 
+    /**
+     * @return array<int, string>|null
+     */
     public function getPtzCapabilities(): ?array
     {
         return $this->ptzCapabilities;
     }
 
+    /**
+     * @param array<int, string>|null $ptzCapabilities
+     */
     public function setPtzCapabilities(?array $ptzCapabilities): static
     {
         $this->ptzCapabilities = $ptzCapabilities;
@@ -274,11 +283,17 @@ class IpCamera
         return in_array('presets', $capabilities);
     }
 
+    /**
+     * @return array<string, mixed>|null
+     */
     public function getCameraSettings(): ?array
     {
         return $this->cameraSettings;
     }
 
+    /**
+     * @param array<string, mixed>|null $cameraSettings
+     */
     public function setCameraSettings(?array $cameraSettings): static
     {
         $this->cameraSettings = $cameraSettings;
@@ -353,8 +368,6 @@ class IpCamera
      */
     public function getFullStreamUrl(): string
     {
-        $hasScheme = static fn(?string $url): bool => is_string($url) && preg_match('/^[a-z][a-z0-9+.-]*:/i', $url) === 1;
-
         // If RTSP URL is set, use it
         if ($this->rtspUrl) {
             $auth = '';
@@ -368,21 +381,14 @@ class IpCamera
         
         if ($this->streamUrl) {
             // Check if it's already a full URL
-            if ($hasScheme($this->streamUrl)) {
+            if (str_starts_with($this->streamUrl, 'http') || str_starts_with($this->streamUrl, 'rtsp')) {
                 return $this->streamUrl;
-            }
-            if (str_starts_with($this->streamUrl, '/data:')) {
-                return substr($this->streamUrl, 1);
             }
             $auth = '';
             if ($this->username && $this->password) {
                 $auth = $this->username . ':' . $this->password . '@';
             }
-            if (!$this->ipAddress) {
-                return $this->streamUrl;
-            }
-            $path = str_starts_with($this->streamUrl, '/') ? $this->streamUrl : '/' . $this->streamUrl;
-            return 'http://' . $auth . $this->ipAddress . ':' . $this->port . $path;
+            return 'http://' . $auth . $this->ipAddress . ':' . $this->port . $this->streamUrl;
         }
         
         $auth = '';
@@ -398,24 +404,15 @@ class IpCamera
      */
     public function getFullSnapshotUrl(): string
     {
-        $hasScheme = static fn(?string $url): bool => is_string($url) && preg_match('/^[a-z][a-z0-9+.-]*:/i', $url) === 1;
-
         if ($this->snapshotUrl) {
-            if ($hasScheme($this->snapshotUrl)) {
+            if (str_starts_with($this->snapshotUrl, 'http')) {
                 return $this->snapshotUrl;
-            }
-            if (str_starts_with($this->snapshotUrl, '/data:')) {
-                return substr($this->snapshotUrl, 1);
             }
             $auth = '';
             if ($this->username && $this->password) {
                 $auth = $this->username . ':' . $this->password . '@';
             }
-            if (!$this->ipAddress) {
-                return $this->snapshotUrl;
-            }
-            $path = str_starts_with($this->snapshotUrl, '/') ? $this->snapshotUrl : '/' . $this->snapshotUrl;
-            return 'http://' . $auth . $this->ipAddress . ':' . $this->port . $path;
+            return 'http://' . $auth . $this->ipAddress . ':' . $this->port . $this->snapshotUrl;
         }
         
         $auth = '';

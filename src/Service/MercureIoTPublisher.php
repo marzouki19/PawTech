@@ -21,8 +21,12 @@ class MercureIoTPublisher
     public function publishIoTData(IoTData $iotData): void
     {
         try {
-            $stationId = $iotData->getStation()->getId();
-            $stationCode = $iotData->getStation()->getCode();
+            $station = $iotData->getStation();
+            $stationId = $station?->getId();
+            $stationCode = $station?->getCode();
+            if ($stationId === null) {
+                return;
+            }
             
             // Create the topic for this specific station
             $topic = sprintf('iot/station/%d', $stationId);
@@ -47,7 +51,7 @@ class MercureIoTPublisher
 
             $update = new Update(
                 $topic,
-                json_encode($data),
+                json_encode($data) ?: '{}',
                 false // not private (anyone can subscribe)
             );
 
@@ -56,7 +60,7 @@ class MercureIoTPublisher
             // Also publish to a global topic for all stations
             $globalUpdate = new Update(
                 'iot/all',
-                json_encode($data),
+                json_encode($data) ?: '{}',
                 false
             );
             
@@ -80,7 +84,7 @@ class MercureIoTPublisher
             'timestamp' => (new \DateTime())->format('c'),
         ];
 
-        $update = new Update($topic, json_encode($data), false);
+        $update = new Update($topic, json_encode($data) ?: '{}', false);
         $this->hub->publish($update);
     }
 }

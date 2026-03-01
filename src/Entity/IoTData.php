@@ -15,6 +15,7 @@ class IoTData
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    // @phpstan-ignore-next-line
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'iotData')]
@@ -45,6 +46,7 @@ class IoTData
     #[ORM\Column(type: Types::BOOLEAN, nullable: true)]
     private ?bool $foodDispensed = null;
 
+    /** @var array<string, mixed>|null */
     #[ORM\Column(type: Types::JSON, nullable: true)]
     private ?array $additionalSensors = null;
 
@@ -173,11 +175,17 @@ class IoTData
         return $this;
     }
 
+    /**
+     * @return array<string, mixed>|null
+     */
     public function getAdditionalSensors(): ?array
     {
         return $this->additionalSensors;
     }
 
+    /**
+     * @param array<string, mixed>|null $additionalSensors
+     */
     public function setAdditionalSensors(?array $additionalSensors): static
     {
         $this->additionalSensors = $additionalSensors;
