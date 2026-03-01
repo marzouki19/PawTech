@@ -1,0 +1,343 @@
+{% extends 'base_front.html.twig' %}
+
+{% block title %}{{ produit.nom }} - PawTech{% endblock %}
+
+{% block body %}
+<div class="min-h-screen bg-gradient-to-br from-orange-50 via-white to-amber-50">
+    <!-- Breadcrumb -->
+    <div class="bg-white border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+            <nav class="flex items-center gap-2 text-sm">
+                <a href="{{ path('app_home') }}" class="text-gray-500 hover:text-orange-600 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                    </svg>
+                </a>
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+                <a href="{{ path('app_shop') }}" class="text-gray-500 hover:text-orange-600 transition-colors">Shop</a>
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+                {% if produit.categorie %}
+                    <a href="{{ path('app_shop') }}?category={{ produit.categorie.id }}" class="text-gray-500 hover:text-orange-600 transition-colors">{{ produit.categorie.nom }}</a>
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                {% endif %}
+                <span class="text-orange-600 font-medium truncate">{{ produit.nom }}</span>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Main Product Section -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-2">
+                <!-- Product Image -->
+                <div class="aspect-square lg:aspect-auto bg-gradient-to-br from-orange-50 to-amber-50 p-8 flex items-center justify-center">
+                    {% if produit.image %}
+                        {% if produit.image matches '#^https?://#' %}
+                            <img src="{{ produit.image }}" alt="{{ produit.nom }}" class="w-full h-full object-contain rounded-2xl shadow-lg">
+                        {% else %}
+                            <img src="{{ asset('uploads/images/' ~ produit.image) }}" alt="{{ produit.nom }}" class="w-full h-full object-contain rounded-2xl shadow-lg">
+                        {% endif %}
+                    {% else %}
+                        <div class="flex flex-col items-center justify-center">
+                            <span class="text-9xl font-black text-orange-200">{{ produit.nom|slice(0, 1) }}</span>
+                            <p class="mt-4 text-gray-400 font-medium">No image available</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Product Details -->
+                <div class="p-8 lg:p-12 flex flex-col">
+                    <!-- Category Badge -->
+                    {% if produit.categorie %}
+                        <span class="inline-flex items-center self-start px-4 py-1.5 rounded-full text-sm font-bold bg-orange-100 text-orange-700 mb-4">
+                            {{ produit.categorie.nom }}
+                        </span>
+                    {% endif %}
+
+                    <!-- Product Name -->
+                    <h1 class="text-4xl font-black text-gray-900 mb-4">{{ produit.nom }}</h1>
+
+                    <!-- Rating & Sales -->
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="flex items-center gap-1">
+                            {% set purchaseCount = produit.purchaseCount|default(0) %}
+                            {% set purchaseStars = produit.purchaseStars|default(1) %}
+                            {% for i in 1..5 %}
+                                {% if i <= purchaseStars %}
+                                    <i class="fas fa-star text-yellow-400 text-lg"></i>
+                                {% else %}
+                                    <i class="far fa-star text-gray-300 text-lg"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <span class="text-gray-500">{{ purchaseCount }} sold</span>
+                        {% if produit.quantite is not null %}
+                            <span class="text-gray-300">|</span>
+                            <span class="{% if produit.quantite <= 5 %}text-red-500{% else %}text-green-500{% endif %} font-medium">
+                                {{ produit.quantite }} in stock
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Price -->
+                    <div class="mb-6">
+                        <span class="text-5xl font-black text-orange-600">{{ produit.prix|number_format(2, ',', ' ') }}</span>
+                        <span class="text-xl font-medium text-gray-400 ml-2">TND</span>
+                    </div>
+
+                    <!-- Stock Status -->
+                    {% if produit.quantite is not null %}
+                        {% set alerte = (produit.seuilAlert is not null and produit.seuilAlert > 0 and produit.quantite <= produit.seuilAlert) %}
+                        <div class="mb-6">
+                            {% if produit.quantite == 0 %}
+                                <div class="inline-flex items-center px-4 py-2 rounded-xl bg-red-100 text-red-700 font-bold">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                    </svg>
+                                    Out of Stock
+                                </div>
+                            {% elseif alerte %}
+                                <div class="inline-flex items-center px-4 py-2 rounded-xl bg-yellow-100 text-yellow-700 font-bold">
+                                    <span class="w-2 h-2 rounded-full bg-yellow-500 mr-2 animate-pulse"></span>
+                                    Low Stock - Only {{ produit.quantite }} left!
+                                </div>
+                            {% else %}
+                                <div class="inline-flex items-center px-4 py-2 rounded-xl bg-green-100 text-green-700 font-bold">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                    In Stock
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+
+                    <!-- Description -->
+                    <div class="mb-8 flex-grow">
+                        <h3 class="text-lg font-bold text-gray-900 mb-3">Description</h3>
+                        <p class="text-gray-600 leading-relaxed {% if produit.description|length > 200 %}line-clamp-4{% endif %}">
+                            {{ produit.description|default('No description available for this product.') }}
+                        </p>
+                        {% if produit.description|length > 200 %}
+                            <button class="text-orange-600 font-medium text-sm mt-2 hover:underline" onclick="this.previousElementSibling.classList.toggle('line-clamp-4')">
+                                Show more
+                            </button>
+                        {% endif %}
+                    </div>
+
+                    <!-- Add to Cart -->
+                    <div class="mt-auto">
+                        {% if produit.quantite is null or produit.quantite > 0 %}
+                            <button type="button"
+                                    class="snipcart-add-item w-full py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold text-lg rounded-2xl shadow-lg hover:shadow-xl hover:from-orange-600 hover:to-orange-700 transition-all duration-200 flex items-center justify-center gap-3"
+                                    data-item-id="{{ produit.id }}"
+                                    data-item-price="{{ produit.prix }}"
+                                    data-item-name="{{ produit.nom }}"
+                                    data-item-description="{{ produit.description|default('') }}"
+                                    data-item-url="{{ path('app_product_detail', {id: produit.id}) }}">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                </svg>
+                                Add to Cart
+                            </button>
+                        {% else %}
+                            <button type="button" disabled class="w-full py-4 bg-gray-200 text-gray-500 font-bold text-lg rounded-2xl cursor-not-allowed">
+                                Out of Stock
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Related Products -->
+        {% if relatedProducts|length > 0 %}
+            <div class="mt-12">
+                <h2 class="text-2xl font-black text-gray-900 mb-6">Related Products</h2>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    {% for related in relatedProducts %}
+                        <a href="{{ path('app_product_detail', {id: related.id}) }}" class="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                            <div class="aspect-square bg-gradient-to-br from-orange-50 to-amber-50 relative overflow-hidden">
+                                {% if related.image %}
+                                    {% if related.image matches '#^https?://#' %}
+                                        <img src="{{ related.image }}" alt="{{ related.nom }}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                                    {% else %}
+                                        <img src="{{ asset('uploads/images/' ~ related.image) }}" alt="{{ related.nom }}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                                    {% endif %}
+                                {% else %}
+                                    <div class="w-full h-full flex items-center justify-center">
+                                        <span class="text-5xl font-black text-orange-200">{{ related.nom|slice(0, 1) }}</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="p-4">
+                                <p class="font-bold text-gray-900 group-hover:text-orange-600 transition truncate">{{ related.nom }}</p>
+                                <p class="text-xl font-black text-orange-600 mt-1">{{ related.prix|number_format(2, ',', ' ') }} TND</p>
+                            </div>
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Reviews Section -->
+        <div class="mt-12">
+            <div class="bg-white rounded-3xl shadow-xl border border-gray-100 p-8">
+                <h2 class="text-2xl font-black text-gray-900 mb-6">Customer Reviews</h2>
+                
+                <!-- Review Summary -->
+                <div class="flex items-center gap-4 mb-8 pb-8 border-b border-gray-100">
+                    <div class="text-center">
+                        <div class="text-5xl font-black text-orange-600">{{ avgRating }}</div>
+                        <div class="flex gap-1 mt-2 justify-center">
+                            {% for i in 1..5 %}
+                                {% if i <= avgRating|round(0, 'floor') %}
+                                    <i class="fas fa-star text-yellow-400"></i>
+                                {% else %}
+                                    <i class="far fa-star text-gray-300"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <p class="text-sm text-gray-500 mt-1">{{ commentCount }} reviews</p>
+                    </div>
+                </div>
+
+                <!-- Add Review Form -->
+                <div class="mb-10">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">Write a Review</h3>
+                    <form action="{{ path('app_product_comment', {id: produit.id}) }}" method="POST" class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Your Name</label>
+                                <input type="text" name="auteur" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500" placeholder="Enter your name">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Rating</label>
+                                <div class="flex gap-2" id="star-rating">
+                                    {% for i in 1..5 %}
+                                        <button type="button" class="star-btn text-2xl text-gray-300 hover:text-yellow-400 transition-colors" data-rating="{{ i }}">
+                                            <i class="far fa-star"></i>
+                                        </button>
+                                    {% endfor %}
+                                </div>
+                                <input type="hidden" name="note" id="selected-rating" value="5" required>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Your Review</label>
+                            <textarea name="contenu" required rows="4" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500" placeholder="Share your experience with this product..."></textarea>
+                        </div>
+                        <button type="submit" class="px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:from-orange-600 hover:to-orange-700 transition-all duration-200">
+                            Submit Review
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Reviews List -->
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900 mb-6">All Reviews ({{ commentCount }})</h3>
+                    {% if comments|length > 0 %}
+                        <div class="space-y-6">
+                            {% for comment in comments %}
+                                <div class="border-b border-gray-100 pb-6">
+                                    <div class="flex items-start justify-between">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold">
+                                                {{ comment.auteur|slice(0, 1)|upper }}
+                                            </div>
+                                            <div>
+                                                <p class="font-bold text-gray-900">{{ comment.auteur }}</p>
+                                                <p class="text-xs text-gray-500">{{ comment.createdAt|date('M d, Y') }}</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex gap-1">
+                                            {% for i in 1..5 %}
+                                                {% if i <= comment.note %}
+                                                    <i class="fas fa-star text-yellow-400 text-sm"></i>
+                                                {% else %}
+                                                    <i class="far fa-star text-gray-300 text-sm"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <p class="mt-3 text-gray-600">{{ comment.contenu }}</p>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-8">
+                            <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                            </svg>
+                            <p class="text-gray-500">No reviews yet. Be the first to review this product!</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Snipcart Initialization -->
+<script>
+window.SnipcartSettings = {
+    publicApiKey: "ODgwZjkxY2ItNDcwOS00MDM3LThjZDktNjEzZGFmYmE1OTdiNjM2NjM4NjAxNDAzMDM4ODk2",
+    loadStrategy: "on-user-interaction",
+    timeoutDuration: 2700
+};
+
+(()=>{var c,d;(d=(c=window.SnipcartSettings).version)!=null||(c.version="3.0");var s,S;(S=(s=window.SnipcartSettings).timeoutDuration)!=null||(s.timeoutDuration=2750);var l,p;(p=(l=window.SnipcartSettings).domain)!=null||(l.domain="cdn.snipcart.com");var w,u;(u=(w=window.SnipcartSettings).protocol)!=null||(w.protocol="https");var f=window.SnipcartSettings.version.includes("v3.0.0-ci")||window.SnipcartSettings.version!="3.0"&&window.SnipcartSettings.version.localeCompare("3.4.0",void 0,{numerical:true})<0;var m=function(){var a=document.createElement("link");a.rel="stylesheet";a.href="https://cdn.snipcart.com/themes/v3.0.31/default/snipcart.css";a.crossOrigin="anonymous";document.head.appendChild(a);if(!f){var b=document.createElement("script");b.src="https://cdn.snipcart.com/snipcart-legacy.js";b.crossOrigin="anonymous";document.head.appendChild(b)}};window.Snipcart=function(){var a=document.querySelector(".snipcart-add-item"),b=document.querySelector(".snipcart-checkout");if(!a&&!b)return m();if(!document.querySelector("#snipcart-script")){var e=document.createElement("script");e.id="snipcart-script";e.src="https://cdn.snipcart.com/scripts/v3.0.31/snipcart.js";e.crossOrigin="anonymous";document.body.appendChild(e);m()}};window.addEventListener("load",window.Snipcart);window.addEventListener("scroll",window.Snipcart,{once:"false"});})();
+</script>
+
+<!-- Star Rating JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const starButtons = document.querySelectorAll('.star-btn');
+    const ratingInput = document.getElementById('selected-rating');
+    
+    starButtons.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const rating = parseInt(this.dataset.rating);
+            ratingInput.value = rating;
+            updateStars(rating);
+        });
+        
+        btn.addEventListener('mouseenter', function() {
+            const rating = parseInt(this.dataset.rating);
+            updateStars(rating);
+        });
+    });
+    
+    document.getElementById('star-rating').addEventListener('mouseleave', function() {
+        const currentRating = parseInt(ratingInput.value);
+        updateStars(currentRating);
+    });
+    
+    function updateStars(rating) {
+        starButtons.forEach(function(btn, index) {
+            const icon = btn.querySelector('i');
+            if (index < rating) {
+                icon.classList.remove('far');
+                icon.classList.add('fas');
+                btn.classList.remove('text-gray-300');
+                btn.classList.add('text-yellow-400');
+            } else {
+                icon.classList.remove('fas');
+                icon.classList.add('far');
+                btn.classList.remove('text-yellow-400');
+                btn.classList.add('text-gray-300');
+            }
+        });
+    }
+    
+    // Initialize with 5 stars
+    updateStars(5);
+});
+</script>
+{% endblock %}
