@@ -19,10 +19,6 @@ Projet collaboratif PawTech — gestion des utilisateurs, stations d'observation
 2. Choisir la branche de travail : `git checkout <nom-branche>`
 3. Créer une branche locale à partir de la branche cible si besoin.
 
-## Structure du projet
-
-À définir selon les modules (backend, frontend, API, etc.).
-
 ## Contribution
 
 Chaque membre travaille sur sa branche dédiée. Les fusions vers `main` se font après revue.
