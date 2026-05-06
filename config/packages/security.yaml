@@ -2,28 +2,73 @@ security:
     # https://symfony.com/doc/current/security.html#registering-the-user-hashing-passwords
     password_hashers:
         Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
+        App\Entity\User:
+            algorithm: bcrypt
+            cost: 12
+
     # https://symfony.com/doc/current/security.html#loading-the-user-the-user-provider
     providers:
-        users_in_memory: { memory: null }
+        app_user_provider:
+            entity:
+                class: App\Entity\User
+                property: email
+
     firewalls:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
+
         main:
-            lazy: true
-            provider: users_in_memory
+            lazy: false
+            provider: app_user_provider
+            stateless: false
+            entry_point: form_login
 
-            # activate different ways to authenticate
-            # https://symfony.com/doc/current/security.html#the-firewall
+            # Form-based login with email
+            form_login:
+                login_path: supabase_signin
+                check_path: supabase_signin
+                default_target_path: app_home
+                always_use_default_target_path: false
+                enable_csrf: true
+                csrf_token_id: authenticate
+                username_parameter: email
+                password_parameter: password
 
-            # https://symfony.com/doc/current/security/impersonating_user.html
-            # switch_user: true
+            # HTTP Basic Authentication for API
+            http_basic:
+                realm: PawTech API
 
-    # Easy way to control access for large sections of your site
-    # Note: Only the *first* access control that matches will be used
+            # User checker
+            user_checker: App\Security\UserChecker
+
+            # Logout configuration
+            logout:
+                path: supabase_logout
+                target: app_home
+                invalidate_session: true
+
+            remember_me:
+                secret: '%kernel.secret%'
+                lifetime: 604800 # 7 days
+                path: /
+                secure: false
+                httponly: true
+                samesite: lax
+
+    # Access control - protect routes
     access_control:
-        # - { path: ^/admin, roles: ROLE_ADMIN }
-        # - { path: ^/profile, roles: ROLE_USER }
+        - { path: ^/admin, roles: ROLE_ADMIN }
+        - { path: ^/dashboard, roles: ROLE_USER }
+        - { path: ^/profile, roles: ROLE_USER }
+        - { path: ^/account, roles: ROLE_USER }
+        - { path: ^/supabase/signin, roles: PUBLIC_ACCESS }
+        - { path: ^/supabase/signup, roles: PUBLIC_ACCESS }
+        - { path: ^/signin, roles: PUBLIC_ACCESS }
+        - { path: ^/signup, roles: PUBLIC_ACCESS }
+        - { path: ^/auth, roles: PUBLIC_ACCESS }
+        - { path: ^/forgot-password, roles: PUBLIC_ACCESS }
+        - { path: ^/, roles: PUBLIC_ACCESS }
 
 when@test:
     security:

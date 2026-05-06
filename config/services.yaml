@@ -22,3 +22,22 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+    App\Service\GeminiService:
+        bind:
+            $apiKey: '%env(GEMINI_API_KEY)%'
+
+    App\Service\SupabaseService:
+        bind:
+            $supabaseUrl: '%env(NEXT_PUBLIC_SUPABASE_URL)%'
+            $apiKey: '%env(SUPABASE_SECRET_KEY)%'
+
+    App\Service\SupabaseUserRepository:
+        arguments:
+            $passwordHasher: '@Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface'
+            $logger: '@Psr\Log\LoggerInterface'
+
+    App\Service\JwtTokenService:
+        bind:
+            $secret: '%kernel.secret%'
+            $appEnv: '%kernel.environment%'
